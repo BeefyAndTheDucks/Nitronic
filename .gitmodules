@@ -4,6 +4,3 @@
 [submodule "NitronicCore/vendor/GLFW"]
 	path = NitronicCore/vendor/GLFW
 	url = https://github.com/TheCherno/glfw.git
-[submodule "NitronicCore/vendor/glfw"]
-	path = NitronicCore/vendor/glfw
-	url = https://github.com/TheCherno/glfw.git
