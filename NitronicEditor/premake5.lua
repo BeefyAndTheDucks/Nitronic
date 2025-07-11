@@ -20,8 +20,9 @@ project "NitronicEditor"
 
     includedirs
     {
-        "%{wks.location}/Hazel/src",
-		"%{wks.location}/Hazel/vendor"
+		"%{wks.location}/NitronicCore/vendor/spdlog/include",
+        "%{wks.location}/NitronicCore/src",
+		"%{wks.location}/NitronicCore/vendor"
     }
 
     links

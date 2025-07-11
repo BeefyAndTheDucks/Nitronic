@@ -7,6 +7,9 @@ project "NitronicCore"
     targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
 
+	pchheader "npch.h"
+	pchsource "src/npch.cpp"
+
     files
     {
         "src/**.h",
@@ -20,7 +23,9 @@ project "NitronicCore"
 
     includedirs
     {
-        "src"
+        "src",
+		"vendor/spdlog/include",
+		"%{IncludeDir.VulkanSDK}"
     }
 
     filter "system:windows"

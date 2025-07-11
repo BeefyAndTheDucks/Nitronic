@@ -22,10 +22,13 @@ workspace "Nitronic"
         "MultiProcessorCompile"
     }
 
+    filter "action:vs*"
+        buildoptions { "/utf-8" }
+
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 group "Dependencies"
-
+    include "vendor/premake"
 group ""
 
 group "Core"

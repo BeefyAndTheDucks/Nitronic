@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Nitronic">
+      <UniqueIdentifier>{0B244921-F7F0-A32C-200A-92D40C36D9BA}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Nitronic\Core">
+      <UniqueIdentifier>{4387C16D-AF47-3DA4-7882-8621E4018280}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Nitronic\Events">
+      <UniqueIdentifier>{8F7562E9-FB00-D0AD-0412-53A2701C2CAE}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\Nitronic.h" />
+    <ClInclude Include="src\Nitronic\Core\Application.h">
+      <Filter>Nitronic\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Nitronic\Core\Assert.h">
+      <Filter>Nitronic\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Nitronic\Core\Base.h">
+      <Filter>Nitronic\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Nitronic\Core\EntryPoint.h">
+      <Filter>Nitronic\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Nitronic\Core\Log.h">
+      <Filter>Nitronic\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Nitronic\Core\PlatformDetection.h">
+      <Filter>Nitronic\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Nitronic\Events\ApplicationEvent.h">
+      <Filter>Nitronic\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Nitronic\Events\Event.h">
+      <Filter>Nitronic\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Nitronic\Events\KeyEvent.h">
+      <Filter>Nitronic\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Nitronic\Events\MouseEvent.h">
+      <Filter>Nitronic\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="src\npch.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\Nitronic\Core\Application.cpp">
+      <Filter>Nitronic\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Nitronic\Core\Log.cpp">
+      <Filter>Nitronic\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\npch.cpp" />
+  </ItemGroup>
+</Project>
