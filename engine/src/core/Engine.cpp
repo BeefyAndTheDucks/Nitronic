@@ -2,22 +2,22 @@
 // Created by simon on 28/08/2025.
 //
 
-#include <iostream>
-#include <ostream>
-#include <engine/Engine.h>
+#include "engine/Engine.h"
 
 namespace Nitronic {
 
     Engine::Engine() {
-        std::cout << "Hello from constructor" << std::endl;
+        m_Window = new Window(1280, 720, "Nitronic");
     }
 
     Engine::~Engine() {
-        std::cout << "Hello from destructor" << std::endl;
+        delete m_Window;
     }
 
     void Engine::Run() {
-        std::cout << "Hello from Run()" << std::endl;
+        while (!m_Window->ShouldClose()) {
+            m_Window->PollEvents();
+        }
     }
 
 

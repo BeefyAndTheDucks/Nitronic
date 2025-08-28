@@ -4,6 +4,7 @@
 
 #ifndef NITRONIC_ENGINE_H
 #define NITRONIC_ENGINE_H
+#include "Window.h"
 
 namespace Nitronic {
 
@@ -13,6 +14,8 @@ namespace Nitronic {
         ~Engine();
 
         void Run();
+    private:
+        Window* m_Window;
     };
 
 }
