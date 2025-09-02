@@ -4,18 +4,23 @@
 
 #ifndef NITRONIC_ENGINE_H
 #define NITRONIC_ENGINE_H
-#include "../../src/engine/core/Window.h"
+#include "core/Macros.h"
+#include "renderer/Renderer.h"
 
-namespace Nitronic {
+#include "Window.h"
+#include "core/Enums.h"
+
+NAMESPACE {
 
     class Engine {
     public:
-        Engine();
+        Engine(int windowWidth, int windowHeight, const char* windowTitle, RenderingBackend backend = Vulkan);
         ~Engine();
 
         void Run();
     private:
         Window* m_Window;
+        Renderer* m_Renderer;
     };
 
 }

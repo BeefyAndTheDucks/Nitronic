@@ -5,7 +5,7 @@
 #include "../../engine/include/engine/Engine.h"
 
 int main(int argc, char *argv[]) {
-    auto* engine = new Nitronic::Engine();
+    auto* engine = new Nitronic::Engine(1280, 720, "Nitronic Editor");
 
     engine->Run();
 

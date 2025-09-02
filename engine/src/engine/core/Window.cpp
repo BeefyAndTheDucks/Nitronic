@@ -2,11 +2,12 @@
 // Created by simon on 28/08/2025.
 //
 
-#include "Window.h"
-
 #include <stdexcept>
 
-namespace Nitronic {
+#include "core/Macros.h"
+#include "engine/Window.h"
+
+NAMESPACE {
 
     Window::Window(const int width, const int height, const char *title) {
         if (!glfwInit())

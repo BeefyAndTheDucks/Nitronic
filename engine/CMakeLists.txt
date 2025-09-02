@@ -1,6 +1,5 @@
 ﻿file(GLOB_RECURSE ENGINE_SOURCES src/engine/*.cpp)
-add_library(engine STATIC)
-target_sources(engine PRIVATE ${ENGINE_SOURCES})
+add_library(engine ${ENGINE_SOURCES})
 target_include_directories(engine PUBLIC include)
 
 if(WIN32)
@@ -21,8 +20,6 @@ if (NVRHI_WITH_VULKAN)
     elseif (TARGET Vulkan::Headers)
         target_link_libraries(engine PRIVATE Vulkan::Headers)
     endif()
-
-    target_compile_definitions(glfw PRIVATE _GLFW_VULKAN_LIBRARY="sl.interposer.dll")
 endif()
 
 target_link_libraries(engine

@@ -6,7 +6,9 @@
 #define NITRONIC_WINDOW_H
 #include <GLFW/glfw3.h>
 
-namespace Nitronic {
+#include "core/Macros.h"
+
+NAMESPACE {
 
     class Window {
     public:
