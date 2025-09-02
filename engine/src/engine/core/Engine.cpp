@@ -16,7 +16,7 @@ namespace Nitronic {
 
     void Engine::Run() {
         while (!m_Window->ShouldClose()) {
-            m_Window->PollEvents();
+            Window::PollEvents();
         }
     }
 

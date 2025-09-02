@@ -2,13 +2,13 @@
 // Created by simon on 28/08/2025.
 //
 
-#include "engine/Window.h"
+#include "Window.h"
 
 #include <stdexcept>
 
 namespace Nitronic {
 
-    Window::Window(int width, int height, const char *title) {
+    Window::Window(const int width, const int height, const char *title) {
         if (!glfwInit())
             throw std::runtime_error("Failed to initialize GLFW");
 

@@ -4,7 +4,7 @@
 
 #ifndef NITRONIC_WINDOW_H
 #define NITRONIC_WINDOW_H
-#include "GLFW/glfw3.h"
+#include <GLFW/glfw3.h>
 
 namespace Nitronic {
 
@@ -14,9 +14,9 @@ namespace Nitronic {
         ~Window();
 
         static void PollEvents();
-        bool ShouldClose() const;
+        [[nodiscard]] bool ShouldClose() const;
 
-        GLFWwindow* GetNativeWindow() const { return m_Window; }
+        [[nodiscard]] GLFWwindow* GetNativeWindow() const { return m_Window; }
     private:
         GLFWwindow* m_Window;
     };

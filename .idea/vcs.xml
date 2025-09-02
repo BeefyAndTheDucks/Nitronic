@@ -2,5 +2,10 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/GLFW" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/nvrhi" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/nvrhi/rtxmu" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/nvrhi/thirdparty/DirectX-Headers" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/nvrhi/thirdparty/Vulkan-Headers" vcs="Git" />
   </component>
 </project>

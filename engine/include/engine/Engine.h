@@ -4,7 +4,7 @@
 
 #ifndef NITRONIC_ENGINE_H
 #define NITRONIC_ENGINE_H
-#include "Window.h"
+#include "../../src/engine/core/Window.h"
 
 namespace Nitronic {
 
