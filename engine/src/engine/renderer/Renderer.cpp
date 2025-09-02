@@ -9,10 +9,12 @@
 
 NAMESPACE {
 
-    Renderer::Renderer(const RenderingBackend backend)
-        : m_Backend(backend)
+    Renderer::Renderer(const RenderingBackend backend, Window* window)
+        : m_Backend(backend), m_Window(window)
     {
         std::cout << "Using backend " << RenderingBackendToString(backend) << std::endl;
+
+        m_Device = new Device(m_Backend);
 
         CREATE_BACKEND_SWITCH(Init);
     }

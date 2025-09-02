@@ -20,11 +20,12 @@ if (NVRHI_WITH_VULKAN)
     elseif (TARGET Vulkan::Headers)
         target_link_libraries(engine PRIVATE Vulkan::Headers)
     endif()
+
 endif()
 
 target_link_libraries(engine
         PUBLIC glfw
-        PRIVATE nvrhi)
+        PUBLIC nvrhi)
 
 if(NITRONIC_WITH_DX11)
     file(GLOB_RECURSE DX11_ENGINE_SOURCES src/platform/dx11/*.cpp)
@@ -47,13 +48,4 @@ endif()
 if(NITRONIC_WITH_VULKAN)
     file(GLOB_RECURSE VULKAN_ENGINE_SOURCES src/platform/vulkan/*.cpp)
     target_sources(engine PRIVATE ${VULKAN_ENGINE_SOURCES})
-    if (NOT NVRHI_BUILD_SHARED)
-        target_link_libraries(engine PRIVATE nvrhi_vk)
-    endif()
-    if (TARGET Vulkan-Headers)
-        target_link_libraries(engine PRIVATE Vulkan-Headers)
-    elseif (TARGET Vulkan::Headers)
-        target_link_libraries(engine PRIVATE Vulkan::Headers)
-    endif()
-
 endif()

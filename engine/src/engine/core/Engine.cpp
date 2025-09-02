@@ -11,7 +11,7 @@ NAMESPACE {
 
     Engine::Engine(const int windowWidth, const int windowHeight, const char* windowTitle, RenderingBackend backend) {
         m_Window = new Window(windowWidth, windowHeight, windowTitle);
-        m_Renderer = new Renderer(backend);
+        m_Renderer = new Renderer(backend, m_Window);
     }
 
     Engine::~Engine() {

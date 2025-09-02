@@ -13,6 +13,8 @@ NAMESPACE {
         if (!glfwInit())
             throw std::runtime_error("Failed to initialize GLFW");
 
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+
         m_Window = glfwCreateWindow(width, height, title, nullptr, nullptr);
         if (!m_Window) {
             glfwTerminate();
