@@ -8,20 +8,22 @@
 #include <GLFW/glfw3.h>
 
 #include "RendererVK.h"
+
+#include "VkMacros.h"
 #include "core/Macros.h"
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
 NAMESPACE {
 
-    vk::Instance g_VkInstance;
-    vk::SurfaceKHR g_VkSurface;
-
     void Renderer::InitVk() {
         std::cout << "Init Vulkan" << std::endl;
 
+        m_RendererData = new RendererDataVk();
+
         try {
             vk::detail::DynamicLoader dl;
+            VULKAN_HPP_DEFAULT_DISPATCHER.init(dl);
             auto vkGetInstanceProcAddr = dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr");
             if (!vkGetInstanceProcAddr) {
                 throw std::runtime_error("Failed to load vkGetInstanceProcAddr");
@@ -97,8 +99,8 @@ NAMESPACE {
             createInfo.ppEnabledLayerNames     = layers.empty() ? nullptr : layers.data();
 
             // Create the instance and initialize the dispatcher with instance-level functions
-            g_VkInstance = vk::createInstance(createInfo);
-            VULKAN_HPP_DEFAULT_DISPATCHER.init(g_VkInstance);
+            RENDERER_DATA->m_Instance = vk::createInstance(createInfo);
+            VULKAN_HPP_DEFAULT_DISPATCHER.init(RENDERER_DATA->m_Instance);
 
             if (!m_Window) {
                 throw std::runtime_error("Window is null");
@@ -106,12 +108,12 @@ NAMESPACE {
 
             VkSurfaceKHR rawSurface = VK_NULL_HANDLE;
             VK_CHECK(glfwCreateWindowSurface(
-                g_VkInstance,
+                RENDERER_DATA->m_Instance,
                 m_Window->GetNativeWindow(),
                 nullptr,
                 &rawSurface
             ));
-            g_VkSurface = rawSurface;
+            RENDERER_DATA->m_Surface = rawSurface;
 
             std::cout << "Vulkan instance and surface created." << std::endl;
         }
@@ -132,17 +134,15 @@ NAMESPACE {
     void Renderer::CleanupVk() {
         std::cout << "Cleanup Vulkan" << std::endl;
 
-        if (g_VkSurface) {
-            g_VkInstance.destroySurfaceKHR(g_VkSurface);
-            g_VkSurface = VK_NULL_HANDLE;
+        if (RENDERER_DATA->m_Surface) {
+            RENDERER_DATA->m_Instance.destroySurfaceKHR(RENDERER_DATA->m_Surface);
+            RENDERER_DATA->m_Surface = VK_NULL_HANDLE;
         }
 
-        if (g_VkInstance) {
-            g_VkInstance.destroy();
-            g_VkInstance = VK_NULL_HANDLE;
+        if (RENDERER_DATA->m_Instance) {
+            RENDERER_DATA->m_Instance.destroy();
+            RENDERER_DATA->m_Instance = VK_NULL_HANDLE;
         }
-
-        delete m_Device;
     }
 
 }

@@ -6,13 +6,15 @@
 
 NAMESPACE {
 
-    Device::Device(const RenderingBackend backend)
+    Device::Device(const RenderingBackend backend, RendererData* rendererData)
         : m_Backend(backend)
     {
+        CREATE_BACKEND_SWITCH(CreateDeviceData, rendererData);
 
+        CREATE_BACKEND_SWITCH(CreateDevice);
     }
 
     Device::~Device() {
-
+        CREATE_BACKEND_SWITCH(DestroyDevice);
     }
 }

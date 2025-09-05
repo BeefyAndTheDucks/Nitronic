@@ -14,12 +14,14 @@ NAMESPACE {
     {
         std::cout << "Using backend " << RenderingBackendToString(backend) << std::endl;
 
-        m_Device = new Device(m_Backend);
-
         CREATE_BACKEND_SWITCH(Init);
+
+        m_Device = new Device(m_Backend, m_RendererData);
     }
 
     Renderer::~Renderer() {
+        delete m_Device;
+
         CREATE_BACKEND_SWITCH(Cleanup);
     }
 

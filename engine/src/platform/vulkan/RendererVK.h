@@ -6,14 +6,8 @@
 #define NITRONIC_RENDERERVK_H
 
 #include "renderer/Renderer.h"
-#include <nvrhi/vulkan.h>
 
-#ifdef NITRONIC_WITH_VULKAN
-#ifndef VULKAN_HPP_DISPATCH_LOADER_DYNAMIC
-#define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
-#endif
-#include <vulkan/vulkan.hpp>
-#endif
+#include "VulkanInclude.h"
 
 #ifndef VK_CHECK
 #define VK_CHECK(x) \
@@ -29,8 +23,10 @@
 
 NAMESPACE {
 
-    extern vk::Instance g_VkInstance;
-    extern vk::SurfaceKHR g_VkSurface;
+    struct RendererDataVk : RendererData {
+        vk::Instance m_Instance;
+        vk::SurfaceKHR m_Surface;
+    };
 
 }
 

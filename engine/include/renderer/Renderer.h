@@ -6,7 +6,6 @@
 #define NITRONIC_RENDERER_H
 #include "core/Enums.h"
 #include "core/Macros.h"
-#include <nvrhi/nvrhi.h>
 
 #include "Device.h"
 #include "engine/Window.h"
@@ -25,8 +24,9 @@ NAMESPACE {
         CREATE_BACKEND_FUNCTIONS(Cleanup)
 
         RenderingBackend m_Backend;
-        Device* m_Device;
+        RendererData* m_RendererData;
 
+        Device* m_Device;
         Window* m_Window;
     };
 
