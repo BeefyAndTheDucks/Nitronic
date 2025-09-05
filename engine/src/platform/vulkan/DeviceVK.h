@@ -14,17 +14,20 @@ NAMESPACE {
 
     struct QueueFamilyIndices {
         std::optional<uint32_t> graphicsFamily;
+        std::optional<uint32_t> presentFamily;
 
         bool IsComplete() const {
-            return graphicsFamily.has_value();
+            return graphicsFamily.has_value() && presentFamily.has_value();
         }
     };
 
     struct DeviceDataVk : DeviceData {
         vk::PhysicalDevice m_PhysicalDevice;
         vk::Device m_LogicalDevice;
-        vk::Queue m_GraphicsQueue;
         QueueFamilyIndices m_QueueFamilyIndices;
+
+        vk::Queue m_GraphicsQueue;
+        vk::Queue m_PresentQueue;
     };
 
 }
