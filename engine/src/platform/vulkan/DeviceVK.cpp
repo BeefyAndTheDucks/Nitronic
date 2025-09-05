@@ -96,6 +96,7 @@ NAMESPACE {
         deviceCreateInfo.enabledExtensionCount = 0;
 
         DEVICE_DATA->m_LogicalDevice = DEVICE_DATA->m_PhysicalDevice.createDevice(deviceCreateInfo);
+        DEVICE_DATA->m_GraphicsQueue = DEVICE_DATA->m_LogicalDevice.getQueue(DEVICE_DATA->m_QueueFamilyIndices.graphicsFamily.value(), 0);
     }
 
     void Device::DestroyDeviceVk()

@@ -23,6 +23,7 @@ NAMESPACE {
     struct DeviceDataVk : DeviceData {
         vk::PhysicalDevice m_PhysicalDevice;
         vk::Device m_LogicalDevice;
+        vk::Queue m_GraphicsQueue;
         QueueFamilyIndices m_QueueFamilyIndices;
     };
 
