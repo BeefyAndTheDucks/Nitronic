@@ -15,12 +15,15 @@ NAMESPACE {
     public:
         Device(RenderingBackend backend, RendererData* rendererData);
         ~Device();
+
+        [[nodiscard]] nvrhi::DeviceHandle GetDevice() const { return m_Device; }
+        [[nodiscard]] DeviceData* GetDeviceData() const { return m_DeviceData; }
     private:
-        CREATE_BACKEND_FUNCTIONS(CreateDeviceData, RendererData* rendererData)
         CREATE_BACKEND_FUNCTIONS(CreateDevice)
         CREATE_BACKEND_FUNCTIONS(DestroyDevice)
 
         RenderingBackend m_Backend;
+        RendererData* m_RendererData;
         DeviceData* m_DeviceData;
         nvrhi::DeviceHandle m_Device;
     };

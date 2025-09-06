@@ -12,6 +12,16 @@
 
 NAMESPACE {
 
+    struct SwapChainImage {
+        //vk::Image image;
+        nvrhi::TextureHandle nvrhiHandle;
+    };
+
+    struct Vertex {
+        float position[3];
+        float texCoord[2];
+    };
+
     class Renderer {
     public:
         Renderer(RenderingBackend backend, Window* window);
@@ -20,14 +30,18 @@ NAMESPACE {
         void Render(double deltaTime);
     private:
         CREATE_BACKEND_FUNCTIONS(Init)
+        CREATE_BACKEND_FUNCTIONS(InitAfterDeviceCreation)
         CREATE_BACKEND_FUNCTIONS(Render, double deltaTime)
+        CREATE_BACKEND_FUNCTIONS(CleanupPreDevice)
         CREATE_BACKEND_FUNCTIONS(Cleanup)
-
+    private:
         RenderingBackend m_Backend;
         RendererData* m_RendererData;
 
         Device* m_Device;
         Window* m_Window;
+
+        std::vector<SwapChainImage> m_SwapChainImages;
     };
 
 }

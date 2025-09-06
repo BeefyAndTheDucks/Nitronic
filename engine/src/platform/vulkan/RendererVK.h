@@ -24,8 +24,10 @@
 NAMESPACE {
 
     struct RendererDataVk : RendererData {
-        vk::Instance m_Instance;
-        vk::SurfaceKHR m_Surface;
+        vk::Instance instance;
+        vk::SurfaceKHR surface;
+
+        vk::SwapchainKHR nativeSwapChain;
     };
 
 }

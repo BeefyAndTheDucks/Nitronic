@@ -30,7 +30,7 @@ NAMESPACE {
             std::chrono::duration<double> elapsed = currentTime - previousTime;
             double deltaTime = elapsed.count(); // seconds
             previousTime = currentTime;
-            std::cout << "DeltaTime: " << deltaTime << "s (" << 1.0f / deltaTime << "FPS)" << std::endl;
+            //std::cout << "DeltaTime: " << deltaTime << "s (" << 1.0f / deltaTime << "FPS)" << std::endl;
 
             Window::PollEvents();
 

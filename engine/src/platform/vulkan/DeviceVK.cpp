@@ -4,12 +4,22 @@
 #include <set>
 
 #include "VkMacros.h"
+#include "nvrhi/validation.h"
 
 NAMESPACE {
 
-    void Device::CreateDeviceDataVk(RendererData* rendererData) {
-        m_DeviceData = new DeviceDataVk();
-        m_DeviceData->m_RendererData = rendererData;
+    std::vector deviceExtensions = {
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME
+    };
+
+    SwapChainSupportDetails QuerySwapChainSupport(const vk::PhysicalDevice device, const vk::SurfaceKHR surface) {
+        SwapChainSupportDetails details{};
+
+        details.capabilities = device.getSurfaceCapabilitiesKHR(surface);
+        details.formats = device.getSurfaceFormatsKHR(surface);
+        details.presentModes = device.getSurfacePresentModesKHR(surface);
+
+        return details;
     }
 
     QueueFamilyIndices FindQueueFamilies(const vk::PhysicalDevice device, const vk::SurfaceKHR surface) {
@@ -34,10 +44,30 @@ NAMESPACE {
         return indices;
     }
 
+    bool CheckDeviceExtensionSupport(const vk::PhysicalDevice device) {
+        std::vector<vk::ExtensionProperties> availableExtensions = device.enumerateDeviceExtensionProperties();
+
+        std::set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
+
+        for (const auto& extension : availableExtensions) {
+            requiredExtensions.erase(extension.extensionName);
+        }
+
+        return requiredExtensions.empty();
+    }
+
     bool IsDeviceSuitable(const vk::PhysicalDevice device, const vk::SurfaceKHR surface) {
         const QueueFamilyIndices indices = FindQueueFamilies(device, surface);
 
-        return indices.IsComplete();
+        bool extensionsSupported = CheckDeviceExtensionSupport(device);
+
+        bool swapChainAdequate = false;
+        if (extensionsSupported) {
+            SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(device, surface);
+            swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
+        }
+
+        return indices.IsComplete() && extensionsSupported && swapChainAdequate;
     }
 
     int RateDeviceSuitability(const vk::PhysicalDevice device) {
@@ -56,7 +86,9 @@ NAMESPACE {
 
     void Device::CreateDeviceVk()
     {
-        std::vector<vk::PhysicalDevice> devices = RENDERER_DATA_FROM_DEVICE->m_Instance.enumeratePhysicalDevices();
+        m_DeviceData = new DeviceDataVk();
+
+        std::vector<vk::PhysicalDevice> devices = RENDERER_DATA->instance.enumeratePhysicalDevices();
         if (devices.empty()) {
             throw std::runtime_error("No Vulkan-compatible GPUs found.");
         }
@@ -64,7 +96,7 @@ NAMESPACE {
         std::multimap<int, vk::PhysicalDevice> candidates;
 
         for (const auto& device : devices) {
-            if (!IsDeviceSuitable(device, RENDERER_DATA_FROM_DEVICE->m_Surface))
+            if (!IsDeviceSuitable(device, RENDERER_DATA->surface))
                 continue;
             int score = RateDeviceSuitability(device);
             candidates.insert(std::make_pair(score, device));
@@ -74,17 +106,18 @@ NAMESPACE {
             throw std::runtime_error("No suitable Vulkan-compatible GPU found.");
 
         if (candidates.rbegin()->first > 0) {
-            DEVICE_DATA->m_PhysicalDevice = candidates.rbegin()->second;
+            DEVICE_DATA->physicalDevice = candidates.rbegin()->second;
         } else {
             throw std::runtime_error("No suitable Vulkan-compatible GPU found.");
         }
 
         std::cout << "Using device " << devices[0].getProperties().deviceName << std::endl;
 
-        DEVICE_DATA->m_QueueFamilyIndices = FindQueueFamilies(DEVICE_DATA->m_PhysicalDevice, RENDERER_DATA_FROM_DEVICE->m_Surface);
+        DEVICE_DATA->queueFamilyIndices = FindQueueFamilies(DEVICE_DATA->physicalDevice, RENDERER_DATA->surface);
+        DEVICE_DATA->swapChainSupport = QuerySwapChainSupport(DEVICE_DATA->physicalDevice, RENDERER_DATA->surface);
 
         std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
-        std::set uniqueQueueFamilies = { DEVICE_DATA->m_QueueFamilyIndices.graphicsFamily.value(), DEVICE_DATA->m_QueueFamilyIndices.presentFamily.value() };
+        std::set uniqueQueueFamilies = { DEVICE_DATA->queueFamilyIndices.graphicsFamily.value(), DEVICE_DATA->queueFamilyIndices.presentFamily.value() };
         float queuePriority = 1.0f;
         for (uint32_t queueFamily : uniqueQueueFamilies) {
             vk::DeviceQueueCreateInfo queueCreateInfo{};
@@ -96,20 +129,47 @@ NAMESPACE {
 
         vk::PhysicalDeviceFeatures deviceFeatures{};
 
+        vk::PhysicalDeviceVulkan11Features vulkan11Features{};
+
+        vk::PhysicalDeviceVulkan12Features vulkan12Features{};
+        vulkan12Features.timelineSemaphore = VK_TRUE;
+        vulkan12Features.pNext = vulkan11Features;
+
         vk::DeviceCreateInfo deviceCreateInfo{};
         deviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
         deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
         deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
-        deviceCreateInfo.enabledExtensionCount = 0;
 
-        DEVICE_DATA->m_LogicalDevice = DEVICE_DATA->m_PhysicalDevice.createDevice(deviceCreateInfo);
-        DEVICE_DATA->m_GraphicsQueue = DEVICE_DATA->m_LogicalDevice.getQueue(DEVICE_DATA->m_QueueFamilyIndices.graphicsFamily.value(), 0);
-        DEVICE_DATA->m_PresentQueue = DEVICE_DATA->m_LogicalDevice.getQueue(DEVICE_DATA->m_QueueFamilyIndices.presentFamily.value(), 0);
+        deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
+        deviceCreateInfo.ppEnabledExtensionNames = deviceExtensions.data();
+        deviceCreateInfo.pNext = &vulkan12Features;
+
+        DEVICE_DATA->logicalDevice = DEVICE_DATA->physicalDevice.createDevice(deviceCreateInfo);
+        DEVICE_DATA->graphicsQueue = DEVICE_DATA->logicalDevice.getQueue(DEVICE_DATA->queueFamilyIndices.graphicsFamily.value(), 0);
+        DEVICE_DATA->presentQueue = DEVICE_DATA->logicalDevice.getQueue(DEVICE_DATA->queueFamilyIndices.presentFamily.value(), 0);
+
+        nvrhi::vulkan::DeviceDesc deviceDesc{};
+        // deviceDesc.errorCB = TODO
+        deviceDesc.physicalDevice = DEVICE_DATA->physicalDevice;
+        deviceDesc.device = DEVICE_DATA->logicalDevice;
+        deviceDesc.graphicsQueue = DEVICE_DATA->graphicsQueue;
+        deviceDesc.graphicsQueueIndex = DEVICE_DATA->queueFamilyIndices.graphicsFamily.value();
+        deviceDesc.deviceExtensions = deviceExtensions.data();
+        deviceDesc.numDeviceExtensions = std::size(deviceExtensions);
+
+        nvrhi::DeviceHandle nvrhiDevice = nvrhi::vulkan::createDevice(deviceDesc);
+
+#if _DEBUG
+        m_Device = nvrhi::validation::createValidationLayer(nvrhiDevice);
+#else
+        m_Device = nvrhiDevice;
+#endif
     }
 
     void Device::DestroyDeviceVk()
     {
-        DEVICE_DATA->m_LogicalDevice.destroy();
+        m_Device = nullptr;
+        DEVICE_DATA->logicalDevice.destroy();
     }
 
 }

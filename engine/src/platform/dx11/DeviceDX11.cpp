@@ -7,11 +7,6 @@
 
 NAMESPACE {
 
-    void Device::CreateDeviceDataDX11(RendererData *rendererData) {
-        m_DeviceData = new DeviceData();
-        m_DeviceData->m_RendererData = rendererData;
-    }
-
     void Device::CreateDeviceDX11() {
 
     }

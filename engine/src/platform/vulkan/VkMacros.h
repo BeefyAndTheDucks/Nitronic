@@ -5,11 +5,10 @@
 #ifndef NITRONIC_VKMACROS_H
 #define NITRONIC_VKMACROS_H
 #include "RendererVK.h"
+#include "DeviceVK.h"
 #include "core/Macros.h"
 
 #include <iostream>
-
-#include "DeviceVK.h"
 
 NAMESPACE {
 
@@ -32,8 +31,10 @@ NAMESPACE {
     }
 
 #define RENDERER_DATA GetRendererDataChecked(m_RendererData, __FILE__, __LINE__)
-#define RENDERER_DATA_FROM_DEVICE GetRendererDataChecked(DEVICE_DATA->m_RendererData, __FILE__, __LINE__)
 #define DEVICE_DATA GetDeviceDataChecked(m_DeviceData, __FILE__, __LINE__)
+
+#define RENDERER_DATA_FROM_BASE(base) GetRendererDataChecked(base, __FILE__, __LINE__)
+#define DEVICE_DATA_FROM_BASE(base) GetDeviceDataChecked(base, __FILE__, __LINE__)
 
 }
 

@@ -5,12 +5,19 @@
 #ifndef NITRONIC_DEVICEVK_H
 #define NITRONIC_DEVICEVK_H
 
+#include "VulkanInclude.h"
+
 #include <optional>
 
 #include "renderer/Device.h"
-#include "RendererVK.h"
 
 NAMESPACE {
+
+    struct SwapChainSupportDetails {
+        vk::SurfaceCapabilitiesKHR capabilities;
+        std::vector<vk::SurfaceFormatKHR> formats;
+        std::vector<vk::PresentModeKHR> presentModes;
+    };
 
     struct QueueFamilyIndices {
         std::optional<uint32_t> graphicsFamily;
@@ -22,12 +29,13 @@ NAMESPACE {
     };
 
     struct DeviceDataVk : DeviceData {
-        vk::PhysicalDevice m_PhysicalDevice;
-        vk::Device m_LogicalDevice;
-        QueueFamilyIndices m_QueueFamilyIndices;
+        vk::PhysicalDevice physicalDevice;
+        vk::Device logicalDevice;
+        QueueFamilyIndices queueFamilyIndices;
+        SwapChainSupportDetails swapChainSupport;
 
-        vk::Queue m_GraphicsQueue;
-        vk::Queue m_PresentQueue;
+        vk::Queue graphicsQueue;
+        vk::Queue presentQueue;
     };
 
 }

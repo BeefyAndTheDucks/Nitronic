@@ -13,8 +13,6 @@ NAMESPACE {
     };
 
     struct DeviceData {
-        RendererData* m_RendererData;
-
         virtual ~DeviceData() = default;
     };
 

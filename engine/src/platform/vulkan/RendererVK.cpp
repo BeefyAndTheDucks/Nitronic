@@ -16,6 +16,107 @@ VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
 NAMESPACE {
 
+    vk::SurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats) {
+        for (const auto& availableFormat : availableFormats) {
+            if (availableFormat.format == vk::Format::eB8G8R8A8Srgb && availableFormat.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear) {
+                return availableFormat;
+            }
+        }
+
+        return availableFormats[0];
+    }
+
+    vk::PresentModeKHR ChooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes) {
+        for (const auto& availablePresentMode : availablePresentModes) {
+            if (availablePresentMode == vk::PresentModeKHR::eMailbox) {
+                return availablePresentMode;
+            }
+        }
+
+        return vk::PresentModeKHR::eFifo; // Guaranteed to exist.
+    }
+
+    vk::Extent2D ChooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities, const Window* window) {
+        if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
+            return capabilities.currentExtent;
+
+        int width, height;
+        glfwGetFramebufferSize(window->GetNativeWindow(), &width, &height);
+
+        vk::Extent2D actualExtent = {
+            static_cast<uint32_t>(width),
+            static_cast<uint32_t>(height)
+        };
+
+        actualExtent.width = std::clamp(actualExtent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
+        actualExtent.height = std::clamp(actualExtent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
+
+        return actualExtent;
+    }
+
+    std::vector<SwapChainImage> CreateSwapChain(const Device* device, const Window* window, const vk::SurfaceKHR surface, RendererDataVk* rendererData) {
+        SwapChainSupportDetails swapChainSupport = DEVICE_DATA_FROM_BASE(device->GetDeviceData())->swapChainSupport;
+
+        vk::SurfaceFormatKHR surfaceFormat = ChooseSwapSurfaceFormat(swapChainSupport.formats);
+        vk::PresentModeKHR presentMode = ChooseSwapPresentMode(swapChainSupport.presentModes);
+        vk::Extent2D extent = ChooseSwapExtent(swapChainSupport.capabilities, window);
+
+        uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
+        if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount) {
+            imageCount = swapChainSupport.capabilities.maxImageCount;
+        }
+
+        vk::SwapchainCreateInfoKHR createInfo{};
+        createInfo.surface = surface;
+        createInfo.minImageCount = imageCount;
+        createInfo.imageFormat = surfaceFormat.format;
+        createInfo.imageColorSpace = surfaceFormat.colorSpace;
+        createInfo.imageExtent = extent;
+        createInfo.imageArrayLayers = 1;
+        createInfo.imageUsage = vk::ImageUsageFlagBits::eColorAttachment;
+
+        QueueFamilyIndices indices = DEVICE_DATA_FROM_BASE(device->GetDeviceData())->queueFamilyIndices;
+        uint32_t queueFamilyIndices[] = { indices.graphicsFamily.value(), indices.presentFamily.value() };
+        if (indices.graphicsFamily != indices.presentFamily) {
+            createInfo.imageSharingMode = vk::SharingMode::eConcurrent;
+            createInfo.queueFamilyIndexCount = 2;
+            createInfo.pQueueFamilyIndices = queueFamilyIndices;
+        } else {
+            createInfo.imageSharingMode = vk::SharingMode::eExclusive;
+            createInfo.queueFamilyIndexCount = 0;
+            createInfo.pQueueFamilyIndices = nullptr;
+        }
+
+        createInfo.preTransform = swapChainSupport.capabilities.currentTransform;
+        createInfo.compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque;
+        createInfo.presentMode = presentMode;
+        createInfo.clipped = VK_TRUE;
+        createInfo.oldSwapchain = VK_NULL_HANDLE; // TODO: Recreate swapchain on resize
+
+        rendererData->nativeSwapChain = DEVICE_DATA_FROM_BASE(device->GetDeviceData())->logicalDevice.createSwapchainKHR(createInfo);
+
+        std::vector<vk::Image> images = DEVICE_DATA_FROM_BASE(device->GetDeviceData())->logicalDevice.getSwapchainImagesKHR(rendererData->nativeSwapChain);
+        std::vector<SwapChainImage> swapChainImages;
+        for (vk::Image image : images) {
+            SwapChainImage sci{};
+            //sci.image = image;
+
+            nvrhi::TextureDesc textureDesc{};
+            textureDesc.width = extent.width;
+            textureDesc.height = extent.height;
+            textureDesc.format = nvrhi::Format::SBGRA8_UNORM;
+            textureDesc.debugName = "Swap chain image";
+            textureDesc.initialState = nvrhi::ResourceStates::Present;
+            textureDesc.keepInitialState = true;
+            textureDesc.isRenderTarget = true;
+
+            sci.nvrhiHandle = device->GetDevice()->createHandleForNativeTexture(nvrhi::ObjectTypes::VK_Image, nvrhi::Object(image), textureDesc);
+            swapChainImages.push_back(sci);
+        }
+
+        return swapChainImages;
+    }
+
     void Renderer::InitVk() {
         std::cout << "Init Vulkan" << std::endl;
 
@@ -99,8 +200,8 @@ NAMESPACE {
             createInfo.ppEnabledLayerNames     = layers.empty() ? nullptr : layers.data();
 
             // Create the instance and initialize the dispatcher with instance-level functions
-            RENDERER_DATA->m_Instance = vk::createInstance(createInfo);
-            VULKAN_HPP_DEFAULT_DISPATCHER.init(RENDERER_DATA->m_Instance);
+            RENDERER_DATA->instance = vk::createInstance(createInfo);
+            VULKAN_HPP_DEFAULT_DISPATCHER.init(RENDERER_DATA->instance);
 
             if (!m_Window) {
                 throw std::runtime_error("Window is null");
@@ -108,12 +209,12 @@ NAMESPACE {
 
             VkSurfaceKHR rawSurface = VK_NULL_HANDLE;
             VK_CHECK(glfwCreateWindowSurface(
-                RENDERER_DATA->m_Instance,
+                RENDERER_DATA->instance,
                 m_Window->GetNativeWindow(),
                 nullptr,
                 &rawSurface
             ));
-            RENDERER_DATA->m_Surface = rawSurface;
+            RENDERER_DATA->surface = rawSurface;
 
             std::cout << "Vulkan instance and surface created." << std::endl;
         }
@@ -127,21 +228,33 @@ NAMESPACE {
         }
     }
 
-    void Renderer::RenderVk(const double deltaTime) {
-        std::cout << "Render Vulkan" << std::endl;
+    void Renderer::InitAfterDeviceCreationVk() {
+        m_SwapChainImages = CreateSwapChain(m_Device, m_Window, RENDERER_DATA->surface, RENDERER_DATA);
     }
+
+    void Renderer::RenderVk(const double deltaTime) {
+        //std::cout << "Render Vulkan" << std::endl;
+    }
+
+    void Renderer::CleanupPreDeviceVk() {
+        if (RENDERER_DATA->nativeSwapChain) {
+            DEVICE_DATA_FROM_BASE(m_Device->GetDeviceData())->logicalDevice.destroySwapchainKHR(RENDERER_DATA->nativeSwapChain);
+            RENDERER_DATA->nativeSwapChain = VK_NULL_HANDLE;
+        }
+    }
+
 
     void Renderer::CleanupVk() {
         std::cout << "Cleanup Vulkan" << std::endl;
 
-        if (RENDERER_DATA->m_Surface) {
-            RENDERER_DATA->m_Instance.destroySurfaceKHR(RENDERER_DATA->m_Surface);
-            RENDERER_DATA->m_Surface = VK_NULL_HANDLE;
+        if (RENDERER_DATA->surface) {
+            RENDERER_DATA->instance.destroySurfaceKHR(RENDERER_DATA->surface);
+            RENDERER_DATA->surface = VK_NULL_HANDLE;
         }
 
-        if (RENDERER_DATA->m_Instance) {
-            RENDERER_DATA->m_Instance.destroy();
-            RENDERER_DATA->m_Instance = VK_NULL_HANDLE;
+        if (RENDERER_DATA->instance) {
+            RENDERER_DATA->instance.destroy();
+            RENDERER_DATA->instance = VK_NULL_HANDLE;
         }
     }
 
