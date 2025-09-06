@@ -25,3 +25,5 @@ add_subdirectory(editor)
 
 add_subdirectory(sandbox)
 
+file(COPY assets DESTINATION ${CMAKE_BINARY_DIR})
+

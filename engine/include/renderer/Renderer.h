@@ -42,6 +42,9 @@ NAMESPACE {
         Window* m_Window;
 
         std::vector<SwapChainImage> m_SwapChainImages;
+
+        nvrhi::CommandListHandle m_CommandList;
+        nvrhi::FramebufferHandle m_Framebuffer;
     };
 
 }
