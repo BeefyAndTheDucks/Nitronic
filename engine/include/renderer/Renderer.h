@@ -4,6 +4,8 @@
 
 #ifndef NITRONIC_RENDERER_H
 #define NITRONIC_RENDERER_H
+#include <iostream>
+
 #include "core/Enums.h"
 #include "core/Macros.h"
 
@@ -20,6 +22,19 @@ NAMESPACE {
     struct Vertex {
         float position[3];
         float texCoord[2];
+    };
+
+    struct NvrhiMessageCallback : nvrhi::IMessageCallback
+    {
+        static NvrhiMessageCallback& GetInstance()
+        {
+            static NvrhiMessageCallback Instance;
+            return Instance;
+        }
+
+        void message(nvrhi::MessageSeverity severity, const char* messageText) override {
+            std::cout << "NVRHI: " << messageText << std::endl;
+        }
     };
 
     class Renderer {

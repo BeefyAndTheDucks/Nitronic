@@ -149,7 +149,7 @@ NAMESPACE {
         DEVICE_DATA->presentQueue = DEVICE_DATA->logicalDevice.getQueue(DEVICE_DATA->queueFamilyIndices.presentFamily.value(), 0);
 
         nvrhi::vulkan::DeviceDesc deviceDesc{};
-        // deviceDesc.errorCB = TODO
+        deviceDesc.errorCB = &NvrhiMessageCallback::GetInstance();
         deviceDesc.physicalDevice = DEVICE_DATA->physicalDevice;
         deviceDesc.device = DEVICE_DATA->logicalDevice;
         deviceDesc.graphicsQueue = DEVICE_DATA->graphicsQueue;
