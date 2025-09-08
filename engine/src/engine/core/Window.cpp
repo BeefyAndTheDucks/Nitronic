@@ -36,6 +36,7 @@ NAMESPACE {
         return glfwWindowShouldClose(m_Window);
     }
 
-
-
+    void Window::SetTitle(const char *title) const {
+        glfwSetWindowTitle(m_Window, title);
+    }
 }

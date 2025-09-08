@@ -48,6 +48,11 @@ NAMESPACE {
         m_Device = new Device(m_Backend, m_RendererData);
         CREATE_BACKEND_SWITCH(InitAfterDeviceCreation);
 
+        for (const auto& img : m_SwapChainImages) {
+            nvrhi::FramebufferDesc fbDesc;
+            fbDesc.addColorAttachment(img.nvrhiHandle);
+        }
+
         auto vertShaderCode = readFile("../assets/shaders/basic.vert.spirv");
         auto fragShaderCode = readFile("../assets/shaders/basic.frag.spirv");
 
@@ -77,10 +82,12 @@ NAMESPACE {
             nvrhi::ShaderDesc().setShaderType(nvrhi::ShaderType::Pixel),
             fragShaderCode.data(), fragShaderCode.size());
 
-        auto framebufferDesc = nvrhi::FramebufferDesc()
-            .addColorAttachment(m_SwapChainImages[0].nvrhiHandle); // you can specify a particular subresource if necessary
+        for (auto& swapChainImage : m_SwapChainImages) {
+            auto framebufferDesc = nvrhi::FramebufferDesc()
+            .addColorAttachment(swapChainImage.nvrhiHandle);
 
-        m_Framebuffer = m_Device->GetDevice()->createFramebuffer(framebufferDesc);
+            m_Framebuffers.push_back(m_Device->GetDevice()->createFramebuffer(framebufferDesc));
+        }
 
         auto layoutDesc = nvrhi::BindingLayoutDesc()
             .setVisibility(nvrhi::ShaderType::All);
@@ -95,7 +102,7 @@ NAMESPACE {
 
         nvrhi::BufferHandle vertexBuffer = m_Device->GetDevice()->createBuffer(vertexBufferDesc);
 
-        m_CommandList = m_Device->GetDevice()->createCommandList();
+        nvrhi::CommandListHandle commandList = m_Device->GetDevice()->createCommandList();
 
         // Note: the binding set must include all bindings declared in the layout, and nothing else.
         // This condition is tested by the validation layer.
@@ -104,28 +111,37 @@ NAMESPACE {
 
         nvrhi::BindingSetHandle bindingSet = m_Device->GetDevice()->createBindingSet(bindingSetDesc, bindingLayout);
 
-        m_CommandList->open();
+        commandList->open();
 
-        m_CommandList->writeBuffer(vertexBuffer, g_Vertices, sizeof(g_Vertices));
+        commandList->writeBuffer(vertexBuffer, g_Vertices, sizeof(g_Vertices));
 
-        m_CommandList->close();
-        m_Device->GetDevice()->executeCommandList(m_CommandList);
+        commandList->close();
+        m_Device->GetDevice()->executeCommandList(commandList);
+        m_Device->GetDevice()->runGarbageCollection();
     }
 
     Renderer::~Renderer() {
+        for (auto& frameBuffer : m_Framebuffers)
+            frameBuffer = nullptr;
+
         CREATE_BACKEND_SWITCH(CleanupPreDevice);
         delete m_Device;
         CREATE_BACKEND_SWITCH(Cleanup);
     }
 
     void Renderer::Render(const double deltaTime) {
-        CREATE_BACKEND_SWITCH(Render, deltaTime); // not sure if required. maybe prerender and postrender?
+        CREATE_BACKEND_SWITCH(BeginFrame); // not sure if required. maybe prerender and postrender?
 
-        m_CommandList->open();
+        nvrhi::CommandListHandle commandList = m_Device->GetDevice()->createCommandList();
 
-        nvrhi::utils::ClearColorAttachment(m_CommandList, m_Framebuffer, 0, nvrhi::Color(1, 0, 0, 1));
+        commandList->open();
 
-        m_CommandList->close();
-        m_Device->GetDevice()->executeCommandList(m_CommandList);
+        nvrhi::utils::ClearColorAttachment(commandList, m_Framebuffers[m_SwapChainIndex], 0, nvrhi::Color(1, 0, 0, 1));
+
+        commandList->close();
+        m_Device->GetDevice()->executeCommandList(commandList);
+        m_Device->GetDevice()->runGarbageCollection();
+
+        CREATE_BACKEND_SWITCH(PresentFrame);
     }
 }

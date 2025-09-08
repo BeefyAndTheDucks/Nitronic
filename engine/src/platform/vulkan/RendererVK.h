@@ -28,6 +28,10 @@ NAMESPACE {
         vk::SurfaceKHR surface;
 
         vk::SwapchainKHR nativeSwapChain;
+
+        std::vector<vk::Semaphore> acquireSemaphores;
+        std::vector<vk::Semaphore> presentSemaphores;
+        uint32_t acquireSemaphoreIndex = 0;
     };
 
 }

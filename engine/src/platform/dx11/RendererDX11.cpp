@@ -18,8 +18,12 @@ NAMESPACE {
         std::cout << "Init after device creation DX11" << std::endl;
     }
 
-    void Renderer::RenderDX11(const double deltaTime) {
-        std::cout << "Render DX11" << std::endl;
+    void Renderer::BeginFrameDX11() {
+        std::cout << "BeginFrame DX11" << std::endl;
+    }
+
+    void Renderer::PresentFrameDX11() {
+        std::cout << "PresentFrame DX11" << std::endl;
     }
 
     void Renderer::CleanupPreDeviceDX11() {

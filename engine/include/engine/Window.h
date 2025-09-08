@@ -20,6 +20,8 @@ NAMESPACE {
         [[nodiscard]] bool ShouldClose() const;
 
         [[nodiscard]] GLFWwindow* GetNativeWindow() const { return m_Window; }
+
+        void SetTitle(const char* title) const;
     private:
         GLFWwindow* m_Window;
     };

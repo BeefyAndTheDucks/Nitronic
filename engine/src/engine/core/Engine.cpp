@@ -32,6 +32,9 @@ NAMESPACE {
             previousTime = currentTime;
             //std::cout << "DeltaTime: " << deltaTime << "s (" << 1.0f / deltaTime << "FPS)" << std::endl;
 
+            std::stringstream ss;
+            ss << "Nitronic Engine - " << 1.0f / deltaTime << "FPS";
+            m_Window->SetTitle(ss.str().c_str());
             Window::PollEvents();
 
             m_Renderer->Render(deltaTime);

@@ -133,7 +133,7 @@ NAMESPACE {
 
         vk::PhysicalDeviceVulkan12Features vulkan12Features{};
         vulkan12Features.timelineSemaphore = VK_TRUE;
-        vulkan12Features.pNext = vulkan11Features;
+        vulkan12Features.pNext = &vulkan11Features;
 
         vk::DeviceCreateInfo deviceCreateInfo{};
         deviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());

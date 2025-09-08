@@ -18,8 +18,12 @@ NAMESPACE {
         std::cout << "Init after device creation DX12" << std::endl;
     }
 
-    void Renderer::RenderDX12(const double deltaTime) {
-        std::cout << "Render DX12" << std::endl;
+    void Renderer::BeginFrameDX12() {
+        std::cout << "BeginFrame DX12" << std::endl;
+    }
+
+    void Renderer::PresentFrameDX12() {
+        std::cout << "PresentFrame DX12" << std::endl;
     }
 
     void Renderer::CleanupPreDeviceDX12() {

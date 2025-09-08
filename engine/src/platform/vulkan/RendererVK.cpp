@@ -14,6 +14,32 @@
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
+// Optional DebugUtils callback (used only if VK_EXT_debug_utils is enabled)
+static VKAPI_ATTR VkBool32 VKAPI_CALL DebugUtilsMessengerCallback(
+    vk::DebugUtilsMessageSeverityFlagBitsEXT      messageSeverity,
+    vk::DebugUtilsMessageTypeFlagsEXT             messageTypes,
+    const vk::DebugUtilsMessengerCallbackDataEXT* pCallbackData,
+    void*                                       pUserData)
+{
+    std::string message = "Vulkan: " + std::string(pCallbackData->pMessage);
+
+    switch (messageSeverity) {
+        case vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose:
+            std::cout << "[VERBOSE] " << message << std::endl;
+            break;
+        case vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo:
+            std::cout << "[INFO] " << message << std::endl;
+            break;
+        case vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning:
+            std::cout << "[WARNING] " << message << std::endl;
+            break;
+        case vk::DebugUtilsMessageSeverityFlagBitsEXT::eError:
+            std::cerr << "[ERROR] " << message << std::endl;
+            break;
+    }
+    return VK_FALSE;
+}
+
 NAMESPACE {
 
     vk::SurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats) {
@@ -73,7 +99,7 @@ NAMESPACE {
         createInfo.imageColorSpace = surfaceFormat.colorSpace;
         createInfo.imageExtent = extent;
         createInfo.imageArrayLayers = 1;
-        createInfo.imageUsage = vk::ImageUsageFlagBits::eColorAttachment;
+        createInfo.imageUsage = vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferDst;
 
         QueueFamilyIndices indices = DEVICE_DATA_FROM_BASE(device->GetDeviceData())->queueFamilyIndices;
         uint32_t queueFamilyIndices[] = { indices.graphicsFamily.value(), indices.presentFamily.value() };
@@ -112,6 +138,22 @@ NAMESPACE {
 
             sci.nvrhiHandle = device->GetDevice()->createHandleForNativeTexture(nvrhi::ObjectTypes::VK_Image, nvrhi::Object(image), textureDesc);
             swapChainImages.push_back(sci);
+        }
+
+        size_t const numPresentSemaphores = swapChainImages.size();
+        RENDERER_DATA_FROM_BASE(rendererData)->presentSemaphores.reserve(numPresentSemaphores);
+        for (uint32_t i = 0; i < numPresentSemaphores; ++i)
+        {
+            RENDERER_DATA_FROM_BASE(rendererData)->presentSemaphores.push_back(DEVICE_DATA_FROM_BASE(device->GetDeviceData())->logicalDevice.createSemaphore(vk::SemaphoreCreateInfo()));
+        }
+
+        // Create semaphores
+        constexpr size_t maxFramesInFlight = 2;
+        size_t const numAcquireSemaphores = std::max(maxFramesInFlight, swapChainImages.size());
+        RENDERER_DATA_FROM_BASE(rendererData)->acquireSemaphores.reserve(numAcquireSemaphores);
+        for (uint32_t i = 0; i < numAcquireSemaphores; ++i)
+        {
+            RENDERER_DATA_FROM_BASE(rendererData)->acquireSemaphores.push_back(DEVICE_DATA_FROM_BASE(device->GetDeviceData())->logicalDevice.createSemaphore(vk::SemaphoreCreateInfo()));
         }
 
         return swapChainImages;
@@ -175,21 +217,46 @@ NAMESPACE {
                 }
             }
 
-            // Check that requested extensions exist
-            {
-                auto availableExts = vk::enumerateInstanceExtensionProperties();
-                for (const char* requested : extensions) {
-                    bool found = false;
-                    for (const auto& ep : availableExts) {
-                        if (std::strcmp(ep.extensionName, requested) == 0) {
-                            found = true;
-                            break;
-                        }
-                    }
-                    if (!found) {
-                        throw std::runtime_error(std::string("Required instance extension not available: ") + requested);
-                    }
+            // Enumerate all available instance extensions once
+            const auto availableExts = vk::enumerateInstanceExtensionProperties();
+            auto isExtAvailable = [&](const char* name) -> bool {
+                for (const auto& ep : availableExts) {
+                    if (std::strcmp(ep.extensionName, name) == 0)
+                        return true;
                 }
+                return false;
+            };
+
+            bool enableDebugUtils = false;
+#ifdef _DEBUG
+            if (isExtAvailable(vk::EXTDebugUtilsExtensionName)) {
+                extensions.emplace_back(vk::EXTDebugUtilsExtensionName);
+                enableDebugUtils = true;
+            }
+#endif
+
+
+            // Verify required extensions (GLFW + any we explicitly added above)
+            for (const char* requested : extensions) {
+                if (!isExtAvailable(requested)) {
+                    // These are considered required because they've been added explicitly (e.g. by GLFW).
+                    throw std::runtime_error(std::string("Required instance extension not available: ") + requested);
+                }
+            }
+
+            vk::DebugUtilsMessengerCreateInfoEXT debugUtilsCreateInfo{};
+            if (enableDebugUtils) {
+                debugUtilsCreateInfo.messageSeverity =
+                    vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose |
+                    vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo    |
+                    vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning |
+                    vk::DebugUtilsMessageSeverityFlagBitsEXT::eError;
+                debugUtilsCreateInfo.messageType =
+                    vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral     |
+                    vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation  |
+                    vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance;
+                debugUtilsCreateInfo.pfnUserCallback = DebugUtilsMessengerCallback;
+                debugUtilsCreateInfo.pUserData = nullptr;
             }
 
             vk::InstanceCreateInfo createInfo{};
@@ -198,6 +265,7 @@ NAMESPACE {
             createInfo.ppEnabledExtensionNames = extensions.data();
             createInfo.enabledLayerCount       = static_cast<uint32_t>(layers.size());
             createInfo.ppEnabledLayerNames     = layers.empty() ? nullptr : layers.data();
+            createInfo.pNext                   = enableDebugUtils ? &debugUtilsCreateInfo : nullptr;
 
             // Create the instance and initialize the dispatcher with instance-level functions
             RENDERER_DATA->instance = vk::createInstance(createInfo);
@@ -230,10 +298,77 @@ NAMESPACE {
 
     void Renderer::InitAfterDeviceCreationVk() {
         m_SwapChainImages = CreateSwapChain(m_Device, m_Window, RENDERER_DATA->surface, RENDERER_DATA);
+        m_SwapChainIndex = 0;
     }
 
-    void Renderer::RenderVk(const double deltaTime) {
-        //std::cout << "Render Vulkan" << std::endl;
+    void Renderer::BeginFrameVk() {
+        const auto& semaphore = RENDERER_DATA->acquireSemaphores[RENDERER_DATA->acquireSemaphoreIndex];
+
+        vk::Result res;
+
+        constexpr int maxAttempts = 3;
+        for (int attempt = 0; attempt < maxAttempts; attempt++) {
+            res = DEVICE_DATA_FROM_BASE(m_Device->GetDeviceData())->logicalDevice.acquireNextImageKHR(
+                RENDERER_DATA->nativeSwapChain,
+                std::numeric_limits<uint64_t>::max(), // timeout
+                semaphore,
+                vk::Fence(),
+                &m_SwapChainIndex);
+
+            if ((res == vk::Result::eErrorOutOfDateKHR || res == vk::Result::eSuboptimalKHR) && attempt < maxAttempts)
+            {
+                std::cerr << "Swap chain is out of date! (TODO)" << std::endl;
+                std::abort();
+            }
+            else
+                break;
+        }
+
+        RENDERER_DATA->acquireSemaphoreIndex = (RENDERER_DATA->acquireSemaphoreIndex + 1) % RENDERER_DATA->acquireSemaphores.size();
+
+        if (res == vk::Result::eSuccess || res == vk::Result::eSuboptimalKHR) // Suboptimal is considered a success
+        {
+            nvrhi::vulkan::DeviceHandle vulkanDevice = static_cast<nvrhi::vulkan::IDevice*>(
+                m_Device->GetDevice()->getNativeObject(nvrhi::ObjectTypes::Nvrhi_VK_Device));
+            // Schedule the wait. The actual wait operation will be submitted when the app executes any command list.
+            vulkanDevice->queueWaitForSemaphore(nvrhi::CommandQueue::Graphics, semaphore, 0);
+        }
+    }
+
+    void Renderer::PresentFrameVk() {
+        nvrhi::vulkan::DeviceHandle vulkanNvrhiDevice = static_cast<nvrhi::vulkan::IDevice*>(
+                m_Device->GetDevice()->getNativeObject(nvrhi::ObjectTypes::Nvrhi_VK_Device));
+
+        const auto& semaphore = RENDERER_DATA->presentSemaphores[m_SwapChainIndex];
+
+        vulkanNvrhiDevice->queueSignalSemaphore(nvrhi::CommandQueue::Graphics, semaphore, 0);
+
+        // NVRHI buffers the semaphores and signals them when something is submitted to a queue.
+        // Call 'executeCommandLists' with no command lists to actually signal the semaphore.
+        vulkanNvrhiDevice->executeCommandLists(nullptr, 0);
+
+        vk::PresentInfoKHR presentInfo{};
+        presentInfo.waitSemaphoreCount = 1;
+        presentInfo.pWaitSemaphores = &semaphore;
+        presentInfo.swapchainCount = 1;
+        presentInfo.pSwapchains = &RENDERER_DATA->nativeSwapChain;
+        presentInfo.pImageIndices = &m_SwapChainIndex;
+
+        try {
+            vk::Result res = DEVICE_DATA_FROM_BASE(m_Device->GetDeviceData())->presentQueue.presentKHR(&presentInfo);
+
+            if (res == vk::Result::eErrorOutOfDateKHR || res == vk::Result::eSuboptimalKHR) {
+                // TODO: Recreate swapchain on resize or mode change
+                std::cerr << "Swap chain is out of date or suboptimal during present! (TODO: recreate swapchain)" << std::endl;
+                std::abort();
+            } else if (res != vk::Result::eSuccess) {
+                std::cerr << "Failed to present swap chain image: " << vk::to_string(res) << std::endl;
+                std::abort();
+            }
+        } catch (const vk::SystemError& e) {
+            std::cerr << "Vulkan error during present: " << e.what() << std::endl;
+            std::abort();
+        }
     }
 
     void Renderer::CleanupPreDeviceVk() {

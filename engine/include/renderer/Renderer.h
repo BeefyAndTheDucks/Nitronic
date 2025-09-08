@@ -46,7 +46,8 @@ NAMESPACE {
     private:
         CREATE_BACKEND_FUNCTIONS(Init)
         CREATE_BACKEND_FUNCTIONS(InitAfterDeviceCreation)
-        CREATE_BACKEND_FUNCTIONS(Render, double deltaTime)
+        CREATE_BACKEND_FUNCTIONS(BeginFrame)
+        CREATE_BACKEND_FUNCTIONS(PresentFrame)
         CREATE_BACKEND_FUNCTIONS(CleanupPreDevice)
         CREATE_BACKEND_FUNCTIONS(Cleanup)
     private:
@@ -57,9 +58,9 @@ NAMESPACE {
         Window* m_Window;
 
         std::vector<SwapChainImage> m_SwapChainImages;
+        uint32_t m_SwapChainIndex = static_cast<uint32_t>(-1);
 
-        nvrhi::CommandListHandle m_CommandList;
-        nvrhi::FramebufferHandle m_Framebuffer;
+        std::vector<nvrhi::FramebufferHandle> m_Framebuffers;
     };
 
 }
