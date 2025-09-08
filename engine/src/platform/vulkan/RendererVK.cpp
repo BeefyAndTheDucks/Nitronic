@@ -148,8 +148,7 @@ NAMESPACE {
         }
 
         // Create semaphores
-        constexpr size_t maxFramesInFlight = 2;
-        size_t const numAcquireSemaphores = std::max(maxFramesInFlight, swapChainImages.size());
+        size_t const numAcquireSemaphores = std::max(g_MaxFramesInFlight, swapChainImages.size());
         RENDERER_DATA_FROM_BASE(rendererData)->acquireSemaphores.reserve(numAcquireSemaphores);
         for (uint32_t i = 0; i < numAcquireSemaphores; ++i)
         {
@@ -369,6 +368,29 @@ NAMESPACE {
             std::cerr << "Vulkan error during present: " << e.what() << std::endl;
             std::abort();
         }
+
+        DEVICE_DATA_FROM_BASE(m_Device->GetDeviceData())->presentQueue.waitIdle();
+
+        while (m_FramesInFlight.size() >= g_MaxFramesInFlight) {
+            auto query = m_FramesInFlight.front();
+            m_FramesInFlight.pop();
+
+            vulkanNvrhiDevice->waitEventQuery(query);
+
+            m_QueryPool.push_back(query);
+        }
+
+        nvrhi::EventQueryHandle query;
+        if (!m_QueryPool.empty()) {
+            query = m_QueryPool.back();
+            m_QueryPool.pop_back();
+        } else {
+            query = vulkanNvrhiDevice->createEventQuery();
+        }
+
+        vulkanNvrhiDevice->resetEventQuery(query);
+        vulkanNvrhiDevice->setEventQuery(query, nvrhi::CommandQueue::Graphics);
+        m_FramesInFlight.push(query);
     }
 
     void Renderer::CleanupPreDeviceVk() {

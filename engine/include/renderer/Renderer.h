@@ -5,6 +5,7 @@
 #ifndef NITRONIC_RENDERER_H
 #define NITRONIC_RENDERER_H
 #include <iostream>
+#include <queue>
 
 #include "core/Enums.h"
 #include "core/Macros.h"
@@ -13,6 +14,8 @@
 #include "engine/Window.h"
 
 NAMESPACE {
+
+    constexpr size_t g_MaxFramesInFlight = 2;
 
     struct SwapChainImage {
         //vk::Image image;
@@ -61,6 +64,9 @@ NAMESPACE {
         uint32_t m_SwapChainIndex = static_cast<uint32_t>(-1);
 
         std::vector<nvrhi::FramebufferHandle> m_Framebuffers;
+
+        std::queue<nvrhi::EventQueryHandle> m_FramesInFlight;
+        std::vector<nvrhi::EventQueryHandle> m_QueryPool;
     };
 
 }
