@@ -398,6 +398,14 @@ NAMESPACE {
             DEVICE_DATA_FROM_BASE(m_Device->GetDeviceData())->logicalDevice.destroySwapchainKHR(RENDERER_DATA->nativeSwapChain);
             RENDERER_DATA->nativeSwapChain = VK_NULL_HANDLE;
         }
+
+        for (vk::Semaphore semaphore : RENDERER_DATA->acquireSemaphores) {
+            DEVICE_DATA_FROM_BASE(m_Device->GetDeviceData())->logicalDevice.destroySemaphore(semaphore);
+        }
+
+        for (vk::Semaphore semaphore : RENDERER_DATA->presentSemaphores) {
+            DEVICE_DATA_FROM_BASE(m_Device->GetDeviceData())->logicalDevice.destroySemaphore(semaphore);
+        }
     }
 
 

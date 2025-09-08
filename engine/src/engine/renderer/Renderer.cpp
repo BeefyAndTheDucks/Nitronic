@@ -124,6 +124,12 @@ NAMESPACE {
         for (auto& frameBuffer : m_Framebuffers)
             frameBuffer = nullptr;
 
+        for (auto& swapchain : m_SwapChainImages)
+            swapchain.nvrhiHandle = nullptr;
+
+        m_Device->GetDevice()->runGarbageCollection();
+        m_Device->GetDevice()->waitForIdle();
+
         CREATE_BACKEND_SWITCH(CleanupPreDevice);
         delete m_Device;
         CREATE_BACKEND_SWITCH(Cleanup);
