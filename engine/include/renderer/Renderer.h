@@ -31,8 +31,8 @@ NAMESPACE {
     {
         static NvrhiMessageCallback& GetInstance()
         {
-            static NvrhiMessageCallback Instance;
-            return Instance;
+            static NvrhiMessageCallback s_Instance;
+            return s_Instance;
         }
 
         void message(nvrhi::MessageSeverity severity, const char* messageText) override {
@@ -67,6 +67,11 @@ NAMESPACE {
 
         std::queue<nvrhi::EventQueryHandle> m_FramesInFlight;
         std::vector<nvrhi::EventQueryHandle> m_QueryPool;
+
+        std::vector<nvrhi::GraphicsPipelineHandle> m_GraphicsPipelines;
+        std::vector<nvrhi::GraphicsState> m_GraphicsStates;
+        nvrhi::BindingSetHandle m_BindingSet;
+        nvrhi::BufferHandle m_VertexBuffer;
     };
 
 }

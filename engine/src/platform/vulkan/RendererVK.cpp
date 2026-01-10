@@ -10,6 +10,7 @@
 #include "RendererVK.h"
 
 #include "VkMacros.h"
+#include "../../../../external/nvrhi/src/vulkan/vulkan-backend.h"
 #include "core/Macros.h"
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
@@ -44,7 +45,8 @@ NAMESPACE {
 
     vk::SurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats) {
         for (const auto& availableFormat : availableFormats) {
-            if (availableFormat.format == vk::Format::eB8G8R8A8Srgb && availableFormat.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear) {
+            //if (availableFormat.format == vk::Format::eB8G8R8A8Srgb && availableFormat.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear) {
+            if (availableFormat.format == vk::Format::eR8G8B8A8Unorm && availableFormat.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear) {
                 return availableFormat;
             }
         }
@@ -125,16 +127,16 @@ NAMESPACE {
         std::vector<SwapChainImage> swapChainImages;
         for (vk::Image image : images) {
             SwapChainImage sci{};
-            //sci.image = image;
 
-            nvrhi::TextureDesc textureDesc{};
-            textureDesc.width = extent.width;
-            textureDesc.height = extent.height;
-            textureDesc.format = nvrhi::Format::SBGRA8_UNORM;
-            textureDesc.debugName = "Swap chain image";
-            textureDesc.initialState = nvrhi::ResourceStates::Present;
-            textureDesc.keepInitialState = true;
-            textureDesc.isRenderTarget = true;
+            nvrhi::TextureDesc textureDesc = nvrhi::TextureDesc()
+                .setDimension(nvrhi::TextureDimension::Texture2D)
+                .setFormat(nvrhi::Format::RGBA8_UNORM)
+                .setWidth(extent.width)
+                .setHeight(extent.height)
+                .setInitialState(nvrhi::ResourceStates::Present)
+                .setKeepInitialState(true)
+                .setIsRenderTarget(true)
+                .setDebugName("Swap chain image");
 
             sci.nvrhiHandle = device->GetDevice()->createHandleForNativeTexture(nvrhi::ObjectTypes::VK_Image, nvrhi::Object(image), textureDesc);
             swapChainImages.push_back(sci);
@@ -303,13 +305,13 @@ NAMESPACE {
     void Renderer::BeginFrameVk() {
         const auto& semaphore = RENDERER_DATA->acquireSemaphores[RENDERER_DATA->acquireSemaphoreIndex];
 
-        vk::Result res;
+        vk::Result res{};
 
         constexpr int maxAttempts = 3;
         for (int attempt = 0; attempt < maxAttempts; attempt++) {
             res = DEVICE_DATA_FROM_BASE(m_Device->GetDeviceData())->logicalDevice.acquireNextImageKHR(
                 RENDERER_DATA->nativeSwapChain,
-                std::numeric_limits<uint64_t>::max(), // timeout
+                std::numeric_limits<uint64_t>::max() - 1, // timeout
                 semaphore,
                 vk::Fence(),
                 &m_SwapChainIndex);
@@ -360,7 +362,8 @@ NAMESPACE {
                 // TODO: Recreate swapchain on resize or mode change
                 std::cerr << "Swap chain is out of date or suboptimal during present! (TODO: recreate swapchain)" << std::endl;
                 std::abort();
-            } else if (res != vk::Result::eSuccess) {
+            }
+            if (res != vk::Result::eSuccess) {
                 std::cerr << "Failed to present swap chain image: " << vk::to_string(res) << std::endl;
                 std::abort();
             }
@@ -369,7 +372,7 @@ NAMESPACE {
             std::abort();
         }
 
-        DEVICE_DATA_FROM_BASE(m_Device->GetDeviceData())->presentQueue.waitIdle();
+        //DEVICE_DATA_FROM_BASE(m_Device->GetDeviceData())->presentQueue.waitIdle();
 
         while (m_FramesInFlight.size() >= g_MaxFramesInFlight) {
             auto query = m_FramesInFlight.front();

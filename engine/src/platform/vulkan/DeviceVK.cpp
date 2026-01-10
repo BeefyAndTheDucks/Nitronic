@@ -9,7 +9,8 @@
 NAMESPACE {
 
     std::vector deviceExtensions = {
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+        VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME
     };
 
     SwapChainSupportDetails QuerySwapChainSupport(const vk::PhysicalDevice device, const vk::SurfaceKHR surface) {
@@ -135,6 +136,10 @@ NAMESPACE {
         vulkan12Features.timelineSemaphore = VK_TRUE;
         vulkan12Features.pNext = &vulkan11Features;
 
+        vk::PhysicalDeviceDynamicRenderingFeatures dynamicRenderingFeatures{};
+        dynamicRenderingFeatures.dynamicRendering = VK_TRUE;
+        dynamicRenderingFeatures.pNext = &vulkan12Features;
+
         vk::DeviceCreateInfo deviceCreateInfo{};
         deviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
         deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
@@ -142,7 +147,7 @@ NAMESPACE {
 
         deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
         deviceCreateInfo.ppEnabledExtensionNames = deviceExtensions.data();
-        deviceCreateInfo.pNext = &vulkan12Features;
+        deviceCreateInfo.pNext = &dynamicRenderingFeatures;
 
         DEVICE_DATA->logicalDevice = DEVICE_DATA->physicalDevice.createDevice(deviceCreateInfo);
         DEVICE_DATA->graphicsQueue = DEVICE_DATA->logicalDevice.getQueue(DEVICE_DATA->queueFamilyIndices.graphicsFamily.value(), 0);

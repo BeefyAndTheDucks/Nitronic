@@ -28,7 +28,7 @@ inline const char* RenderingBackendToString(const RenderingBackend backend) {
 #ifdef NITRONIC_WITH_DX12
         case DirectX12: return "DirectX12";
 #endif
-        default: return "Unknown Backend";
+        default: return "Unknown";
     }
 }
 

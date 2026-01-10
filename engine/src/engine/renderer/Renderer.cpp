@@ -15,9 +15,9 @@
 NAMESPACE {
 
     static constexpr Vertex g_Vertices[] = {
-        { { 0.f, 0.f, 0.f }, { 0.f, 0.f } },
-        { { 1.f, 0.f, 0.f }, { 1.f, 0.f } },
-        { { 0.5f, 0.5f, 0.f }, { 0.5f, 0.5f } },
+        { { -0.5f, -0.5f, 0.f }, { 0.f, 0.f } },
+        { {  0.5f, -0.5f, 0.f }, { 1.f, 0.f } },
+        { {  0.0f,  0.5f, 0.f }, { 0.5f, 0.5f } },
     };
 
     static std::vector<char> readFile(const std::filesystem::path& filename) {
@@ -40,9 +40,9 @@ NAMESPACE {
     }
 
     Renderer::Renderer(const RenderingBackend backend, Window* window)
-        : m_Backend(backend), m_Window(window)
+        : m_Backend(backend), m_Window(window), m_RendererData(nullptr)
     {
-        std::cout << "Using backend " << RenderingBackendToString(backend) << std::endl;
+        std::cout << "Using " << RenderingBackendToString(backend) << " backend." << std::endl;
 
         CREATE_BACKEND_SWITCH(Init);
         m_Device = new Device(m_Backend, m_RendererData);
@@ -100,7 +100,7 @@ NAMESPACE {
             .setKeepInitialState(true) // enable fully automatic state tracking
             .setDebugName("Vertex Buffer");
 
-        nvrhi::BufferHandle vertexBuffer = m_Device->GetDevice()->createBuffer(vertexBufferDesc);
+        m_VertexBuffer = m_Device->GetDevice()->createBuffer(vertexBufferDesc);
 
         nvrhi::CommandListHandle commandList = m_Device->GetDevice()->createCommandList();
 
@@ -108,12 +108,36 @@ NAMESPACE {
         // This condition is tested by the validation layer.
         // The order of items in the binding set doesn't matter.
         auto bindingSetDesc = nvrhi::BindingSetDesc();
+        //bindingSetDesc.addItem();
 
-        nvrhi::BindingSetHandle bindingSet = m_Device->GetDevice()->createBindingSet(bindingSetDesc, bindingLayout);
+        m_BindingSet = m_Device->GetDevice()->createBindingSet(bindingSetDesc, bindingLayout);
+
+        for (const auto& framebuffer : m_Framebuffers) {
+            nvrhi::GraphicsPipelineDesc pipelineDesc;
+            pipelineDesc.inputLayout = inputLayout;
+            pipelineDesc.VS = vertexShader;
+            pipelineDesc.PS = pixelShader;
+            pipelineDesc.bindingLayouts = { bindingLayout };
+            pipelineDesc.renderState.rasterState.frontCounterClockwise = true;
+            pipelineDesc.renderState.depthStencilState.depthTestEnable = false;
+            pipelineDesc.renderState.depthStencilState.stencilEnable = false;
+
+            auto pipeline = m_Device->GetDevice()->createGraphicsPipeline(pipelineDesc, framebuffer);
+            m_GraphicsPipelines.push_back(pipeline);
+
+            nvrhi::GraphicsState graphicsState = nvrhi::GraphicsState()
+                .setPipeline(pipeline)
+                .setFramebuffer(framebuffer)
+                .addVertexBuffer(nvrhi::VertexBufferBinding(m_VertexBuffer))
+                .addBindingSet(m_BindingSet)
+                .setViewport(nvrhi::ViewportState().addViewportAndScissorRect(nvrhi::Viewport(static_cast<float>(m_Window->GetWidth()), static_cast<float>(m_Window->GetHeight()))));
+
+            m_GraphicsStates.push_back(graphicsState);
+        }
 
         commandList->open();
 
-        commandList->writeBuffer(vertexBuffer, g_Vertices, sizeof(g_Vertices));
+        commandList->writeBuffer(m_VertexBuffer, g_Vertices, sizeof(g_Vertices));
 
         commandList->close();
         m_Device->GetDevice()->executeCommandList(commandList);
@@ -121,14 +145,23 @@ NAMESPACE {
     }
 
     Renderer::~Renderer() {
+        m_Device->GetDevice()->runGarbageCollection();
+        m_Device->GetDevice()->waitForIdle();
+
+        for (auto& graphicsState : m_GraphicsStates)
+            graphicsState = {};
+
+        for (auto& pipeline : m_GraphicsPipelines)
+            pipeline = nullptr;
+
         for (auto& frameBuffer : m_Framebuffers)
             frameBuffer = nullptr;
 
         for (auto& swapchain : m_SwapChainImages)
             swapchain.nvrhiHandle = nullptr;
 
-        m_Device->GetDevice()->runGarbageCollection();
-        m_Device->GetDevice()->waitForIdle();
+        m_VertexBuffer = nullptr;
+        m_BindingSet = nullptr;
 
         CREATE_BACKEND_SWITCH(CleanupPreDevice);
         delete m_Device;
@@ -142,7 +175,13 @@ NAMESPACE {
 
         commandList->open();
 
-        nvrhi::utils::ClearColorAttachment(commandList, m_Framebuffers[m_SwapChainIndex], 0, nvrhi::Color(1, 0, 0, 1));
+        nvrhi::utils::ClearColorAttachment(commandList, m_Framebuffers[m_SwapChainIndex], 0, nvrhi::Color(1, 1, 1, 1));
+
+        commandList->setGraphicsState(m_GraphicsStates[m_SwapChainIndex]);
+
+        nvrhi::DrawArguments drawArgs{};
+        drawArgs.vertexCount = std::size(g_Vertices);
+        commandList->draw(drawArgs);
 
         commandList->close();
         m_Device->GetDevice()->executeCommandList(commandList);

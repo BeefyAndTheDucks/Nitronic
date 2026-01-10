@@ -21,8 +21,14 @@ NAMESPACE {
 
         [[nodiscard]] GLFWwindow* GetNativeWindow() const { return m_Window; }
 
+        [[nodiscard]] int GetWidth() const { return m_Width; }
+        [[nodiscard]] int GetHeight() const { return m_Height; }
+
         void SetTitle(const char* title) const;
     private:
+        int m_Width;
+        int m_Height;
+
         GLFWwindow* m_Window;
     };
 

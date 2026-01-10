@@ -9,7 +9,8 @@
 
 NAMESPACE {
 
-    Window::Window(const int width, const int height, const char *title) {
+    Window::Window(const int width, const int height, const char *title)
+        : m_Width(width), m_Height(height) {
         if (!glfwInit())
             throw std::runtime_error("Failed to initialize GLFW");
 
