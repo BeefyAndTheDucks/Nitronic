@@ -15,7 +15,6 @@ NAMESPACE {
             throw std::runtime_error("Failed to initialize GLFW");
 
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
         m_Window = glfwCreateWindow(width, height, title, nullptr, nullptr);
         if (!m_Window) {

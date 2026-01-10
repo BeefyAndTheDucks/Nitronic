@@ -23,6 +23,10 @@ NAMESPACE {
         return details;
     }
 
+    SwapChainSupportDetails DeviceDataVk::GetSwapChainSupport() const {
+        return QuerySwapChainSupport(physicalDevice, surface);
+    }
+
     QueueFamilyIndices FindQueueFamilies(const vk::PhysicalDevice device, const vk::SurfaceKHR surface) {
         QueueFamilyIndices indices{};
 
@@ -88,6 +92,7 @@ NAMESPACE {
     void Device::CreateDeviceVk()
     {
         m_DeviceData = new DeviceDataVk();
+        DEVICE_DATA->surface = RENDERER_DATA->surface;
 
         std::vector<vk::PhysicalDevice> devices = RENDERER_DATA->instance.enumeratePhysicalDevices();
         if (devices.empty()) {
@@ -115,7 +120,6 @@ NAMESPACE {
         std::cout << "Using device " << devices[0].getProperties().deviceName << std::endl;
 
         DEVICE_DATA->queueFamilyIndices = FindQueueFamilies(DEVICE_DATA->physicalDevice, RENDERER_DATA->surface);
-        DEVICE_DATA->swapChainSupport = QuerySwapChainSupport(DEVICE_DATA->physicalDevice, RENDERER_DATA->surface);
 
         std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
         std::set uniqueQueueFamilies = { DEVICE_DATA->queueFamilyIndices.graphicsFamily.value(), DEVICE_DATA->queueFamilyIndices.presentFamily.value() };

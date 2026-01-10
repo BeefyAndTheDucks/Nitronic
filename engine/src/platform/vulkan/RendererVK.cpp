@@ -83,7 +83,9 @@ NAMESPACE {
     }
 
     std::vector<SwapChainImage> CreateSwapChain(const Device* device, const Window* window, const vk::SurfaceKHR surface, RendererDataVk* rendererData) {
-        SwapChainSupportDetails swapChainSupport = DEVICE_DATA_FROM_BASE(device->GetDeviceData())->swapChainSupport;
+        SwapChainSupportDetails swapChainSupport = DEVICE_DATA_FROM_BASE(device->GetDeviceData())->GetSwapChainSupport();
+
+        device->GetDevice()->waitForIdle();
 
         vk::SurfaceFormatKHR surfaceFormat = ChooseSwapSurfaceFormat(swapChainSupport.formats);
         vk::PresentModeKHR presentMode = ChooseSwapPresentMode(swapChainSupport.presentModes);
@@ -119,9 +121,13 @@ NAMESPACE {
         createInfo.compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque;
         createInfo.presentMode = presentMode;
         createInfo.clipped = VK_TRUE;
-        createInfo.oldSwapchain = VK_NULL_HANDLE; // TODO: Recreate swapchain on resize
+        createInfo.oldSwapchain = rendererData->nativeSwapChain;
 
         rendererData->nativeSwapChain = DEVICE_DATA_FROM_BASE(device->GetDeviceData())->logicalDevice.createSwapchainKHR(createInfo);
+
+        if (createInfo.oldSwapchain) {
+            DEVICE_DATA_FROM_BASE(device->GetDeviceData())->logicalDevice.destroySwapchainKHR(createInfo.oldSwapchain);
+        }
 
         std::vector<vk::Image> images = DEVICE_DATA_FROM_BASE(device->GetDeviceData())->logicalDevice.getSwapchainImagesKHR(rendererData->nativeSwapChain);
         std::vector<SwapChainImage> swapChainImages;
@@ -141,6 +147,14 @@ NAMESPACE {
             sci.nvrhiHandle = device->GetDevice()->createHandleForNativeTexture(nvrhi::ObjectTypes::VK_Image, nvrhi::Object(image), textureDesc);
             swapChainImages.push_back(sci);
         }
+
+        for (auto s : RENDERER_DATA_FROM_BASE(rendererData)->presentSemaphores)
+            DEVICE_DATA_FROM_BASE(device->GetDeviceData())->logicalDevice.destroySemaphore(s);
+        for (auto s : RENDERER_DATA_FROM_BASE(rendererData)->acquireSemaphores)
+            DEVICE_DATA_FROM_BASE(device->GetDeviceData())->logicalDevice.destroySemaphore(s);
+
+        RENDERER_DATA_FROM_BASE(rendererData)->presentSemaphores.clear();
+        RENDERER_DATA_FROM_BASE(rendererData)->acquireSemaphores.clear();
 
         size_t const numPresentSemaphores = swapChainImages.size();
         RENDERER_DATA_FROM_BASE(rendererData)->presentSemaphores.reserve(numPresentSemaphores);
@@ -303,12 +317,11 @@ NAMESPACE {
     }
 
     void Renderer::BeginFrameVk() {
-        const auto& semaphore = RENDERER_DATA->acquireSemaphores[RENDERER_DATA->acquireSemaphoreIndex];
-
         vk::Result res{};
 
         constexpr int maxAttempts = 3;
         for (int attempt = 0; attempt < maxAttempts; attempt++) {
+            const auto& semaphore = RENDERER_DATA->acquireSemaphores[RENDERER_DATA->acquireSemaphoreIndex];
             res = DEVICE_DATA_FROM_BASE(m_Device->GetDeviceData())->logicalDevice.acquireNextImageKHR(
                 RENDERER_DATA->nativeSwapChain,
                 std::numeric_limits<uint64_t>::max() - 1, // timeout
@@ -316,15 +329,17 @@ NAMESPACE {
                 vk::Fence(),
                 &m_SwapChainIndex);
 
-            if ((res == vk::Result::eErrorOutOfDateKHR || res == vk::Result::eSuboptimalKHR) && attempt < maxAttempts)
+            if (res == vk::Result::eErrorOutOfDateKHR && attempt < maxAttempts)
             {
-                std::cerr << "Swap chain is out of date! (TODO)" << std::endl;
-                std::abort();
+                m_SwapChainImages = CreateSwapChain(m_Device, m_Window, RENDERER_DATA->surface, RENDERER_DATA);
+                m_SwapChainIndex = 0;
+                GenerateFramebuffers();
             }
             else
                 break;
         }
 
+        const auto& semaphore = RENDERER_DATA->acquireSemaphores[RENDERER_DATA->acquireSemaphoreIndex];
         RENDERER_DATA->acquireSemaphoreIndex = (RENDERER_DATA->acquireSemaphoreIndex + 1) % RENDERER_DATA->acquireSemaphores.size();
 
         if (res == vk::Result::eSuccess || res == vk::Result::eSuboptimalKHR) // Suboptimal is considered a success
@@ -340,39 +355,42 @@ NAMESPACE {
         nvrhi::vulkan::DeviceHandle vulkanNvrhiDevice = static_cast<nvrhi::vulkan::IDevice*>(
                 m_Device->GetDevice()->getNativeObject(nvrhi::ObjectTypes::Nvrhi_VK_Device));
 
-        const auto& semaphore = RENDERER_DATA->presentSemaphores[m_SwapChainIndex];
-
-        vulkanNvrhiDevice->queueSignalSemaphore(nvrhi::CommandQueue::Graphics, semaphore, 0);
-
-        // NVRHI buffers the semaphores and signals them when something is submitted to a queue.
-        // Call 'executeCommandLists' with no command lists to actually signal the semaphore.
-        vulkanNvrhiDevice->executeCommandLists(nullptr, 0);
-
         vk::PresentInfoKHR presentInfo{};
         presentInfo.waitSemaphoreCount = 1;
-        presentInfo.pWaitSemaphores = &semaphore;
         presentInfo.swapchainCount = 1;
-        presentInfo.pSwapchains = &RENDERER_DATA->nativeSwapChain;
-        presentInfo.pImageIndices = &m_SwapChainIndex;
 
-        try {
-            vk::Result res = DEVICE_DATA_FROM_BASE(m_Device->GetDeviceData())->presentQueue.presentKHR(&presentInfo);
+        constexpr int maxAttempts = 3;
+        for (int attempt = 0; attempt < maxAttempts; attempt++) {
+            const auto& semaphore = RENDERER_DATA->presentSemaphores[m_SwapChainIndex];
+            vulkanNvrhiDevice->queueSignalSemaphore(nvrhi::CommandQueue::Graphics, semaphore, 0);
 
-            if (res == vk::Result::eErrorOutOfDateKHR || res == vk::Result::eSuboptimalKHR) {
-                // TODO: Recreate swapchain on resize or mode change
-                std::cerr << "Swap chain is out of date or suboptimal during present! (TODO: recreate swapchain)" << std::endl;
+            // NVRHI buffers the semaphores and signals them when something is submitted to a queue.
+            // Call 'executeCommandLists' with no command lists to actually signal the semaphore.
+            vulkanNvrhiDevice->executeCommandLists(nullptr, 0);
+            presentInfo.pWaitSemaphores = &semaphore;
+            presentInfo.pSwapchains = &RENDERER_DATA->nativeSwapChain;
+            presentInfo.pImageIndices = &m_SwapChainIndex;
+
+            try {
+                vk::Result res = DEVICE_DATA_FROM_BASE(m_Device->GetDeviceData())->presentQueue.presentKHR(&presentInfo);
+
+                if (res == vk::Result::eErrorOutOfDateKHR || res == vk::Result::eSuboptimalKHR) {
+                    m_SwapChainImages = CreateSwapChain(m_Device, m_Window, RENDERER_DATA->surface, RENDERER_DATA);
+                    m_SwapChainIndex = 0;
+                    GenerateFramebuffers();
+                    return;
+                }
+                if (res != vk::Result::eSuccess) {
+                    std::cerr << "Failed to present swap chain image: " << vk::to_string(res) << std::endl;
+                    std::abort();
+                }
+
+                break;
+            } catch (const vk::SystemError& e) {
+                std::cerr << "Vulkan error during present: " << e.what() << std::endl;
                 std::abort();
             }
-            if (res != vk::Result::eSuccess) {
-                std::cerr << "Failed to present swap chain image: " << vk::to_string(res) << std::endl;
-                std::abort();
-            }
-        } catch (const vk::SystemError& e) {
-            std::cerr << "Vulkan error during present: " << e.what() << std::endl;
-            std::abort();
         }
-
-        //DEVICE_DATA_FROM_BASE(m_Device->GetDeviceData())->presentQueue.waitIdle();
 
         while (m_FramesInFlight.size() >= g_MaxFramesInFlight) {
             auto query = m_FramesInFlight.front();

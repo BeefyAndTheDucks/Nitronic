@@ -21,8 +21,23 @@ NAMESPACE {
 
         [[nodiscard]] GLFWwindow* GetNativeWindow() const { return m_Window; }
 
-        [[nodiscard]] int GetWidth() const { return m_Width; }
-        [[nodiscard]] int GetHeight() const { return m_Height; }
+        [[nodiscard]] int GetFramebufferWidth() const {
+            int width, height;
+            glfwGetFramebufferSize(m_Window, &width, &height);
+            return width;
+        }
+
+        [[nodiscard]] int GetFramebufferHeight() const {
+            int width, height;
+            glfwGetFramebufferSize(m_Window, &width, &height);
+            return height;
+        }
+
+        [[nodiscard]] bool IsMinimized() const {
+            int width, height;
+            glfwGetFramebufferSize(m_Window, &width, &height);
+            return width <= 0 || height <= 0;
+        }
 
         void SetTitle(const char* title) const;
     private:

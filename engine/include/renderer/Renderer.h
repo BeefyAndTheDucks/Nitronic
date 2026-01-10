@@ -53,6 +53,8 @@ NAMESPACE {
         CREATE_BACKEND_FUNCTIONS(PresentFrame)
         CREATE_BACKEND_FUNCTIONS(CleanupPreDevice)
         CREATE_BACKEND_FUNCTIONS(Cleanup)
+
+        void GenerateFramebuffers();
     private:
         RenderingBackend m_Backend;
         RendererData* m_RendererData;
@@ -70,7 +72,14 @@ NAMESPACE {
 
         std::vector<nvrhi::GraphicsPipelineHandle> m_GraphicsPipelines;
         std::vector<nvrhi::GraphicsState> m_GraphicsStates;
+
         nvrhi::BindingSetHandle m_BindingSet;
+        nvrhi::BindingLayoutHandle m_BindingLayout;
+        nvrhi::InputLayoutHandle m_InputLayout;
+
+        // Shaders
+        nvrhi::ShaderHandle m_VertexShader;
+        nvrhi::ShaderHandle m_PixelShader;
 
         // Buffers
         nvrhi::BufferHandle m_VertexBuffer;

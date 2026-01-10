@@ -31,11 +31,13 @@ NAMESPACE {
     struct DeviceDataVk : DeviceData {
         vk::PhysicalDevice physicalDevice;
         vk::Device logicalDevice;
+        vk::SurfaceKHR surface;
         QueueFamilyIndices queueFamilyIndices;
-        SwapChainSupportDetails swapChainSupport;
 
         vk::Queue graphicsQueue;
         vk::Queue presentQueue;
+    public:
+        [[nodiscard]] SwapChainSupportDetails GetSwapChainSupport() const;
     };
 
 }

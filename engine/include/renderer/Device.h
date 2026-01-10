@@ -22,10 +22,10 @@ NAMESPACE {
         CREATE_BACKEND_FUNCTIONS(CreateDevice)
         CREATE_BACKEND_FUNCTIONS(DestroyDevice)
 
-        RenderingBackend m_Backend;
         RendererData* m_RendererData;
         DeviceData* m_DeviceData;
         nvrhi::DeviceHandle m_Device;
+        RenderingBackend m_Backend;
     };
 
 }
