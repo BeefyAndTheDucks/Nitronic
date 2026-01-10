@@ -71,7 +71,10 @@ NAMESPACE {
         std::vector<nvrhi::GraphicsPipelineHandle> m_GraphicsPipelines;
         std::vector<nvrhi::GraphicsState> m_GraphicsStates;
         nvrhi::BindingSetHandle m_BindingSet;
+
+        // Buffers
         nvrhi::BufferHandle m_VertexBuffer;
+        nvrhi::BufferHandle m_IndexBuffer;
     };
 
 }
