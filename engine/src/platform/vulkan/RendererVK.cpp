@@ -299,7 +299,7 @@ NAMESPACE {
             ));
             RENDERER_DATA->surface = rawSurface;
 
-            std::cout << "Vulkan instance and surface created." << std::endl;
+            std::cout << "Vulkan initialized." << std::endl;
         }
         catch (const vk::SystemError& e) {
             std::cerr << "Vulkan error during instance creation: " << e.what() << std::endl;
@@ -431,8 +431,6 @@ NAMESPACE {
 
 
     void Renderer::CleanupVk() {
-        std::cout << "Cleanup Vulkan" << std::endl;
-
         if (RENDERER_DATA->surface) {
             RENDERER_DATA->instance.destroySurfaceKHR(RENDERER_DATA->surface);
             RENDERER_DATA->surface = VK_NULL_HANDLE;

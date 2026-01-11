@@ -36,8 +36,6 @@ NAMESPACE {
         auto vertShaderCode = LoadShaderCode("Basic", ShaderType::Vertex);
         auto fragShaderCode = LoadShaderCode("Basic", ShaderType::Fragment);
 
-        std::cout << "Shader code size: " << vertShaderCode.size() << std::endl;
-
         m_VertexShader = m_Device->GetDevice()->createShader(
             nvrhi::ShaderDesc().setShaderType(nvrhi::ShaderType::Vertex),
             vertShaderCode.data(), vertShaderCode.size());
