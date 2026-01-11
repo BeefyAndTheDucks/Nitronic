@@ -444,8 +444,4 @@ NAMESPACE {
         }
     }
 
-    std::vector<char> Renderer::LoadShaderCodeVk(const std::filesystem::path &filename) {
-        return readFile(std::filesystem::path(filename.string() + ".spv"));
-    }
-
 }

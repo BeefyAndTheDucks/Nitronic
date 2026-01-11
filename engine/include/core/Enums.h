@@ -5,7 +5,7 @@
 #ifndef NITRONIC_ENUMS_H
 #define NITRONIC_ENUMS_H
 
-enum RenderingBackend {
+enum class RenderingBackend {
 #ifdef NITRONIC_WITH_VULKAN
     Vulkan,
 #endif
@@ -20,16 +20,21 @@ enum RenderingBackend {
 inline const char* RenderingBackendToString(const RenderingBackend backend) {
     switch (backend) {
 #ifdef NITRONIC_WITH_VULKAN
-        case Vulkan: return "Vulkan";
+        case RenderingBackend::Vulkan: return "Vulkan";
 #endif
 #ifdef NITRONIC_WITH_DX11
-        case DirectX11: return "DirectX11";
+        case RenderingBackend::DirectX11: return "DirectX11";
 #endif
 #ifdef NITRONIC_WITH_DX12
-        case DirectX12: return "DirectX12";
+        case RenderingBackend::DirectX12: return "DirectX12";
 #endif
         default: return "Unknown";
     }
 }
+
+enum class ShaderType {
+    Fragment,
+    Vertex
+};
 
 #endif //NITRONIC_ENUMS_H

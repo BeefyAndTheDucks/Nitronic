@@ -9,8 +9,8 @@
 #include <iostream>
 #include <vector>
 
-static std::vector<char> readFile(const std::filesystem::path& filename) {
-    std::ifstream file(filename, std::ios::ate | std::ios::binary);
+static std::vector<char> readFile(const std::filesystem::path& filePath) {
+    std::ifstream file(filePath, std::ios::ate | std::ios::binary);
 
     if (!file.is_open()) {
         std::cout << std::filesystem::current_path() << std::endl;

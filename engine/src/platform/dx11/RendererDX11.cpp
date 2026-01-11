@@ -35,8 +35,4 @@ NAMESPACE {
         std::cout << "Cleanup DX11" << std::endl;
     }
 
-    std::vector<char> Renderer::LoadShaderCodeDX11(const std::filesystem::path& filename) {
-        return readFile(std::filesystem::path(filename.string() + ".dxil"));
-    }
-
 }

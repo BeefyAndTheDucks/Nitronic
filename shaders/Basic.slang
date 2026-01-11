@@ -31,7 +31,6 @@ Varyings vertexMain(
 }
 
 [shader("fragment")]
-//[[vk::location(0)]]
 float4 fragmentMain(Varyings input) : SV_Target
 {
     return float4(input.color, 1.0);

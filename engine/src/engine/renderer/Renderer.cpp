@@ -33,8 +33,8 @@ NAMESPACE {
         m_Device = new Device(m_Backend, m_RendererData);
         CREATE_BACKEND_SWITCH(InitAfterDeviceCreation);
 
-        auto vertShaderCode = LoadShaderCode("Basic.vertex");
-        auto fragShaderCode = LoadShaderCode("Basic.fragment");
+        auto vertShaderCode = LoadShaderCode("Basic", ShaderType::Vertex);
+        auto fragShaderCode = LoadShaderCode("Basic", ShaderType::Fragment);
 
         std::cout << "Shader code size: " << vertShaderCode.size() << std::endl;
 

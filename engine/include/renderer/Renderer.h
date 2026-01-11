@@ -13,10 +13,13 @@
 
 #include "Device.h"
 #include "engine/Window.h"
+#include "util/IOUtils.h"
 
 NAMESPACE {
 
     constexpr size_t g_MaxFramesInFlight = 2;
+
+    constexpr auto g_ShadersDirectory = "../shaders/";
 
     struct SwapChainImage {
         //vk::Image image;
@@ -55,10 +58,22 @@ NAMESPACE {
         CREATE_BACKEND_FUNCTIONS(void, CleanupPreDevice)
         CREATE_BACKEND_FUNCTIONS(void, Cleanup)
 
-        CREATE_BACKEND_FUNCTIONS(static std::vector<char>, LoadShaderCode, const std::filesystem::path& filename);
+        [[nodiscard]] std::vector<char> LoadShaderCode(const std::string &shaderFile, const ShaderType shaderType) const {
+            std::string extension = m_Backend == RenderingBackend::Vulkan ? ".spv" : ".dxil";
 
-        [[nodiscard]] std::vector<char> LoadShaderCode(const std::string &shaderFile) const {
-            return CREATE_BACKEND_SWITCH(LoadShaderCode, std::filesystem::path("../shaders/" + shaderFile));
+            std::string stageName;
+            switch (shaderType) {
+                case ShaderType::Vertex: stageName = ".vertex"; break;
+                case ShaderType::Fragment: stageName = ".fragment"; break;
+            }
+
+            std::filesystem::path path = g_ShadersDirectory + shaderFile + stageName + extension;
+
+            if (!std::filesystem::exists(path)) {
+                throw std::runtime_error("Shader missing: " + shaderFile + stageName + extension);
+            }
+
+            return readFile(path);
         }
 
         void GenerateFramebuffers();
