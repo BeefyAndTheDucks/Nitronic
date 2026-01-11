@@ -59,8 +59,11 @@ NAMESPACE {
                 .setElementStride(sizeof(Vertex)),
         };
 
+#pragma warning(push)
+#pragma warning(disable: 4267)
         m_InputLayout = m_Device->GetDevice()->createInputLayout(
             attributes, std::size(attributes), m_VertexShader);
+#pragma warning(pop)
 
         auto layoutDesc = nvrhi::BindingLayoutDesc()
             .setVisibility(nvrhi::ShaderType::All);
