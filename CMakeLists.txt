@@ -28,20 +28,14 @@ add_subdirectory(editor)
 add_subdirectory(sandbox)
 
 # Define paths
-set(SHADER_SCRIPT_DIR "shaders")
-
-if (WIN32)
-    set(SHADER_SCRIPT_NAME "Compile.bat")
-else()
-    set(SHADER_SCRIPT_NAME "Compile.sh")
-    message(FATAL_ERROR "Linux unsupported so far...")
-endif()
+set(SHADERS_DIR "shaders")
+set(ASSETS_DIR "assets")
 
 set(ALL_SHADER_OUTPUTS "")
 function(add_slang_shader SHADER_NAME STAGE ENTRY_POINT)
-    set(SLANG_SRC "${CMAKE_CURRENT_SOURCE_DIR}/shaders/${SHADER_NAME}.slang")
-    set(SPIRV_OUT "${CMAKE_BINARY_DIR}/shaders/${SHADER_NAME}.${STAGE}.spv")
-    set(DXIL_OUT "${CMAKE_BINARY_DIR}/shaders/${SHADER_NAME}.${STAGE}.dxil")
+    set(SLANG_SRC "${CMAKE_CURRENT_SOURCE_DIR}/${SHADERS_DIR}/${SHADER_NAME}.slang")
+    set(SPIRV_OUT "${CMAKE_BINARY_DIR}/${SHADERS_DIR}/${SHADER_NAME}.${STAGE}.spv")
+    set(DXIL_OUT "${CMAKE_BINARY_DIR}/${SHADERS_DIR}/${SHADER_NAME}.${STAGE}.dxil")
 
     add_custom_command(
             OUTPUT "${SPIRV_OUT}" "${DXIL_OUT}"
@@ -51,7 +45,7 @@ function(add_slang_shader SHADER_NAME STAGE ENTRY_POINT)
                     -profile sm_6_0
                     -stage "${STAGE}"
                     -entry "${ENTRY_POINT}"
-                    -I "shaders/include"
+                    -I "${SHADERS_DIR}/include"
                     -matrix-layout-column-major
             DEPENDS "${SLANG_SRC}"
             VERBATIM
@@ -68,12 +62,12 @@ add_custom_target(compile_shaders ALL DEPENDS ${ALL_SHADER_OUTPUTS})
 
 add_dependencies(engine compile_shaders)
 
-add_custom_target(copy_assets ALL
-        COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_BINARY_DIR}/assets"
-        COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/assets"
+add_custom_target(copy_assets
+        COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_BINARY_DIR}/${ASSETS_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/${ASSETS_DIR}"
         COMMAND ${CMAKE_COMMAND} -E copy_directory
-        "${CMAKE_CURRENT_SOURCE_DIR}/assets"
-        "${CMAKE_BINARY_DIR}/assets"
+        "${CMAKE_CURRENT_SOURCE_DIR}/${ASSETS_DIR}"
+        "${CMAKE_BINARY_DIR}/${ASSETS_DIR}"
         COMMENT "Syncing assets to build directory..."
 )
 
