@@ -186,13 +186,16 @@ NAMESPACE {
             auto pipeline = m_Device->GetDevice()->createGraphicsPipeline(pipelineDesc, framebuffer);
             m_GraphicsPipelines.push_back(pipeline);
 
+            int framebufferWidth, framebufferHeight;
+            m_Window->GetFramebufferSize(&framebufferWidth, &framebufferHeight);
+
             nvrhi::GraphicsState graphicsState = nvrhi::GraphicsState()
                 .setPipeline(pipeline)
                 .setFramebuffer(framebuffer)
                 .addVertexBuffer(nvrhi::VertexBufferBinding(m_VertexBuffer))
                 .setIndexBuffer(nvrhi::IndexBufferBinding(m_IndexBuffer))
                 .addBindingSet(m_BindingSet)
-                .setViewport(nvrhi::ViewportState().addViewportAndScissorRect(nvrhi::Viewport(static_cast<float>(m_Window->GetFramebufferWidth()), static_cast<float>(m_Window->GetFramebufferHeight()))));
+                .setViewport(nvrhi::ViewportState().addViewportAndScissorRect(nvrhi::Viewport(static_cast<float>(framebufferWidth), static_cast<float>(framebufferHeight))));
             m_GraphicsStates.push_back(graphicsState);
         }
     }

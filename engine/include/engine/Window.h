@@ -21,6 +21,7 @@ NAMESPACE {
 
         [[nodiscard]] GLFWwindow* GetNativeWindow() const { return m_Window; }
 
+        void GetFramebufferSize(int* width, int* height) const;
         [[nodiscard]] int GetFramebufferWidth() const;
         [[nodiscard]] int GetFramebufferHeight() const;
 

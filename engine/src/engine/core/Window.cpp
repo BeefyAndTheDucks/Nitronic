@@ -36,21 +36,25 @@ NAMESPACE {
         return glfwWindowShouldClose(m_Window);
     }
 
+    void Window::GetFramebufferSize(int *width, int *height) const {
+        glfwGetFramebufferSize(m_Window, width, height);
+    }
+
     int Window::GetFramebufferWidth() const {
         int width, height;
-        glfwGetFramebufferSize(m_Window, &width, &height);
+        GetFramebufferSize(&width, &height);
         return width;
     }
 
     int Window::GetFramebufferHeight() const {
         int width, height;
-        glfwGetFramebufferSize(m_Window, &width, &height);
+        GetFramebufferSize(&width, &height);
         return height;
     }
 
     bool Window::IsMinimized() const {
         int width, height;
-        glfwGetFramebufferSize(m_Window, &width, &height);
+        GetFramebufferSize(&width, &height);
         return width <= 0 || height <= 0;
     }
 
