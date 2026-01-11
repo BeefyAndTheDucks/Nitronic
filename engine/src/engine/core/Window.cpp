@@ -36,6 +36,24 @@ NAMESPACE {
         return glfwWindowShouldClose(m_Window);
     }
 
+    int Window::GetFramebufferWidth() const {
+        int width, height;
+        glfwGetFramebufferSize(m_Window, &width, &height);
+        return width;
+    }
+
+    int Window::GetFramebufferHeight() const {
+        int width, height;
+        glfwGetFramebufferSize(m_Window, &width, &height);
+        return height;
+    }
+
+    bool Window::IsMinimized() const {
+        int width, height;
+        glfwGetFramebufferSize(m_Window, &width, &height);
+        return width <= 0 || height <= 0;
+    }
+
     void Window::SetTitle(const char *title) const {
         glfwSetWindowTitle(m_Window, title);
     }
