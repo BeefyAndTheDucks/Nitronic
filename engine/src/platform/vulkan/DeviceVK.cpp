@@ -135,6 +135,7 @@ NAMESPACE {
         vk::PhysicalDeviceFeatures deviceFeatures{};
 
         vk::PhysicalDeviceVulkan11Features vulkan11Features{};
+        vulkan11Features.shaderDrawParameters = VK_TRUE;
 
         vk::PhysicalDeviceVulkan12Features vulkan12Features{};
         vulkan12Features.timelineSemaphore = VK_TRUE;

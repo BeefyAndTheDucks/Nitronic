@@ -4,6 +4,7 @@
 
 #ifndef NITRONIC_RENDERER_H
 #define NITRONIC_RENDERER_H
+#include <filesystem>
 #include <iostream>
 #include <queue>
 
@@ -47,12 +48,18 @@ NAMESPACE {
 
         void Render(double deltaTime);
     private:
-        CREATE_BACKEND_FUNCTIONS(Init)
-        CREATE_BACKEND_FUNCTIONS(InitAfterDeviceCreation)
-        CREATE_BACKEND_FUNCTIONS(BeginFrame)
-        CREATE_BACKEND_FUNCTIONS(PresentFrame)
-        CREATE_BACKEND_FUNCTIONS(CleanupPreDevice)
-        CREATE_BACKEND_FUNCTIONS(Cleanup)
+        CREATE_BACKEND_FUNCTIONS(void, Init)
+        CREATE_BACKEND_FUNCTIONS(void, InitAfterDeviceCreation)
+        CREATE_BACKEND_FUNCTIONS(void, BeginFrame)
+        CREATE_BACKEND_FUNCTIONS(void, PresentFrame)
+        CREATE_BACKEND_FUNCTIONS(void, CleanupPreDevice)
+        CREATE_BACKEND_FUNCTIONS(void, Cleanup)
+
+        CREATE_BACKEND_FUNCTIONS(static std::vector<char>, LoadShaderCode, const std::filesystem::path& filename);
+
+        [[nodiscard]] std::vector<char> LoadShaderCode(const std::string &shaderFile) const {
+            return CREATE_BACKEND_SWITCH(LoadShaderCode, std::filesystem::path("../shaders/" + shaderFile));
+        }
 
         void GenerateFramebuffers();
     private:

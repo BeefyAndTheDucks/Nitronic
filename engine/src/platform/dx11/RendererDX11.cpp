@@ -7,6 +7,7 @@
 
 #include "renderer/Renderer.h"
 #include "core/Macros.h"
+#include "util/IOUtils.h"
 
 NAMESPACE {
 
@@ -32,6 +33,10 @@ NAMESPACE {
 
     void Renderer::CleanupDX11() {
         std::cout << "Cleanup DX11" << std::endl;
+    }
+
+    std::vector<char> Renderer::LoadShaderCodeDX11(const std::filesystem::path& filename) {
+        return readFile(std::filesystem::path(filename.string() + ".dxil"));
     }
 
 }

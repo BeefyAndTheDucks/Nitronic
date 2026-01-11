@@ -10,8 +10,8 @@
 #include "RendererVK.h"
 
 #include "VkMacros.h"
-#include "../../../../external/nvrhi/src/vulkan/vulkan-backend.h"
 #include "core/Macros.h"
+#include "util/IOUtils.h"
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
@@ -442,6 +442,10 @@ NAMESPACE {
             RENDERER_DATA->instance.destroy();
             RENDERER_DATA->instance = VK_NULL_HANDLE;
         }
+    }
+
+    std::vector<char> Renderer::LoadShaderCodeVk(const std::filesystem::path &filename) {
+        return readFile(std::filesystem::path(filename.string() + ".spv"));
     }
 
 }

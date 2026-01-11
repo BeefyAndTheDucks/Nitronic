@@ -11,6 +11,7 @@
 
 #include "core/Macros.h"
 #include "nvrhi/utils.h"
+#include "util/IOUtils.h"
 
 NAMESPACE {
 
@@ -23,25 +24,6 @@ NAMESPACE {
 
     static constexpr uint32_t g_Indices[] = { 0, 1, 2, 2, 3, 0 };
 
-    static std::vector<char> readFile(const std::filesystem::path& filename) {
-        std::ifstream file(filename, std::ios::ate | std::ios::binary);
-
-        if (!file.is_open()) {
-            std::cout << std::filesystem::current_path() << std::endl;
-            throw std::runtime_error("failed to open file!");
-        }
-
-        size_t fileSize = file.tellg();
-        std::vector<char> buffer(fileSize);
-
-        file.seekg(0);
-        file.read(buffer.data(), fileSize);
-
-        file.close();
-
-        return buffer;
-    }
-
     Renderer::Renderer(const RenderingBackend backend, Window* window)
         : m_Backend(backend), m_Window(window), m_RendererData(nullptr)
     {
@@ -51,8 +33,8 @@ NAMESPACE {
         m_Device = new Device(m_Backend, m_RendererData);
         CREATE_BACKEND_SWITCH(InitAfterDeviceCreation);
 
-        auto vertShaderCode = readFile("../assets/shaders/basic.vert.spirv");
-        auto fragShaderCode = readFile("../assets/shaders/basic.frag.spirv");
+        auto vertShaderCode = LoadShaderCode("Basic.vertex");
+        auto fragShaderCode = LoadShaderCode("Basic.fragment");
 
         std::cout << "Shader code size: " << vertShaderCode.size() << std::endl;
 

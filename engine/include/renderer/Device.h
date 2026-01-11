@@ -19,8 +19,8 @@ NAMESPACE {
         [[nodiscard]] nvrhi::DeviceHandle GetDevice() const { return m_Device; }
         [[nodiscard]] DeviceData* GetDeviceData() const { return m_DeviceData; }
     private:
-        CREATE_BACKEND_FUNCTIONS(CreateDevice)
-        CREATE_BACKEND_FUNCTIONS(DestroyDevice)
+        CREATE_BACKEND_FUNCTIONS(void, CreateDevice)
+        CREATE_BACKEND_FUNCTIONS(void, DestroyDevice)
 
         RendererData* m_RendererData;
         DeviceData* m_DeviceData;

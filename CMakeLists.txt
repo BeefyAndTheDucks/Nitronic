@@ -28,7 +28,7 @@ add_subdirectory(editor)
 add_subdirectory(sandbox)
 
 # Define paths
-set(SHADER_SCRIPT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets/shaders")
+set(SHADER_SCRIPT_DIR "shaders")
 
 if (WIN32)
     set(SHADER_SCRIPT_NAME "Compile.bat")
@@ -37,30 +37,47 @@ else()
     message(FATAL_ERROR "Linux unsupported so far...")
 endif()
 
-# Add the command to run your script
-add_custom_command(
-        OUTPUT "${CMAKE_BINARY_DIR}/assets/shaders/shaders_compiled.stamp"
-        COMMAND ${SHADER_SCRIPT_NAME}
-        WORKING_DIRECTORY "${SHADER_SCRIPT_DIR}"
-        COMMENT "Running shader compilation script..."
-        VERBATIM
-)
+set(ALL_SHADER_OUTPUTS "")
+function(add_slang_shader SHADER_NAME STAGE ENTRY_POINT)
+    set(SLANG_SRC "${CMAKE_CURRENT_SOURCE_DIR}/shaders/${SHADER_NAME}.slang")
+    set(SPIRV_OUT "${CMAKE_BINARY_DIR}/shaders/${SHADER_NAME}.${STAGE}.spv")
+    set(DXIL_OUT "${CMAKE_BINARY_DIR}/shaders/${SHADER_NAME}.${STAGE}.dxil")
 
-# Create a target so this actually runs during the build
-add_custom_target(compile_shaders_target ALL
-        DEPENDS "${CMAKE_BINARY_DIR}/assets/shaders/shaders_compiled.stamp"
-)
+    add_custom_command(
+            OUTPUT "${SPIRV_OUT}" "${DXIL_OUT}"
+            COMMAND slangc "${SLANG_SRC}"
+                    -target spirv -o "${SPIRV_OUT}"
+                    -target dxil -o "${DXIL_OUT}"
+                    -profile sm_6_0
+                    -stage "${STAGE}"
+                    -entry "${ENTRY_POINT}"
+                    -I "shaders/include"
+                    -matrix-layout-column-major
+            DEPENDS "${SLANG_SRC}"
+            VERBATIM
+            COMMENT "Building Shader: ${SHADER_NAME} [${ENTRY_POINT}]"
+    )
+
+    set(ALL_SHADER_OUTPUTS ${ALL_SHADER_OUTPUTS} "${SPIRV_OUT}" "${DXIL_OUT}" PARENT_SCOPE)
+endfunction()
+
+add_slang_shader(Basic vertex vertexMain)
+add_slang_shader(Basic fragment fragmentMain)
+
+add_custom_target(compile_shaders ALL DEPENDS ${ALL_SHADER_OUTPUTS})
+
+add_dependencies(engine compile_shaders)
 
 add_custom_target(copy_assets ALL
+        COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_BINARY_DIR}/assets"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/assets"
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${CMAKE_CURRENT_SOURCE_DIR}/assets"
         "${CMAKE_BINARY_DIR}/assets"
         COMMENT "Syncing assets to build directory..."
 )
 
-# Ensure shaders are compiled BEFORE the copy happens (if needed)
-add_dependencies(copy_assets compile_shaders_target)
-
+add_dependencies(compile_shaders copy_assets)
 add_dependencies(engine copy_assets)
 
 #file(COPY assets DESTINATION ${CMAKE_BINARY_DIR})
