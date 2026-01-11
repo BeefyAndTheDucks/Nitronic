@@ -179,7 +179,6 @@ NAMESPACE {
             pipelineDesc.PS = m_PixelShader;
             pipelineDesc.bindingLayouts = { m_BindingLayout };
             pipelineDesc.renderState.rasterState.frontCounterClockwise = true;
-            pipelineDesc.renderState.rasterState.cullMode = nvrhi::RasterCullMode::None;
             pipelineDesc.renderState.depthStencilState.depthTestEnable = false;
             pipelineDesc.renderState.depthStencilState.stencilEnable = false;
 
