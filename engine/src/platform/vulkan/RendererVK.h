@@ -27,6 +27,8 @@ NAMESPACE {
         vk::Instance instance;
         vk::SurfaceKHR surface;
 
+        std::vector<const char*> instanceExtensions;
+
         vk::SwapchainKHR nativeSwapChain;
 
         std::vector<vk::Semaphore> acquireSemaphores;

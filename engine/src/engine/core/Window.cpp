@@ -7,9 +7,11 @@
 #include "core/Macros.h"
 #include "engine/Window.h"
 
+#include <iostream>
+
 NAMESPACE {
 
-    Window::Window(const int width, const int height, const char *title)
+    Window::Window(const int width, const int height, const char* title)
         : m_Width(width), m_Height(height) {
         if (!glfwInit())
             throw std::runtime_error("Failed to initialize GLFW");
@@ -21,6 +23,8 @@ NAMESPACE {
             glfwTerminate();
             throw std::runtime_error("Failed to create GLFW window");
         }
+
+        glfwSetWindowAspectRatio(m_Window, 16, 9);
     }
 
     Window::~Window() {
@@ -53,9 +57,8 @@ NAMESPACE {
     }
 
     bool Window::IsMinimized() const {
-        int width, height;
-        GetFramebufferSize(&width, &height);
-        return width <= 0 || height <= 0;
+        const bool isMinimized = glfwGetWindowAttrib(m_Window, GLFW_ICONIFIED);
+        return isMinimized;
     }
 
     void Window::SetTitle(const char *title) const {

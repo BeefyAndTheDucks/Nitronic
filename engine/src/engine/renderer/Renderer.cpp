@@ -9,23 +9,59 @@
 
 #include <filesystem>
 
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#include <glm/ext/matrix_clip_space.hpp>
+#include <glm/ext/matrix_transform.hpp>
+
 #include "core/Macros.h"
 #include "nvrhi/utils.h"
-#include "util/IOUtils.h"
 
 NAMESPACE {
 
-    static constexpr Vertex g_Vertices[] = {
-        { { -0.5f, -0.5f, 0.f }, { 0.f, 0.f } },
-        { {  0.5f, -0.5f, 0.f }, { 1.f, 0.f } },
-        { {  0.5f,  0.5f, 0.f }, { 1.f, 1.f } },
-        { { -0.5f,  0.5f, 0.f }, { 0.f, 1.f } },
+    static const Vertex g_Vertices[] = {
+        { {-0.5f,  0.5f, -0.5f}, {0.0f, 0.0f} }, // front face
+        { { 0.5f, -0.5f, -0.5f}, {1.0f, 1.0f} },
+        { {-0.5f, -0.5f, -0.5f}, {0.0f, 1.0f} },
+        { { 0.5f,  0.5f, -0.5f}, {1.0f, 0.0f} },
+
+        { { 0.5f, -0.5f, -0.5f}, {0.0f, 1.0f} }, // right side face
+        { { 0.5f,  0.5f,  0.5f}, {1.0f, 0.0f} },
+        { { 0.5f, -0.5f,  0.5f}, {1.0f, 1.0f} },
+        { { 0.5f,  0.5f, -0.5f}, {0.0f, 0.0f} },
+
+        { {-0.5f,  0.5f,  0.5f}, {0.0f, 0.0f} }, // left side face
+        { {-0.5f, -0.5f, -0.5f}, {1.0f, 1.0f} },
+        { {-0.5f, -0.5f,  0.5f}, {0.0f, 1.0f} },
+        { {-0.5f,  0.5f, -0.5f}, {1.0f, 0.0f} },
+
+        { { 0.5f,  0.5f,  0.5f}, {0.0f, 0.0f} }, // back face
+        { {-0.5f, -0.5f,  0.5f}, {1.0f, 1.0f} },
+        { { 0.5f, -0.5f,  0.5f}, {0.0f, 1.0f} },
+        { {-0.5f,  0.5f,  0.5f}, {1.0f, 0.0f} },
+
+        { {-0.5f,  0.5f, -0.5f}, {0.0f, 1.0f} }, // top face
+        { { 0.5f,  0.5f,  0.5f}, {1.0f, 0.0f} },
+        { { 0.5f,  0.5f, -0.5f}, {1.0f, 1.0f} },
+        { {-0.5f,  0.5f,  0.5f}, {0.0f, 0.0f} },
+
+        { { 0.5f, -0.5f,  0.5f}, {1.0f, 1.0f} }, // bottom face
+        { {-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f} },
+        { { 0.5f, -0.5f, -0.5f}, {1.0f, 0.0f} },
+        { {-0.5f, -0.5f,  0.5f}, {0.0f, 1.0f} },
     };
 
-    static constexpr uint32_t g_Indices[] = { 0, 1, 2, 2, 3, 0 };
+    static const uint32_t g_Indices[] = {
+        0,  1,  2,   0,  3,  1, // front face
+        4,  5,  6,   4,  7,  5, // left face
+        8,  9, 10,   8, 11,  9, // right face
+       12, 13, 14,  12, 15, 13, // back face
+       16, 17, 18,  16, 19, 17, // top face
+       20, 21, 22,  20, 23, 21, // bottom face
+    };
 
     Renderer::Renderer(const RenderingBackend backend, Window* window)
-        : m_Backend(backend), m_Window(window), m_RendererData(nullptr)
+        : m_Backend(backend), m_RendererData(nullptr), m_Window(window)
     {
         std::cout << "Using " << RenderingBackendToString(backend) << " backend." << std::endl;
 
@@ -33,16 +69,8 @@ NAMESPACE {
         m_Device = new Device(m_Backend, m_RendererData);
         CREATE_BACKEND_SWITCH(InitAfterDeviceCreation);
 
-        auto vertShaderCode = LoadShaderCode("Basic", ShaderType::Vertex);
-        auto fragShaderCode = LoadShaderCode("Basic", ShaderType::Fragment);
-
-        m_VertexShader = m_Device->GetDevice()->createShader(
-            nvrhi::ShaderDesc().setShaderType(nvrhi::ShaderType::Vertex),
-            vertShaderCode.data(), vertShaderCode.size());
-
-        m_PixelShader = m_Device->GetDevice()->createShader(
-            nvrhi::ShaderDesc().setShaderType(nvrhi::ShaderType::Pixel),
-            fragShaderCode.data(), fragShaderCode.size());
+        m_VertexShader = LoadShader("Basic", ShaderType::Vertex);
+        m_FragmentShader = LoadShader("Basic", ShaderType::Fragment);
 
         nvrhi::VertexAttributeDesc attributes[] = {
             nvrhi::VertexAttributeDesc()
@@ -57,23 +85,16 @@ NAMESPACE {
                 .setElementStride(sizeof(Vertex)),
         };
 
-#pragma warning(push)
-#pragma warning(disable: 4267)
         m_InputLayout = m_Device->GetDevice()->createInputLayout(
-            attributes, std::size(attributes), m_VertexShader);
-#pragma warning(pop)
+            attributes, uint32_t(std::size(attributes)), m_VertexShader);
 
-        auto layoutDesc = nvrhi::BindingLayoutDesc()
-            .setVisibility(nvrhi::ShaderType::All);
-        m_BindingLayout = m_Device->GetDevice()->createBindingLayout(layoutDesc);
-
+        // Create buffers
         auto vertexBufferDesc = nvrhi::BufferDesc()
             .setByteSize(sizeof(g_Vertices))
             .setIsVertexBuffer(true)
             .setInitialState(nvrhi::ResourceStates::VertexBuffer)
             .setKeepInitialState(true) // enable fully automatic state tracking
             .setDebugName("Vertex Buffer");
-
         m_VertexBuffer = m_Device->GetDevice()->createBuffer(vertexBufferDesc);
 
         auto indexBufferDesc = nvrhi::BufferDesc()
@@ -82,20 +103,25 @@ NAMESPACE {
             .setInitialState(nvrhi::ResourceStates::IndexBuffer)
             .setKeepInitialState(true) // enable fully automatic state tracking
             .setDebugName("Index Buffer");
-
         m_IndexBuffer = m_Device->GetDevice()->createBuffer(indexBufferDesc);
 
-        nvrhi::CommandListHandle commandList = m_Device->GetDevice()->createCommandList();
+        auto frameConstantsBufferDesc = nvrhi::utils::CreateVolatileConstantBufferDesc(
+            sizeof(FrameConstants), "FrameConstantsBuffer", g_MaxFramesInFlight * 2)
+            .setInitialState(nvrhi::ResourceStates::ConstantBuffer)
+            .setKeepInitialState(true);
+        m_FrameConstantsBuffer = m_Device->GetDevice()->createBuffer(frameConstantsBufferDesc);
 
-        // Note: the binding set must include all bindings declared in the layout, and nothing else.
-        // This condition is tested by the validation layer.
-        // The order of items in the binding set doesn't matter.
-        auto bindingSetDesc = nvrhi::BindingSetDesc();
-        //bindingSetDesc.addItem();
+        auto bindingSetDesc = nvrhi::BindingSetDesc()
+            .addItem(nvrhi::BindingSetItem::ConstantBuffer(0, m_FrameConstantsBuffer))
+        ;
 
-        m_BindingSet = m_Device->GetDevice()->createBindingSet(bindingSetDesc, m_BindingLayout);
+        if (!nvrhi::utils::CreateBindingSetAndLayout(m_Device->GetDevice(), nvrhi::ShaderType::Vertex, 0, bindingSetDesc, m_BindingLayout, m_BindingSet)) {
+            throw std::runtime_error("Failed to create binding set and layout.");
+        }
 
         GenerateFramebuffers();
+
+        nvrhi::CommandListHandle commandList = m_Device->GetDevice()->createCommandList();
 
         commandList->open();
 
@@ -111,21 +137,18 @@ NAMESPACE {
         m_Device->GetDevice()->runGarbageCollection();
         m_Device->GetDevice()->waitForIdle();
 
-        for (auto& pipeline : m_GraphicsPipelines)
-            pipeline = nullptr;
-
-        for (auto& frameBuffer : m_Framebuffers)
-            frameBuffer = nullptr;
-
         for (auto& swapchain : m_SwapChainImages)
             swapchain.nvrhiHandle = nullptr;
 
+        m_Framebuffer = nullptr;
+        m_GraphicsPipeline = nullptr;
         m_VertexBuffer = nullptr;
         m_IndexBuffer = nullptr;
+        m_FrameConstantsBuffer = nullptr;
         m_BindingSet = nullptr;
         m_InputLayout = nullptr;
         m_VertexShader = nullptr;
-        m_PixelShader = nullptr;
+        m_FragmentShader = nullptr;
         m_BindingLayout = nullptr;
 
         CREATE_BACKEND_SWITCH(CleanupPreDevice);
@@ -139,13 +162,23 @@ NAMESPACE {
 
         CREATE_BACKEND_SWITCH(BeginFrame); // not sure if required. maybe prerender and postrender?
 
-        const nvrhi::CommandListHandle commandList = m_Device->GetDevice()->createCommandList();
+        int windowWidth, windowHeight;
+        m_Window->GetFramebufferSize(&windowWidth, &windowHeight);
+        float aspect = static_cast<float>(windowWidth) / static_cast<float>(windowHeight);
 
+        const nvrhi::CommandListHandle commandList = m_Device->GetDevice()->createCommandList();
         commandList->open();
 
-        nvrhi::utils::ClearColorAttachment(commandList, m_Framebuffers[m_SwapChainIndex], 0, nvrhi::Color(1, 1, 1, 1));
+        // update frame constants
+        FrameConstants cpuFrameConstants{};
+        cpuFrameConstants.model         = glm::mat4(1.0f);
+        cpuFrameConstants.view          = glm::lookAt(glm::vec3(0,0,5), glm::vec3(0,0,0), glm::vec3(0,1,0));
+        cpuFrameConstants.projection    = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
+        commandList->writeBuffer(m_FrameConstantsBuffer, &cpuFrameConstants, sizeof(cpuFrameConstants));
 
-        commandList->setGraphicsState(m_GraphicsStates[m_SwapChainIndex]);
+        commandList->setGraphicsState(m_GraphicsState);
+
+        nvrhi::utils::ClearColorAttachment(commandList, m_Framebuffer, m_SwapChainIndex, nvrhi::Color(1, 1, 1, 1));
 
         nvrhi::DrawArguments drawArgs{};
         drawArgs.vertexCount = static_cast<uint32_t>(std::size(g_Indices));
@@ -153,47 +186,44 @@ NAMESPACE {
 
         commandList->close();
         m_Device->GetDevice()->executeCommandList(commandList);
-        m_Device->GetDevice()->runGarbageCollection();
 
         CREATE_BACKEND_SWITCH(PresentFrame);
+
+        m_Device->GetDevice()->runGarbageCollection();
     }
 
     void Renderer::GenerateFramebuffers() {
-        m_Framebuffers.clear();
-        m_GraphicsPipelines.clear();
-        m_GraphicsStates.clear();
-
+        auto framebufferDesc = nvrhi::FramebufferDesc();
         for (auto&[swapChainNvrhiHandle] : m_SwapChainImages) {
-            auto framebufferDesc = nvrhi::FramebufferDesc()
-            .addColorAttachment(swapChainNvrhiHandle);
-
-            m_Framebuffers.push_back(m_Device->GetDevice()->createFramebuffer(framebufferDesc));
+            framebufferDesc
+                .addColorAttachment(swapChainNvrhiHandle);
         }
+        m_Framebuffer = m_Device->GetDevice()->createFramebuffer(framebufferDesc);
 
-        for (const auto& framebuffer : m_Framebuffers) {
-            nvrhi::GraphicsPipelineDesc pipelineDesc;
-            pipelineDesc.inputLayout = m_InputLayout;
-            pipelineDesc.VS = m_VertexShader;
-            pipelineDesc.PS = m_PixelShader;
-            pipelineDesc.bindingLayouts = { m_BindingLayout };
-            pipelineDesc.renderState.rasterState.frontCounterClockwise = true;
-            pipelineDesc.renderState.depthStencilState.depthTestEnable = false;
-            pipelineDesc.renderState.depthStencilState.stencilEnable = false;
+        nvrhi::GraphicsPipelineDesc pipelineDesc = nvrhi::GraphicsPipelineDesc()
+            .setInputLayout(m_InputLayout)
+            .addBindingLayout(m_BindingLayout)
+            .setVertexShader(m_VertexShader)
+            .setPixelShader(m_FragmentShader)
+            .setPrimType(nvrhi::PrimitiveType::TriangleList)
+            .setRenderState(nvrhi::RenderState()
+                .setDepthStencilState(nvrhi::DepthStencilState()
+                    .setDepthTestEnable(false)
+                    .setStencilEnable(false))
+                .setRasterState(nvrhi::RasterState()
+                    .setFrontCounterClockwise(true)));
 
-            auto pipeline = m_Device->GetDevice()->createGraphicsPipeline(pipelineDesc, framebuffer);
-            m_GraphicsPipelines.push_back(pipeline);
+        m_GraphicsPipeline = m_Device->GetDevice()->createGraphicsPipeline(pipelineDesc, m_Framebuffer);
 
-            int framebufferWidth, framebufferHeight;
-            m_Window->GetFramebufferSize(&framebufferWidth, &framebufferHeight);
+        int framebufferWidth, framebufferHeight;
+        m_Window->GetFramebufferSize(&framebufferWidth, &framebufferHeight);
 
-            nvrhi::GraphicsState graphicsState = nvrhi::GraphicsState()
-                .setPipeline(pipeline)
-                .setFramebuffer(framebuffer)
-                .addVertexBuffer(nvrhi::VertexBufferBinding(m_VertexBuffer))
-                .setIndexBuffer(nvrhi::IndexBufferBinding(m_IndexBuffer))
-                .addBindingSet(m_BindingSet)
-                .setViewport(nvrhi::ViewportState().addViewportAndScissorRect(nvrhi::Viewport(static_cast<float>(framebufferWidth), static_cast<float>(framebufferHeight))));
-            m_GraphicsStates.push_back(graphicsState);
-        }
+        m_GraphicsState = nvrhi::GraphicsState()
+            .setPipeline(m_GraphicsPipeline)
+            .setFramebuffer(m_Framebuffer)
+            .addVertexBuffer(nvrhi::VertexBufferBinding(m_VertexBuffer))
+            .setIndexBuffer(nvrhi::IndexBufferBinding(m_IndexBuffer))
+            .addBindingSet(m_BindingSet)
+            .setViewport(nvrhi::ViewportState().addViewportAndScissorRect(nvrhi::Viewport(static_cast<float>(framebufferWidth), static_cast<float>(framebufferHeight))));
     }
 }

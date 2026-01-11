@@ -11,6 +11,7 @@
 
 #include "VkMacros.h"
 #include "core/Macros.h"
+#include "nvrhi/utils.h"
 #include "util/IOUtils.h"
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
@@ -25,9 +26,9 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL DebugUtilsMessengerCallback(
     std::string message = "Vulkan: " + std::string(pCallbackData->pMessage);
 
     switch (messageSeverity) {
-        case vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose:
-            std::cout << "[VERBOSE] " << message << std::endl;
-            break;
+        //case vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose:
+        //    std::cout << "[VERBOSE] " << message << std::endl;
+        //    break;
         case vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo:
             std::cout << "[INFO] " << message << std::endl;
             break;
@@ -46,7 +47,7 @@ NAMESPACE {
     vk::SurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats) {
         for (const auto& availableFormat : availableFormats) {
             //if (availableFormat.format == vk::Format::eB8G8R8A8Srgb && availableFormat.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear) {
-            if (availableFormat.format == vk::Format::eR8G8B8A8Unorm && availableFormat.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear) {
+            if (availableFormat.format == vk::Format::eR8G8B8A8Srgb && availableFormat.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear) {
                 return availableFormat;
             }
         }
@@ -69,7 +70,7 @@ NAMESPACE {
             return capabilities.currentExtent;
 
         int width, height;
-        glfwGetFramebufferSize(window->GetNativeWindow(), &width, &height);
+        window->GetFramebufferSize(&width, &height);
 
         vk::Extent2D actualExtent = {
             static_cast<uint32_t>(width),
@@ -83,7 +84,7 @@ NAMESPACE {
     }
 
     std::vector<SwapChainImage> CreateSwapChain(const Device* device, const Window* window, const vk::SurfaceKHR surface, RendererDataVk* rendererData) {
-        SwapChainSupportDetails swapChainSupport = DEVICE_DATA_FROM_BASE(device->GetDeviceData())->GetSwapChainSupport();
+        auto swapChainSupport = DEVICE_DATA_FROM_BASE(device->GetDeviceData())->GetSwapChainSupport();
 
         device->GetDevice()->waitForIdle();
 
@@ -131,18 +132,20 @@ NAMESPACE {
 
         std::vector<vk::Image> images = DEVICE_DATA_FROM_BASE(device->GetDeviceData())->logicalDevice.getSwapchainImagesKHR(rendererData->nativeSwapChain);
         std::vector<SwapChainImage> swapChainImages;
+
+        int imageIndex = 0;
         for (vk::Image image : images) {
             SwapChainImage sci{};
 
             nvrhi::TextureDesc textureDesc = nvrhi::TextureDesc()
                 .setDimension(nvrhi::TextureDimension::Texture2D)
-                .setFormat(nvrhi::Format::RGBA8_UNORM)
+                .setFormat(nvrhi::Format::SRGBA8_UNORM)
                 .setWidth(extent.width)
                 .setHeight(extent.height)
                 .setInitialState(nvrhi::ResourceStates::Present)
                 .setKeepInitialState(true)
                 .setIsRenderTarget(true)
-                .setDebugName("Swap chain image");
+                .setDebugName("SwapChainImage" + std::to_string(imageIndex++));
 
             sci.nvrhiHandle = device->GetDevice()->createHandleForNativeTexture(nvrhi::ObjectTypes::VK_Image, nvrhi::Object(image), textureDesc);
             swapChainImages.push_back(sci);
@@ -196,12 +199,12 @@ NAMESPACE {
             appInfo.engineVersion      = VK_MAKE_API_VERSION(0, 0, 1, 0);
             appInfo.apiVersion         = VK_API_VERSION_1_3;
 
-            std::vector<const char*> extensions;
+            std::vector<const char*> instanceExtensions;
             {
                 uint32_t glfwExtCount = 0;
                 const char** glfwExts = glfwGetRequiredInstanceExtensions(&glfwExtCount);
                 if (glfwExts && glfwExtCount > 0) {
-                    extensions.assign(glfwExts, glfwExts + glfwExtCount);
+                    instanceExtensions.assign(glfwExts, glfwExts + glfwExtCount);
                 } else {
                     throw std::runtime_error("glfwGetRequiredInstanceExtensions returned no extensions");
                 }
@@ -245,14 +248,14 @@ NAMESPACE {
             bool enableDebugUtils = false;
 #ifdef _DEBUG
             if (isExtAvailable(vk::EXTDebugUtilsExtensionName)) {
-                extensions.emplace_back(vk::EXTDebugUtilsExtensionName);
+                instanceExtensions.emplace_back(vk::EXTDebugUtilsExtensionName);
                 enableDebugUtils = true;
             }
 #endif
 
 
             // Verify required extensions (GLFW + any we explicitly added above)
-            for (const char* requested : extensions) {
+            for (const char* requested : instanceExtensions) {
                 if (!isExtAvailable(requested)) {
                     // These are considered required because they've been added explicitly (e.g. by GLFW).
                     throw std::runtime_error(std::string("Required instance extension not available: ") + requested);
@@ -276,8 +279,8 @@ NAMESPACE {
 
             vk::InstanceCreateInfo createInfo{};
             createInfo.pApplicationInfo        = &appInfo;
-            createInfo.enabledExtensionCount   = static_cast<uint32_t>(extensions.size());
-            createInfo.ppEnabledExtensionNames = extensions.data();
+            createInfo.enabledExtensionCount   = static_cast<uint32_t>(instanceExtensions.size());
+            createInfo.ppEnabledExtensionNames = instanceExtensions.data();
             createInfo.enabledLayerCount       = static_cast<uint32_t>(layers.size());
             createInfo.ppEnabledLayerNames     = layers.empty() ? nullptr : layers.data();
             createInfo.pNext                   = enableDebugUtils ? &debugUtilsCreateInfo : nullptr;
@@ -374,13 +377,13 @@ NAMESPACE {
             try {
                 vk::Result res = DEVICE_DATA_FROM_BASE(m_Device->GetDeviceData())->presentQueue.presentKHR(&presentInfo);
 
-                if (res == vk::Result::eErrorOutOfDateKHR || res == vk::Result::eSuboptimalKHR) {
+                if (res == vk::Result::eErrorOutOfDateKHR) {
                     m_SwapChainImages = CreateSwapChain(m_Device, m_Window, RENDERER_DATA->surface, RENDERER_DATA);
                     m_SwapChainIndex = 0;
                     GenerateFramebuffers();
                     return;
                 }
-                if (res != vk::Result::eSuccess) {
+                if (res != vk::Result::eSuccess && res != vk::Result::eSuboptimalKHR) {
                     std::cerr << "Failed to present swap chain image: " << vk::to_string(res) << std::endl;
                     std::abort();
                 }

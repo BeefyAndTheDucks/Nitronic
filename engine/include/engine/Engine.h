@@ -17,7 +17,7 @@ NAMESPACE {
         Engine(int windowWidth, int windowHeight, const char* windowTitle, RenderingBackend backend = RenderingBackend::Vulkan);
         ~Engine();
 
-        void Run();
+        void Run() const;
     private:
         Window* m_Window;
         Renderer* m_Renderer;

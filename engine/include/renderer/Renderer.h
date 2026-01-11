@@ -12,6 +12,7 @@
 #include "core/Macros.h"
 
 #include "Device.h"
+#include "../../../external/glm/glm/mat4x4.hpp"
 #include "engine/Window.h"
 #include "util/IOUtils.h"
 
@@ -29,6 +30,12 @@ NAMESPACE {
     struct Vertex {
         float position[3];
         float texCoord[2];
+    };
+
+    struct alignas(16) FrameConstants {
+        glm::mat4 model;
+        glm::mat4 view;
+        glm::mat4 projection;
     };
 
     struct NvrhiMessageCallback : nvrhi::IMessageCallback
@@ -76,6 +83,16 @@ NAMESPACE {
             return readFile(path);
         }
 
+        [[nodiscard]] nvrhi::ShaderHandle LoadShader(const std::string &shaderFile, const ShaderType shaderType) const {
+            const auto shaderCode = LoadShaderCode(shaderFile, shaderType);
+
+            const std::string debugName = shaderFile + "." + ShaderTypeToString(shaderType);
+
+            return m_Device->GetDevice()->createShader(
+                nvrhi::ShaderDesc().setShaderType(ShaderTypeToNvrhiShaderType(shaderType)).setDebugName(debugName), shaderCode.data(),
+                shaderCode.size());
+        }
+
         void GenerateFramebuffers();
     private:
         RenderingBackend m_Backend;
@@ -87,13 +104,13 @@ NAMESPACE {
         std::vector<SwapChainImage> m_SwapChainImages;
         uint32_t m_SwapChainIndex = static_cast<uint32_t>(-1);
 
-        std::vector<nvrhi::FramebufferHandle> m_Framebuffers;
+        nvrhi::FramebufferHandle m_Framebuffer;
 
         std::queue<nvrhi::EventQueryHandle> m_FramesInFlight;
         std::vector<nvrhi::EventQueryHandle> m_QueryPool;
 
-        std::vector<nvrhi::GraphicsPipelineHandle> m_GraphicsPipelines;
-        std::vector<nvrhi::GraphicsState> m_GraphicsStates;
+        nvrhi::GraphicsPipelineHandle m_GraphicsPipeline;
+        nvrhi::GraphicsState m_GraphicsState;
 
         nvrhi::BindingSetHandle m_BindingSet;
         nvrhi::BindingLayoutHandle m_BindingLayout;
@@ -101,11 +118,12 @@ NAMESPACE {
 
         // Shaders
         nvrhi::ShaderHandle m_VertexShader;
-        nvrhi::ShaderHandle m_PixelShader;
+        nvrhi::ShaderHandle m_FragmentShader;
 
         // Buffers
         nvrhi::BufferHandle m_VertexBuffer;
         nvrhi::BufferHandle m_IndexBuffer;
+        nvrhi::BufferHandle m_FrameConstantsBuffer;
     };
 
 }

@@ -8,7 +8,8 @@ endif()
 
 target_link_libraries(engine
         PUBLIC glfw
-        PUBLIC nvrhi)
+        PUBLIC nvrhi
+        PUBLIC glm)
 
 if (NITRONIC_WITH_VULKAN)
     file(GLOB_RECURSE VULKAN_ENGINE_SOURCES src/platform/vulkan/*.cpp)

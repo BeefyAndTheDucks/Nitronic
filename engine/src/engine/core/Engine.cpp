@@ -15,11 +15,11 @@ NAMESPACE {
     }
 
     Engine::~Engine() {
-        delete m_Window;
         delete m_Renderer;
+        delete m_Window;
     }
 
-    void Engine::Run() {
+    void Engine::Run() const {
         using clock = std::chrono::high_resolution_clock;
         using time_point = std::chrono::time_point<clock>;
 

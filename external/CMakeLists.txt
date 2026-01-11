@@ -15,3 +15,5 @@ set(NVRHI_WITH_DX12 "${NITRONIC_WITH_DX12}" CACHE BOOL "" FORCE)
 set(NVRHI_WITH_VULKAN "${NITRONIC_WITH_VULKAN}" CACHE BOOL "" FORCE)
 
 add_subdirectory(nvrhi)
+
+add_subdirectory(glm)

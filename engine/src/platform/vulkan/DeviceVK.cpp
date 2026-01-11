@@ -166,6 +166,9 @@ NAMESPACE {
         deviceDesc.graphicsQueueIndex = DEVICE_DATA->queueFamilyIndices.graphicsFamily.value();
         deviceDesc.deviceExtensions = deviceExtensions.data();
         deviceDesc.numDeviceExtensions = std::size(deviceExtensions);
+        deviceDesc.instance = RENDERER_DATA->instance;
+        deviceDesc.instanceExtensions = RENDERER_DATA->instanceExtensions.data();
+        deviceDesc.numInstanceExtensions = RENDERER_DATA->instanceExtensions.size();
 
         nvrhi::DeviceHandle nvrhiDevice = nvrhi::vulkan::createDevice(deviceDesc);
 

@@ -58,7 +58,10 @@ endfunction()
 add_slang_shader(Basic vertex vertexMain)
 add_slang_shader(Basic fragment fragmentMain)
 
-add_custom_target(compile_shaders ALL DEPENDS ${ALL_SHADER_OUTPUTS})
+add_custom_target(
+        compile_shaders ALL DEPENDS ${ALL_SHADER_OUTPUTS}
+        COMMENT "Building Shaders..."
+)
 
 add_dependencies(engine compile_shaders)
 

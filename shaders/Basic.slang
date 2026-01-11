@@ -1,3 +1,11 @@
+[[vk::binding(0)]]
+cbuffer CB : register(b0)
+{
+    float4x4 model;
+    float4x4 view;
+    float4x4 projection;
+};
+
 struct Varyings
 {
     float4 pos : SV_Position;
@@ -24,7 +32,9 @@ Varyings vertexMain(
 {
     Varyings output;
 
-    output.pos = float4(input.position, 1.0);
+    float4x4 mvp = mul(projection, mul(view, model));
+    output.pos = mul(mvp, float4(input.position, 1.0));
+    //output.pos = float4(input.position, 1.0);
     output.color = colors[vertexIndex % 4];
 
     return output;
