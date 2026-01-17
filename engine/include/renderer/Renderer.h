@@ -104,13 +104,13 @@ NAMESPACE {
         std::vector<SwapChainImage> m_SwapChainImages;
         uint32_t m_SwapChainIndex = static_cast<uint32_t>(-1);
 
-        nvrhi::FramebufferHandle m_Framebuffer;
+        std::vector<nvrhi::FramebufferHandle> m_Framebuffers;
 
         std::queue<nvrhi::EventQueryHandle> m_FramesInFlight;
         std::vector<nvrhi::EventQueryHandle> m_QueryPool;
 
-        nvrhi::GraphicsPipelineHandle m_GraphicsPipeline;
-        nvrhi::GraphicsState m_GraphicsState;
+        std::vector<nvrhi::GraphicsPipelineHandle> m_GraphicsPipelines;
+        std::vector<nvrhi::GraphicsState> m_GraphicsStates;
 
         nvrhi::BindingSetHandle m_BindingSet;
         nvrhi::BindingLayoutHandle m_BindingLayout;
@@ -124,6 +124,9 @@ NAMESPACE {
         nvrhi::BufferHandle m_VertexBuffer;
         nvrhi::BufferHandle m_IndexBuffer;
         nvrhi::BufferHandle m_FrameConstantsBuffer;
+
+        // random stuff
+        double m_TimePassed = 0.0f;
     };
 
 }

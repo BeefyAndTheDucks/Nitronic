@@ -9,11 +9,13 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 include(CMakeDependentOption)
 
-set(NITRONIC_WITH_DX11 OFF)
-set(NITRONIC_WITH_DX12 OFF)
-#cmake_dependent_option(NITRONIC_WITH_DX11 "Enable the DX11 version of Nitronic" ON "WIN32 AND MSVC" OFF)
-#cmake_dependent_option(NITRONIC_WITH_DX12 "Enable the DX12 version of Nitronic" ON "WIN32 AND MSVC" OFF)
+#set(NITRONIC_WITH_DX11 OFF)
+#set(NITRONIC_WITH_DX12 OFF)
+cmake_dependent_option(NITRONIC_WITH_DX11 "Enable the DX11 version of Nitronic" ON "WIN32 AND MSVC" OFF)
+cmake_dependent_option(NITRONIC_WITH_DX12 "Enable the DX12 version of Nitronic" ON "WIN32 AND MSVC" OFF)
 option(NITRONIC_WITH_VULKAN "Enable the Vulkan version of Nitronic" ON)
+
+message("-- Nitronic Graphics APIs: Vulkan - ${NITRONIC_WITH_VULKAN}, DX12 - ${NITRONIC_WITH_DX12}, DX11 - ${NITRONIC_WITH_DX11}")
 
 if (WIN32)
     option(NITRONIC_FORCE_DISCRETE_GPU "Declare symbols to make the OS run the app on discrete GPU on laptops" OFF)
@@ -37,6 +39,7 @@ function(add_slang_shader SHADER_NAME STAGE ENTRY_POINT)
     set(SPIRV_OUT "${CMAKE_BINARY_DIR}/${SHADERS_DIR}/${SHADER_NAME}.${STAGE}.spv")
     set(DXIL_OUT "${CMAKE_BINARY_DIR}/${SHADERS_DIR}/${SHADER_NAME}.${STAGE}.dxil")
 
+    # Get shifts from nvrhi.h in the VulkanBindingOffsets structure.
     add_custom_command(
             OUTPUT "${SPIRV_OUT}" "${DXIL_OUT}"
             COMMAND slangc "${SLANG_SRC}"
@@ -47,6 +50,10 @@ function(add_slang_shader SHADER_NAME STAGE ENTRY_POINT)
                     -entry "${ENTRY_POINT}"
                     -I "${SHADERS_DIR}/include"
                     -matrix-layout-column-major
+                    -fvk-t-shift 0 0
+                    -fvk-s-shift 128 0
+                    -fvk-b-shift 256 0
+                    -fvk-u-shift 384 0
             DEPENDS "${SLANG_SRC}"
             VERBATIM
             COMMENT "Building Shader: ${SHADER_NAME} [${ENTRY_POINT}]"
@@ -58,8 +65,23 @@ endfunction()
 add_slang_shader(Basic vertex vertexMain)
 add_slang_shader(Basic fragment fragmentMain)
 
+set(CLEANUP_SCRIPT "${CMAKE_BINARY_DIR}/cleanup_shaders.cmake")
+file(WRITE "${CLEANUP_SCRIPT}" "
+    file(GLOB_RECURSE EXISTING_BINARIES \"${CMAKE_BINARY_DIR}/${SHADERS_DIR}/*.spv\" \"${CMAKE_BINARY_DIR}/${SHADERS_DIR}/*.dxil\")
+    set(TRACKED_BINARIES \"${ALL_SHADER_OUTPUTS}\")
+    foreach(FILE IN LISTS EXISTING_BINARIES)
+        # Convert path to CMake style for reliable comparison
+        file(TO_CMAKE_PATH \"\${FILE}\" FILE_PATH)
+        if (NOT FILE_PATH IN_LIST TRACKED_BINARIES)
+            message(STATUS \"Removing orphaned shader binary: \${FILE_PATH}\")
+            file(REMOVE \"\${FILE_PATH}\")
+        endif()
+    endforeach()
+")
+
 add_custom_target(
         compile_shaders ALL DEPENDS ${ALL_SHADER_OUTPUTS}
+        COMMAND ${CMAKE_COMMAND} -P "${CLEANUP_SCRIPT}" # Remove shaders with no source file
         COMMENT "Building Shaders..."
 )
 

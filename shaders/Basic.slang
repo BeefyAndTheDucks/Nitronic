@@ -26,16 +26,16 @@ static const float3 colors[4] = {
 };
 
 [shader("vertex")]
-Varyings vertexMain(
-    VertexInput input,
-    uint vertexIndex : SV_VertexID)
+Varyings vertexMain(VertexInput input)
 {
     Varyings output;
 
     float4x4 mvp = mul(projection, mul(view, model));
     output.pos = mul(mvp, float4(input.position, 1.0));
-    //output.pos = float4(input.position, 1.0);
-    output.color = colors[vertexIndex % 4];
+
+    // lets use texcoord to index into our color array
+    int flattened = (int)input.texCoord.x + (int)input.texCoord.y * 2;
+    output.color = colors[flattened];
 
     return output;
 }
