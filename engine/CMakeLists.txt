@@ -8,7 +8,6 @@ endif()
 
 target_link_libraries(engine
         PUBLIC glfw
-        PUBLIC nvrhi
         PUBLIC glm)
 
 if (NITRONIC_WITH_VULKAN)
@@ -47,3 +46,5 @@ if(NITRONIC_WITH_DX12)
     endif()
     target_link_libraries(engine PUBLIC d3d12 dxgi dxguid)
 endif()
+
+target_link_libraries(engine PUBLIC nvrhi)

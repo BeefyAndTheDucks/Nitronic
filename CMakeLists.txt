@@ -17,10 +17,6 @@ option(NITRONIC_WITH_VULKAN "Enable the Vulkan version of Nitronic" ON)
 
 message("-- Nitronic Graphics APIs: Vulkan - ${NITRONIC_WITH_VULKAN}, DX12 - ${NITRONIC_WITH_DX12}, DX11 - ${NITRONIC_WITH_DX11}")
 
-if (WIN32)
-    option(NITRONIC_FORCE_DISCRETE_GPU "Declare symbols to make the OS run the app on discrete GPU on laptops" OFF)
-endif()
-
 add_subdirectory(external)
 
 add_subdirectory(engine)
