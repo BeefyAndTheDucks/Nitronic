@@ -6,6 +6,7 @@
 
 #include <chrono>
 #include <iostream>
+#include <numeric>
 
 NAMESPACE {
 
@@ -19,7 +20,7 @@ NAMESPACE {
         delete m_Window;
     }
 
-    void Engine::Run() const {
+    void Engine::Run() {
         using clock = std::chrono::high_resolution_clock;
         using time_point = std::chrono::time_point<clock>;
 
@@ -28,13 +29,23 @@ NAMESPACE {
         while (!m_Window->ShouldClose()) {
             time_point currentTime = clock::now();
             std::chrono::duration<double> elapsed = currentTime - previousTime;
-            double deltaTime = elapsed.count(); // seconds
+            const double deltaTime = elapsed.count(); // seconds
+            m_TotalTimePassed += deltaTime;
+            m_FPSCalcTimePassed += deltaTime;
+            m_DeltaTimes.push_back(deltaTime);
             previousTime = currentTime;
             //std::cout << "DeltaTime: " << deltaTime << "s (" << 1.0f / deltaTime << "FPS)" << std::endl;
 
-            std::stringstream ss;
-            ss << "Nitronic Engine - " << 1.0f / deltaTime << "FPS";
-            m_Window->SetTitle(ss.str().c_str());
+            if (m_FPSCalcTimePassed >= 1.0) {
+                m_FPSCalcTimePassed = 0;
+                const double mean = std::accumulate(m_DeltaTimes.begin(), m_DeltaTimes.end(), 0.0) / m_DeltaTimes.size();
+                m_DeltaTimes.clear();
+
+                std::stringstream ss;
+                ss << "Nitronic Engine - " << 1.0f / mean << "FPS";
+                m_Window->SetTitle(ss.str().c_str());
+            }
+
             Window::PollEvents();
 
             m_Renderer->Render(deltaTime);

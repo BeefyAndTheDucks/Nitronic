@@ -48,7 +48,7 @@
             CREATE_BACKEND_CASE_VK(functionName, __VA_ARGS__) \
             CREATE_BACKEND_CASE_DX11(functionName, __VA_ARGS__) \
             CREATE_BACKEND_CASE_DX12(functionName, __VA_ARGS__) \
-            default: return decltype(functionName##Vk(__VA_ARGS__)){}; \
+            default: std::abort(); \
         } \
     }())
 

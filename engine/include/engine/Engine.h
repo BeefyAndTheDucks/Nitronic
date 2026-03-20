@@ -17,10 +17,15 @@ NAMESPACE {
         Engine(int windowWidth, int windowHeight, const char* windowTitle, RenderingBackend backend = RenderingBackend::Vulkan);
         ~Engine();
 
-        void Run() const;
+        void Run();
     private:
         Window* m_Window;
         Renderer* m_Renderer;
+
+        double m_TotalTimePassed;
+        double m_FPSCalcTimePassed;
+
+        std::vector<double> m_DeltaTimes;
     };
 
 }

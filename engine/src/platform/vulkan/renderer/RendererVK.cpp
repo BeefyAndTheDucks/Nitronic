@@ -35,6 +35,8 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL DebugUtilsMessengerCallback(
         case vk::DebugUtilsMessageSeverityFlagBitsEXT::eError:
             std::cerr << "[ERROR] " << message << std::endl;
             break;
+        default:
+            break;
     }
     return VK_FALSE;
 }
@@ -199,9 +201,9 @@ NAMESPACE {
             std::vector<const char*> instanceExtensions;
             {
                 uint32_t glfwExtCount = 0;
-                const char** glfwExts = glfwGetRequiredInstanceExtensions(&glfwExtCount);
-                if (glfwExts && glfwExtCount > 0) {
-                    instanceExtensions.assign(glfwExts, glfwExts + glfwExtCount);
+                const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtCount);
+                if (glfwExtensions && glfwExtCount > 0) {
+                    instanceExtensions.assign(glfwExtensions, glfwExtensions + glfwExtCount);
                 } else {
                     throw std::runtime_error("glfwGetRequiredInstanceExtensions returned no extensions");
                 }
@@ -233,9 +235,9 @@ NAMESPACE {
             }
 
             // Enumerate all available instance extensions once
-            const auto availableExts = vk::enumerateInstanceExtensionProperties();
+            const auto availableExtensions = vk::enumerateInstanceExtensionProperties();
             auto isExtAvailable = [&](const char* name) -> bool {
-                for (const auto& ep : availableExts) {
+                for (const auto& ep : availableExtensions) {
                     if (std::strcmp(ep.extensionName, name) == 0)
                         return true;
                 }
@@ -250,11 +252,10 @@ NAMESPACE {
             }
 #endif
 
-
             // Verify required extensions (GLFW + any we explicitly added above)
             for (const char* requested : instanceExtensions) {
                 if (!isExtAvailable(requested)) {
-                    // These are considered required because they've been added explicitly (e.g. by GLFW).
+                    // These are considered required because they've been added explicitly (e.g., by GLFW).
                     throw std::runtime_error(std::string("Required instance extension not available: ") + requested);
                 }
             }
@@ -344,7 +345,7 @@ NAMESPACE {
 
         if (res == vk::Result::eSuccess || res == vk::Result::eSuboptimalKHR) // Suboptimal is considered a success
         {
-            nvrhi::vulkan::DeviceHandle vulkanDevice = static_cast<nvrhi::vulkan::IDevice*>(
+            const nvrhi::vulkan::DeviceHandle vulkanDevice = static_cast<nvrhi::vulkan::IDevice*>(
                 m_Device->GetDevice()->getNativeObject(nvrhi::ObjectTypes::Nvrhi_VK_Device));
             // Schedule the wait. The actual wait operation will be submitted when the app executes any command list.
             vulkanDevice->queueWaitForSemaphore(nvrhi::CommandQueue::Graphics, semaphore, 0);
@@ -352,7 +353,7 @@ NAMESPACE {
     }
 
     void Renderer::PresentFrameVk() {
-        nvrhi::vulkan::DeviceHandle vulkanNvrhiDevice = static_cast<nvrhi::vulkan::IDevice*>(
+        const nvrhi::vulkan::DeviceHandle vulkanNvrhiDevice = static_cast<nvrhi::vulkan::IDevice*>(
                 m_Device->GetDevice()->getNativeObject(nvrhi::ObjectTypes::Nvrhi_VK_Device));
 
         vk::PresentInfoKHR presentInfo{};

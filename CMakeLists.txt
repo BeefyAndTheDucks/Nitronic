@@ -35,12 +35,25 @@ function(add_slang_shader SHADER_NAME SHADER_TYPE STAGE ENTRY_POINT)
     set(SPIRV_OUT "${CMAKE_BINARY_DIR}/${SHADERS_DIR}/${SHADER_NAME}.${STAGE}.spv")
     set(DXIL_OUT "${CMAKE_BINARY_DIR}/${SHADERS_DIR}/${SHADER_NAME}.${STAGE}.dxil")
 
+    if(WIN32)
+        set(SHADER_TARGETS
+                -target spirv -o "${SPIRV_OUT}"
+                -target dxil  -o "${DXIL_OUT}"
+        )
+        set(SHADER_OUTPUTS "${SPIRV_OUT}" "${DXIL_OUT}")
+    else()
+        set(SHADER_TARGETS
+                -target spirv -o "${SPIRV_OUT}"
+        )
+        set(SHADER_OUTPUTS "${SPIRV_OUT}")
+    endif()
+
     # Get shifts from nvrhi.h in the VulkanBindingOffsets structure.
     add_custom_command(
-            OUTPUT "${SPIRV_OUT}" "${DXIL_OUT}"
+            OUTPUT ${SHADER_OUTPUTS}
+            COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/${SHADERS_DIR}"
             COMMAND slangc "${SLANG_SRC}"
-                    -target spirv -o "${SPIRV_OUT}"
-                    -target dxil -o "${DXIL_OUT}"
+                    ${SHADER_TARGETS}
                     -profile sm_6_0
                     -stage "${STAGE}"
                     -entry "${ENTRY_POINT}"
@@ -55,7 +68,7 @@ function(add_slang_shader SHADER_NAME SHADER_TYPE STAGE ENTRY_POINT)
             COMMENT "Building Shader: ${SHADER_NAME} [${ENTRY_POINT}]"
     )
 
-    set(ALL_SHADER_OUTPUTS ${ALL_SHADER_OUTPUTS} "${SPIRV_OUT}" "${DXIL_OUT}" PARENT_SCOPE)
+    set(ALL_SHADER_OUTPUTS ${ALL_SHADER_OUTPUTS} ${SHADER_OUTPUTS} PARENT_SCOPE)
 endfunction()
 
 add_slang_shader(Basic slang vertex vertexMain)
@@ -63,6 +76,7 @@ add_slang_shader(Basic slang fragment fragmentMain)
 
 set(CLEANUP_SCRIPT "${CMAKE_BINARY_DIR}/cleanup_shaders.cmake")
 file(WRITE "${CLEANUP_SCRIPT}" "
+    cmake_policy(SET CMP0057 NEW)
     file(GLOB_RECURSE EXISTING_BINARIES \"${CMAKE_BINARY_DIR}/${SHADERS_DIR}/*.spv\" \"${CMAKE_BINARY_DIR}/${SHADERS_DIR}/*.dxil\")
     set(TRACKED_BINARIES \"${ALL_SHADER_OUTPUTS}\")
     foreach(FILE IN LISTS EXISTING_BINARIES)
