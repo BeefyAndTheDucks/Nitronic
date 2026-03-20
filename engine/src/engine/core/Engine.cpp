@@ -10,7 +10,8 @@
 
 NAMESPACE {
 
-    Engine::Engine(const int windowWidth, const int windowHeight, const char* windowTitle, RenderingBackend backend) {
+    Engine::Engine(const int windowWidth, const int windowHeight, const char* windowTitle, RenderingBackend backend)
+        : m_TotalTimePassed(0), m_FPSCalcTimePassed(0) {
         m_Window = new Window(windowWidth, windowHeight, windowTitle);
         m_Renderer = new Renderer(backend, m_Window);
     }
