@@ -205,9 +205,12 @@ NAMESPACE {
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
         ImGui::Begin("Game");
         const ImVec2 windowSize = ImGui::GetContentRegionAvail();
-        if (windowSize.x != m_FramebufferWidth || windowSize.y != m_FramebufferHeight)
-            RegenerateFrambuffers(windowSize.x, windowSize.y);
-        ImGui::Image(m_ImGuiFramebufferTextures[m_SwapChainIndex].textureID, windowSize);
+        const bool validWindow = windowSize.x > 0 && windowSize.y > 0;
+        if (validWindow) {
+            if (windowSize.x != m_FramebufferWidth || windowSize.y != m_FramebufferHeight)
+                RegenerateFrambuffers(windowSize.x, windowSize.y);
+            ImGui::Image(m_ImGuiFramebufferTextures[m_SwapChainIndex].textureID, windowSize);
+        }
         ImGui::End();
         ImGui::PopStyleVar();
 
@@ -231,13 +234,15 @@ NAMESPACE {
         cpuFrameConstants.projection    = glm::perspective(glm::radians(45.0f), gameWindowAspect, 0.1f, 100.0f);
         commandList->writeBuffer(m_FrameConstantsBuffer, &cpuFrameConstants, sizeof(cpuFrameConstants));
 
-        nvrhi::utils::ClearColorAttachment(commandList, m_Framebuffers[m_SwapChainIndex], 0, nvrhi::Color(1, 1, 1, 1));
+        if (validWindow) {
+            nvrhi::utils::ClearColorAttachment(commandList, m_Framebuffers[m_SwapChainIndex], 0, nvrhi::Color(1, 1, 1, 1));
 
-        commandList->setGraphicsState(m_GraphicsStates[m_SwapChainIndex]);
+            commandList->setGraphicsState(m_GraphicsStates[m_SwapChainIndex]);
 
-        nvrhi::DrawArguments drawArgs{};
-        drawArgs.vertexCount = static_cast<uint32_t>(std::size(g_Indices));
-        commandList->drawIndexed(drawArgs);
+            nvrhi::DrawArguments drawArgs{};
+            drawArgs.vertexCount = static_cast<uint32_t>(std::size(g_Indices));
+            commandList->drawIndexed(drawArgs);
+        }
 
         commandList->setTextureState(m_ImGuiFramebufferTextures[m_SwapChainIndex].texture, nvrhi::AllSubresources, nvrhi::ResourceStates::ShaderResource);
 
@@ -271,6 +276,7 @@ NAMESPACE {
         // same number of images as the swapchain
         const nvrhi::TextureDesc textureDesc = nvrhi::TextureDesc()
             .setDimension(nvrhi::TextureDimension::Texture2D)
+            .setDebugName("ImGui Window Render Target")
             .setFormat(nvrhi::Format::SBGRA8_UNORM)
             .setWidth(static_cast<uint32_t>(m_FramebufferWidth))
             .setHeight(static_cast<uint32_t>(m_FramebufferHeight))

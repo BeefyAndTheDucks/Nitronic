@@ -36,13 +36,13 @@ NAMESPACE {
             previousTime = currentTime;
             //std::cout << "DeltaTime: " << deltaTime << "s (" << 1.0f / deltaTime << "FPS)" << std::endl;
 
-            if (m_FPSCalcTimePassed >= 1.0) {
+            if (m_FPSCalcTimePassed >= 0.1) {
                 m_FPSCalcTimePassed = 0;
                 const double mean = std::accumulate(m_DeltaTimes.begin(), m_DeltaTimes.end(), 0.0) / m_DeltaTimes.size();
                 m_DeltaTimes.clear();
 
                 std::stringstream ss;
-                ss << "Nitronic Engine - " << 1.0f / mean << "FPS";
+                ss << "Nitronic Engine - " << 1.0f / mean << "FPS (" << mean << "ms)";
                 m_Window->SetTitle(ss.str().c_str());
             }
 
