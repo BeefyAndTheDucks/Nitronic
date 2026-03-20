@@ -38,6 +38,8 @@ NAMESPACE {
             Window::PollEvents();
 
             m_Renderer->Render(deltaTime);
+
+            m_Window->SwapBuffers();
         }
     }
 

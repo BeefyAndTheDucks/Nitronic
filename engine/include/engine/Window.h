@@ -5,7 +5,7 @@
 #ifndef NITRONIC_WINDOW_H
 #define NITRONIC_WINDOW_H
 #define GLFW_INCLUDE_NONE
-#include <GLFW/glfw3.h>
+#include "GlfwInclude.h"
 
 #include "core/Macros.h"
 
@@ -17,6 +17,9 @@ NAMESPACE {
         ~Window();
 
         static void PollEvents();
+
+        void SwapBuffers() const;
+
         [[nodiscard]] bool ShouldClose() const;
 
         [[nodiscard]] GLFWwindow* GetNativeWindow() const { return m_Window; }

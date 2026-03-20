@@ -1,5 +1,5 @@
 [[vk::binding(0)]]
-cbuffer CB : register(b0)
+cbuffer FrameConstants : register(b0)
 {
     float4x4 model;
     float4x4 view;

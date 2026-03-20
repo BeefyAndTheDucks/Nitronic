@@ -30,8 +30,8 @@ set(SHADERS_DIR "shaders")
 set(ASSETS_DIR "assets")
 
 set(ALL_SHADER_OUTPUTS "")
-function(add_slang_shader SHADER_NAME STAGE ENTRY_POINT)
-    set(SLANG_SRC "${CMAKE_CURRENT_SOURCE_DIR}/${SHADERS_DIR}/${SHADER_NAME}.slang")
+function(add_slang_shader SHADER_NAME SHADER_TYPE STAGE ENTRY_POINT)
+    set(SLANG_SRC "${CMAKE_CURRENT_SOURCE_DIR}/${SHADERS_DIR}/${SHADER_NAME}.${SHADER_TYPE}")
     set(SPIRV_OUT "${CMAKE_BINARY_DIR}/${SHADERS_DIR}/${SHADER_NAME}.${STAGE}.spv")
     set(DXIL_OUT "${CMAKE_BINARY_DIR}/${SHADERS_DIR}/${SHADER_NAME}.${STAGE}.dxil")
 
@@ -58,8 +58,8 @@ function(add_slang_shader SHADER_NAME STAGE ENTRY_POINT)
     set(ALL_SHADER_OUTPUTS ${ALL_SHADER_OUTPUTS} "${SPIRV_OUT}" "${DXIL_OUT}" PARENT_SCOPE)
 endfunction()
 
-add_slang_shader(Basic vertex vertexMain)
-add_slang_shader(Basic fragment fragmentMain)
+add_slang_shader(Basic slang vertex vertexMain)
+add_slang_shader(Basic slang fragment fragmentMain)
 
 set(CLEANUP_SCRIPT "${CMAKE_BINARY_DIR}/cleanup_shaders.cmake")
 file(WRITE "${CLEANUP_SCRIPT}" "

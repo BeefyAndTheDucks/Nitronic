@@ -4,15 +4,12 @@
 
 #include <iostream>
 
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
+#include "engine/GlfwInclude.h"
 
 #include "RendererVK.h"
 
 #include "VkMacros.h"
 #include "core/Macros.h"
-#include "nvrhi/utils.h"
-#include "util/IOUtils.h"
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
@@ -47,7 +44,7 @@ NAMESPACE {
     vk::SurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats) {
         for (const auto& availableFormat : availableFormats) {
             //if (availableFormat.format == vk::Format::eB8G8R8A8Srgb && availableFormat.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear) {
-            if (availableFormat.format == vk::Format::eR8G8B8A8Srgb && availableFormat.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear) {
+            if (availableFormat.format == vk::Format::eB8G8R8A8Unorm/* && availableFormat.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear*/) {
                 return availableFormat;
             }
         }
@@ -139,7 +136,7 @@ NAMESPACE {
 
             nvrhi::TextureDesc textureDesc = nvrhi::TextureDesc()
                 .setDimension(nvrhi::TextureDimension::Texture2D)
-                .setFormat(nvrhi::Format::SRGBA8_UNORM)
+                .setFormat(nvrhi::Format::BGRA8_UNORM)
                 .setWidth(extent.width)
                 .setHeight(extent.height)
                 .setInitialState(nvrhi::ResourceStates::Present)
@@ -336,7 +333,7 @@ NAMESPACE {
             {
                 m_SwapChainImages = CreateSwapChain(m_Device, m_Window, RENDERER_DATA->surface, RENDERER_DATA);
                 m_SwapChainIndex = 0;
-                GenerateFramebuffers();
+                GenerateBackbuffers();
             }
             else
                 break;
@@ -380,7 +377,7 @@ NAMESPACE {
                 if (res == vk::Result::eErrorOutOfDateKHR) {
                     m_SwapChainImages = CreateSwapChain(m_Device, m_Window, RENDERER_DATA->surface, RENDERER_DATA);
                     m_SwapChainIndex = 0;
-                    GenerateFramebuffers();
+                    GenerateBackbuffers();
                     return;
                 }
                 if (res != vk::Result::eSuccess && res != vk::Result::eSuboptimalKHR) {

@@ -7,12 +7,13 @@
 #include <filesystem>
 #include <iostream>
 #include <queue>
+#include <glm/mat4x4.hpp>
 
 #include "core/Enums.h"
 #include "core/Macros.h"
 
 #include "Device.h"
-#include "../../../external/glm/glm/mat4x4.hpp"
+#include "ImGuiRenderer.h"
 #include "engine/Window.h"
 #include "util/IOUtils.h"
 
@@ -30,6 +31,12 @@ NAMESPACE {
     struct Vertex {
         float position[3];
         float texCoord[2];
+    };
+
+    struct ImGuiVertex {
+        float position[2];
+        float uv[2];
+        float color[3];
     };
 
     struct alignas(16) FrameConstants {
@@ -57,6 +64,11 @@ NAMESPACE {
         ~Renderer();
 
         void Render(double deltaTime);
+
+        void RegenerateFrambuffers(float requestedWidth, float requestedHeight);
+
+        [[nodiscard]] RendererData* GetRendererData() const { return m_RendererData; }
+        [[nodiscard]] Device* GetDevice() const { return m_Device; }
     private:
         CREATE_BACKEND_FUNCTIONS(void, Init)
         CREATE_BACKEND_FUNCTIONS(void, InitAfterDeviceCreation)
@@ -93,7 +105,7 @@ NAMESPACE {
                 shaderCode.size());
         }
 
-        void GenerateFramebuffers();
+        void GenerateBackbuffers();
     private:
         RenderingBackend m_Backend;
         RendererData* m_RendererData;
@@ -104,10 +116,16 @@ NAMESPACE {
         std::vector<SwapChainImage> m_SwapChainImages;
         uint32_t m_SwapChainIndex = static_cast<uint32_t>(-1);
 
+        std::vector<nvrhi::FramebufferHandle> m_Backbuffers;
+
         std::vector<nvrhi::FramebufferHandle> m_Framebuffers;
+        float m_FramebufferWidth = -1, m_FramebufferHeight = -1;
 
         std::queue<nvrhi::EventQueryHandle> m_FramesInFlight;
         std::vector<nvrhi::EventQueryHandle> m_QueryPool;
+
+        std::vector<nvrhi::GraphicsPipelineHandle> m_ImGuiGraphicsPipelines;
+        std::vector<nvrhi::GraphicsState> m_ImGuiGraphicsStates;
 
         std::vector<nvrhi::GraphicsPipelineHandle> m_GraphicsPipelines;
         std::vector<nvrhi::GraphicsState> m_GraphicsStates;
@@ -124,6 +142,14 @@ NAMESPACE {
         nvrhi::BufferHandle m_VertexBuffer;
         nvrhi::BufferHandle m_IndexBuffer;
         nvrhi::BufferHandle m_FrameConstantsBuffer;
+
+        // ImGui
+        ImGuiRenderer* m_ImGuiRenderer;
+        std::vector<ImGuiTexture> m_ImGuiFramebufferTextures;
+        bool m_HasGeneratedImGuiFramebuffer;
+
+        // Textures
+        nvrhi::SamplerHandle m_Sampler;
 
         // random stuff
         double m_TimePassed = 0.0f;

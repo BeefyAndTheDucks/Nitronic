@@ -16,6 +16,10 @@ NAMESPACE {
         virtual ~DeviceData() = default;
     };
 
+    struct ImGuiRendererData {
+        virtual ~ImGuiRendererData() = default;
+    };
+
 }
 
 #endif //NITRONIC_RENDERERTYPES_H

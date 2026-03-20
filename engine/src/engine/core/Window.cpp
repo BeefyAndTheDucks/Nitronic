@@ -23,8 +23,6 @@ NAMESPACE {
             glfwTerminate();
             throw std::runtime_error("Failed to create GLFW window");
         }
-
-        glfwSetWindowAspectRatio(m_Window, 16, 9);
     }
 
     Window::~Window() {
@@ -34,6 +32,10 @@ NAMESPACE {
 
     void Window::PollEvents() {
         glfwPollEvents();
+    }
+
+    void Window::SwapBuffers() const {
+        glfwSwapBuffers(m_Window);
     }
 
     bool Window::ShouldClose() const {
