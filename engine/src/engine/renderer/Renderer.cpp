@@ -63,7 +63,7 @@ NAMESPACE {
     };
 
     Renderer::Renderer(const RenderingBackend backend, Window* window)
-        : m_Backend(backend), m_RendererData(nullptr), m_Window(window), m_HasGeneratedImGuiFramebuffer(false)
+        : m_Backend(backend), m_RendererData(nullptr), m_Window(window)
     {
         std::cout << "Using " << RenderingBackendToString(backend) << " backend." << std::endl;
 
@@ -71,8 +71,16 @@ NAMESPACE {
         m_Device = new Device(m_Backend, m_RendererData);
         CREATE_BACKEND_SWITCH(InitAfterDeviceCreation);
 
-        m_VertexShader = LoadShader("Basic", ShaderType::Vertex);
-        m_FragmentShader = LoadShader("Basic", ShaderType::Fragment);
+        m_ShaderCache.emplace(
+            m_Device->GetDevice(),
+            g_ShadersDirectory,
+            backend
+        );
+
+        m_PSOCache.emplace(m_Device->GetDevice(), *m_ShaderCache);
+
+        m_VertexShader = m_ShaderCache->getShader({"Basic", nvrhi::ShaderType::Vertex});
+        m_FragmentShader = m_ShaderCache->getShader({"Basic", nvrhi::ShaderType::Pixel});
 
         nvrhi::VertexAttributeDesc attributes[] = {
             nvrhi::VertexAttributeDesc()
@@ -153,8 +161,8 @@ NAMESPACE {
         m_ImGuiGraphicsStates.clear();
         m_GraphicsStates.clear();
 
-        m_ImGuiGraphicsPipelines.clear();
-        m_GraphicsPipelines.clear();
+        m_ImGuiGraphicsPipeline = nullptr;
+        m_GraphicsPipeline = nullptr;
 
         m_Framebuffers.clear();
         m_Backbuffers.clear();
@@ -175,6 +183,9 @@ NAMESPACE {
 
         for (auto& swapchain : m_SwapChainImages)
             swapchain.nvrhiHandle = nullptr;
+
+        m_PSOCache->clear();
+        m_ShaderCache->clear();
 
         m_Device->GetDevice()->runGarbageCollection();
 
@@ -249,7 +260,6 @@ NAMESPACE {
 
         m_ImGuiFramebufferTextures.clear();
         m_Framebuffers.clear();
-        m_GraphicsPipelines.clear();
         m_GraphicsStates.clear();
 
         // same number of images as the swapchain
@@ -271,26 +281,46 @@ NAMESPACE {
                 .addColorAttachment(texture);
             auto framebuffer = m_Device->GetDevice()->createFramebuffer(framebufferDesc);
             m_Framebuffers.push_back(framebuffer);
+        }
 
-            nvrhi::GraphicsPipelineDesc pipelineDesc = nvrhi::GraphicsPipelineDesc()
-                .setInputLayout(m_InputLayout)
-                .addBindingLayout(m_BindingLayout)
-                .setVertexShader(m_VertexShader)
-                .setPixelShader(m_FragmentShader)
-                .setPrimType(nvrhi::PrimitiveType::TriangleList)
-                .setRenderState(nvrhi::RenderState()
-                    .setDepthStencilState(nvrhi::DepthStencilState()
-                        .setDepthTestEnable(false)
-                        .setStencilEnable(false))
-                    .setRasterState(nvrhi::RasterState()
-                        .setFrontCounterClockwise(true)));
+        if (!m_HasGraphicsPipeline) {
+            nvrhi::RenderState renderState = nvrhi::RenderState()
+                .setDepthStencilState(nvrhi::DepthStencilState()
+                    .setDepthTestEnable(false)
+                    .setStencilEnable(false))
+                .setRasterState(nvrhi::RasterState()
+                    .setFrontCounterClockwise(true));
 
-            auto pipeline = m_Device->GetDevice()->createGraphicsPipeline(pipelineDesc, framebuffer);
-            m_GraphicsPipelines.push_back(pipeline);
+            std::vector attributes = {
+                nvrhi::VertexAttributeDesc()
+                    .setName("a_Position")
+                    .setFormat(nvrhi::Format::RGB32_FLOAT)
+                    .setOffset(offsetof(Vertex, position))
+                    .setElementStride(sizeof(Vertex)),
+                nvrhi::VertexAttributeDesc()
+                    .setName("a_TexCoord")
+                    .setFormat(nvrhi::Format::RG32_FLOAT)
+                    .setOffset(offsetof(Vertex, texCoord))
+                    .setElementStride(sizeof(Vertex)),
+            };
 
+            PSOKey key{};
+            key.vertexShader    = { "Basic", nvrhi::ShaderType::Vertex };
+            key.fragmentShader  = { "Basic", nvrhi::ShaderType::Pixel };
+            key.renderState        = renderState;
+            key.bindingLayout      = m_BindingLayout;
+            key.framebufferInfo    = m_Framebuffers[0]->getFramebufferInfo();
+            key.vertexAttributes   = attributes;
+            key.primType           = nvrhi::PrimitiveType::TriangleList;
+            m_GraphicsPipeline = m_PSOCache->get(key);
+
+            m_HasGraphicsPipeline = true;
+        }
+
+        for (int i = 0; i < m_SwapChainImages.size(); i++) {
             auto graphicsState = nvrhi::GraphicsState()
-                .setPipeline(pipeline)
-                .setFramebuffer(framebuffer)
+                .setPipeline(m_GraphicsPipeline)
+                .setFramebuffer(m_Framebuffers[i])
                 .addVertexBuffer(nvrhi::VertexBufferBinding(m_VertexBuffer))
                 .setIndexBuffer(nvrhi::IndexBufferBinding(m_IndexBuffer))
                 .addBindingSet(m_BindingSet)
@@ -318,7 +348,6 @@ NAMESPACE {
 
     void Renderer::GenerateBackbuffers() {
         m_Backbuffers.clear();
-        m_ImGuiGraphicsPipelines.clear();
         m_ImGuiGraphicsStates.clear();
 
         for (auto&[swapChainNvrhiHandle] : m_SwapChainImages) {
@@ -327,29 +356,44 @@ NAMESPACE {
             m_Backbuffers.push_back(m_Device->GetDevice()->createFramebuffer(framebufferDesc));
         }
 
-        for (auto& backbuffer : m_Backbuffers) {
-            nvrhi::GraphicsPipelineDesc pipelineDesc = nvrhi::GraphicsPipelineDesc()
-                .setInputLayout(m_InputLayout)
-                .addBindingLayout(m_BindingLayout)
-                .setVertexShader(m_VertexShader)
-                .setPixelShader(m_FragmentShader)
-                .setPrimType(nvrhi::PrimitiveType::TriangleList)
-                .setRenderState(nvrhi::RenderState()
+        if (!m_HasImGuiGraphicsPipeline) {
+            nvrhi::RenderState renderState = nvrhi::RenderState()
                     .setDepthStencilState(nvrhi::DepthStencilState()
                         .setDepthTestEnable(false)
-                        .setStencilEnable(false)))
-                //    .setRasterState(nvrhi::RasterState()
-                //        .setFrontCounterClockwise(true)))
-            ;
+                        .setStencilEnable(false));
 
-            auto pipeline = m_Device->GetDevice()->createGraphicsPipeline(pipelineDesc, backbuffer);
-            m_ImGuiGraphicsPipelines.push_back(pipeline);
+            std::vector attributes = {
+                nvrhi::VertexAttributeDesc()
+                    .setName("a_Position")
+                    .setFormat(nvrhi::Format::RGB32_FLOAT)
+                    .setOffset(offsetof(Vertex, position))
+                    .setElementStride(sizeof(Vertex)),
+                nvrhi::VertexAttributeDesc()
+                    .setName("a_TexCoord")
+                    .setFormat(nvrhi::Format::RG32_FLOAT)
+                    .setOffset(offsetof(Vertex, texCoord))
+                    .setElementStride(sizeof(Vertex)),
+            };
 
+            PSOKey key{};
+            key.vertexShader    = { "Basic", nvrhi::ShaderType::Vertex };
+            key.fragmentShader  = { "Basic", nvrhi::ShaderType::Pixel };
+            key.renderState        = renderState;
+            key.bindingLayout      = m_BindingLayout;
+            key.framebufferInfo    = m_Backbuffers[0]->getFramebufferInfo();
+            key.vertexAttributes   = attributes;
+            key.primType           = nvrhi::PrimitiveType::TriangleList;
+
+            m_ImGuiGraphicsPipeline = m_PSOCache->get(key);
+            m_HasImGuiGraphicsPipeline = true;
+        }
+
+        for (auto& backbuffer : m_Backbuffers) {
             int framebufferWidth, framebufferHeight;
             m_Window->GetFramebufferSize(&framebufferWidth, &framebufferHeight);
 
             auto graphicsState = nvrhi::GraphicsState()
-                .setPipeline(pipeline)
+                .setPipeline(m_ImGuiGraphicsPipeline)
                 .setFramebuffer(backbuffer)
                 .addVertexBuffer(nvrhi::VertexBufferBinding(m_VertexBuffer))
                 .setIndexBuffer(nvrhi::IndexBufferBinding(m_IndexBuffer))

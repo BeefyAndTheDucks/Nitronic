@@ -47,7 +47,7 @@ NAMESPACE {
                 m_DeltaTimes.clear();
 
                 std::stringstream ss;
-                ss << "Nitronic Engine - " << 1.0f / mean << "FPS (" << mean << "ms)";
+                ss << "Nitronic Engine - " << 1.0f / mean << "FPS (" << mean * 1000 << "ms)";
                 m_Window->SetTitle(ss.str().c_str());
             }
 

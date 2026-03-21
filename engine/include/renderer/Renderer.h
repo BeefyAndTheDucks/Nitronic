@@ -14,6 +14,7 @@
 
 #include "Device.h"
 #include "ImGuiRenderer.h"
+#include "PSOCache.h"
 #include "engine/Window.h"
 #include "util/IOUtils.h"
 
@@ -77,7 +78,7 @@ NAMESPACE {
         CREATE_BACKEND_FUNCTIONS(void, Cleanup)
 
         [[nodiscard]] std::vector<char> LoadShaderCode(const std::string &shaderFile, const ShaderType shaderType) const {
-            std::string extension = m_Backend == RenderingBackend::Vulkan ? ".spv" : ".dxil";
+            const std::string extension = m_Backend == RenderingBackend::Vulkan ? ".spv" : ".dxil";
 
             std::string stageName;
             switch (shaderType) {
@@ -123,11 +124,16 @@ NAMESPACE {
         std::queue<nvrhi::EventQueryHandle> m_FramesInFlight;
         std::vector<nvrhi::EventQueryHandle> m_QueryPool;
 
-        std::vector<nvrhi::GraphicsPipelineHandle> m_ImGuiGraphicsPipelines;
+        bool m_HasImGuiGraphicsPipeline = false;
+        nvrhi::GraphicsPipelineHandle m_ImGuiGraphicsPipeline;
         std::vector<nvrhi::GraphicsState> m_ImGuiGraphicsStates;
 
-        std::vector<nvrhi::GraphicsPipelineHandle> m_GraphicsPipelines;
+        bool m_HasGraphicsPipeline = false;
+        nvrhi::GraphicsPipelineHandle m_GraphicsPipeline;
         std::vector<nvrhi::GraphicsState> m_GraphicsStates;
+
+        std::optional<ShaderCache> m_ShaderCache;
+        std::optional<PSOCache> m_PSOCache;
 
         nvrhi::BindingSetHandle m_BindingSet;
         nvrhi::BindingLayoutHandle m_BindingLayout;
@@ -145,7 +151,7 @@ NAMESPACE {
         // ImGui
         ImGuiRenderer* m_ImGuiRenderer;
         std::vector<ImGuiTexture> m_ImGuiFramebufferTextures;
-        bool m_HasGeneratedImGuiFramebuffer;
+        bool m_HasGeneratedImGuiFramebuffer = false;
 
         // Textures
         nvrhi::SamplerHandle m_Sampler;
