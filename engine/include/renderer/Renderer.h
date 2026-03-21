@@ -6,6 +6,7 @@
 #define NITRONIC_RENDERER_H
 #include <filesystem>
 #include <iostream>
+#include <optional>
 #include <queue>
 
 #include "Camera.h"

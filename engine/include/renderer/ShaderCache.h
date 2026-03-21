@@ -6,6 +6,7 @@
 #define NITRONIC_SHADERCACHE_H
 #include <filesystem>
 #include <shared_mutex>
+#include <mutex>
 #include <string>
 #include <unordered_map>
 
@@ -48,8 +49,8 @@ NAMESPACE {
         // Disallow copy, allow move.
         ShaderCache(const ShaderCache&)            = delete;
         ShaderCache& operator=(const ShaderCache&) = delete;
-        ShaderCache(ShaderCache&&)                 = default;
-        ShaderCache& operator=(ShaderCache&&)      = default;
+        ShaderCache(ShaderCache&&)                 = delete;
+        ShaderCache& operator=(ShaderCache&&)      = delete;
 
 
         nvrhi::ShaderHandle getShader(const std::string& sourcePath, const nvrhi::ShaderType& stage) {

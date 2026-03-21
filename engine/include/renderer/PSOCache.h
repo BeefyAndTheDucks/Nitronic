@@ -75,8 +75,8 @@ NAMESPACE {
 
         PSOCache(const PSOCache&)            = delete;
         PSOCache& operator=(const PSOCache&) = delete;
-        PSOCache(PSOCache&&)                 = default;
-        PSOCache& operator=(PSOCache&&)      = default;
+        PSOCache(PSOCache&&)                 = delete;
+        PSOCache& operator=(PSOCache&&)      = delete;
 
         nvrhi::GraphicsPipelineHandle get(const PSOKey& key)
         {
