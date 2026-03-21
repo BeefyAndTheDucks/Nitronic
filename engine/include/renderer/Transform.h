@@ -5,14 +5,15 @@
 #ifndef NITRONIC_TRANSFORM_H
 #define NITRONIC_TRANSFORM_H
 #include "core/Macros.h"
-#include "glm/vec3.hpp"
+#include <glm/vec3.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 NAMESPACE {
 
     struct Transform {
-        glm::vec3 Position;
-        glm::vec3 Rotation;
-        glm::vec3 Scale;
+        glm::vec3 position;
+        glm::quat rotation;
+        glm::vec3 scale;
     };
 
 }

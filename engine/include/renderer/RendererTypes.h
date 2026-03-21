@@ -20,6 +20,11 @@ NAMESPACE {
         virtual ~ImGuiRendererData() = default;
     };
 
+    struct Vertex {
+        float position[3];
+        float texCoord[2];
+    };
+
 }
 
 #endif //NITRONIC_RENDERERTYPES_H

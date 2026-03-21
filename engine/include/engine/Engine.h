@@ -26,6 +26,8 @@ NAMESPACE {
         double m_FPSCalcTimePassed;
 
         std::vector<double> m_DeltaTimes;
+
+        Model* m_TestModel;
     };
 
 }

@@ -14,6 +14,7 @@
 
 #include "Device.h"
 #include "ImGuiRenderer.h"
+#include "Model.h"
 #include "PSOCache.h"
 #include "engine/Window.h"
 #include "util/IOUtils.h"
@@ -27,11 +28,6 @@ NAMESPACE {
     struct SwapChainImage {
         //vk::Image image;
         nvrhi::TextureHandle nvrhiHandle;
-    };
-
-    struct Vertex {
-        float position[3];
-        float texCoord[2];
     };
 
     struct ImGuiVertex {
@@ -63,12 +59,17 @@ NAMESPACE {
         Renderer(RenderingBackend backend, Window* window);
         ~Renderer();
 
-        void Render(double deltaTime);
+        void BeginScene();
+
+        void RenderModel(Model* model);
+
+        void EndScene();
 
         void RegenerateFrambuffers(float requestedWidth, float requestedHeight);
 
         [[nodiscard]] RendererData* GetRendererData() const { return m_RendererData; }
         [[nodiscard]] Device* GetDevice() const { return m_Device; }
+
     private:
         CREATE_BACKEND_FUNCTIONS(void, Init)
         CREATE_BACKEND_FUNCTIONS(void, InitAfterDeviceCreation)
@@ -77,35 +78,8 @@ NAMESPACE {
         CREATE_BACKEND_FUNCTIONS(void, CleanupPreDevice)
         CREATE_BACKEND_FUNCTIONS(void, Cleanup)
 
-        [[nodiscard]] std::vector<char> LoadShaderCode(const std::string &shaderFile, const ShaderType shaderType) const {
-            const std::string extension = m_Backend == RenderingBackend::Vulkan ? ".spv" : ".dxil";
-
-            std::string stageName;
-            switch (shaderType) {
-                case ShaderType::Vertex: stageName = ".vertex"; break;
-                case ShaderType::Fragment: stageName = ".fragment"; break;
-            }
-
-            std::filesystem::path path = g_ShadersDirectory + shaderFile + stageName + extension;
-
-            if (!std::filesystem::exists(path)) {
-                throw std::runtime_error("Shader missing: " + shaderFile + stageName + extension);
-            }
-
-            return readFile(path);
-        }
-
-        [[nodiscard]] nvrhi::ShaderHandle LoadShader(const std::string &shaderFile, const ShaderType shaderType) const {
-            const auto shaderCode = LoadShaderCode(shaderFile, shaderType);
-
-            const std::string debugName = shaderFile + "." + ShaderTypeToString(shaderType);
-
-            return m_Device->GetDevice()->createShader(
-                nvrhi::ShaderDesc().setShaderType(ShaderTypeToNvrhiShaderType(shaderType)).setDebugName(debugName), shaderCode.data(),
-                shaderCode.size());
-        }
-
         void GenerateBackbuffers();
+
     private:
         RenderingBackend m_Backend;
         RendererData* m_RendererData;
@@ -126,34 +100,31 @@ NAMESPACE {
 
         bool m_HasImGuiGraphicsPipeline = false;
         nvrhi::GraphicsPipelineHandle m_ImGuiGraphicsPipeline;
-        std::vector<nvrhi::GraphicsState> m_ImGuiGraphicsStates;
-
-        bool m_HasGraphicsPipeline = false;
-        nvrhi::GraphicsPipelineHandle m_GraphicsPipeline;
-        std::vector<nvrhi::GraphicsState> m_GraphicsStates;
 
         std::optional<ShaderCache> m_ShaderCache;
         std::optional<PSOCache> m_PSOCache;
 
+        nvrhi::BindingSetDesc m_BindingSetDesc;
         nvrhi::BindingSetHandle m_BindingSet;
         nvrhi::BindingLayoutHandle m_BindingLayout;
         nvrhi::InputLayoutHandle m_InputLayout;
 
         // Buffers
+        nvrhi::BufferHandle m_FrameConstantsBuffer;
         nvrhi::BufferHandle m_VertexBuffer;
         nvrhi::BufferHandle m_IndexBuffer;
-        nvrhi::BufferHandle m_FrameConstantsBuffer;
 
         // ImGui
         ImGuiRenderer* m_ImGuiRenderer;
         std::vector<ImGuiTexture> m_ImGuiFramebufferTextures;
         bool m_HasGeneratedImGuiFramebuffer = false;
+        bool m_ValidGameWindow = false;
 
         // Textures
         nvrhi::SamplerHandle m_Sampler;
 
-        // random stuff
-        double m_TimePassed = 0.0f;
+        // Command Lists
+        nvrhi::CommandListHandle m_RenderingCommandList;
     };
 
 }

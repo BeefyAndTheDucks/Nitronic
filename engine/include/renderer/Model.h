@@ -6,22 +6,37 @@
 #define NITRONIC_MODEL_H
 #include <nvrhi/nvrhi.h>
 #include "Material.h"
-#include "Renderer.h"
+#include "Mesh.h"
+#include "PSOCache.h"
 #include "Transform.h"
 
 NAMESPACE {
 
     class Model {
     public:
-        Model(Vertex vertices[], uint32_t indices[], Material material, Transform transform, bool isStatic);
-        ~Model();
+        Model(const Mesh &mesh, const Material &material, const Transform &transform, bool isStatic);
+        ~Model() = default;
+
+        [[nodiscard]] bool IsInitialized() const { return m_Initialized; }
+
+        void Initialize(nvrhi::IDevice* device, const nvrhi::CommandListHandle &commandList, PSOCache& psoCache, const nvrhi::BindingSetDesc &frameConstantsBindingSet, const nvrhi::FramebufferHandle &fb);
+
+        void Render(const nvrhi::CommandListHandle &commandList, const nvrhi::FramebufferHandle& fb) const;
     private:
         Transform m_Transform;
-
-        nvrhi::BufferHandle m_VertexBuffer;
-        nvrhi::BufferHandle m_IndexBuffer;
-        nvrhi::BufferHandle m_ObjectConstantsBuffer;
+        Mesh m_Mesh;
         Material m_Material;
+
+        //nvrhi::BufferHandle m_ObjectConstantsBuffer;
+
+        nvrhi::GraphicsPipelineHandle m_GraphicsPipeline;
+
+        nvrhi::BindingLayoutHandle m_BindingLayout;
+        nvrhi::BindingSetHandle m_BindingSet;
+
+        bool m_IsStatic;
+
+        bool m_Initialized = false;
     };
 
 }

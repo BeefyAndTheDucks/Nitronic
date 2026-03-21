@@ -10,8 +10,10 @@
 NAMESPACE {
 
     struct Material {
-        ShaderKey m_FragmentShader;
-        ShaderKey m_VertexShader;
+        ShaderKey fragmentShader;
+        ShaderKey vertexShader;
+
+        std::vector<nvrhi::VertexAttributeDesc> vertexAttributes;
     };
 
 }
