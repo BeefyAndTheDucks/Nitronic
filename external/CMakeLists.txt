@@ -64,3 +64,12 @@ if (NOT TARGET imgui)
         set_target_properties(update_mappings PROPERTIES FOLDER ${third_party_folder})
     endif()
 endif()
+
+
+
+# stb
+
+if (NOT TARGET stb)
+    add_library(stb INTERFACE)
+    target_include_directories(stb INTERFACE stb)
+endif()

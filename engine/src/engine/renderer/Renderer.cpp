@@ -227,9 +227,10 @@ NAMESPACE {
         const     glm::mat4 rotX = glm::rotate(tran, glm::radians(static_cast<float>(m_TimePassed * 20.0f)), glm::vec3(1,0,0));
         const     glm::mat4 rotY = glm::rotate(rotX, glm::radians(static_cast<float>(m_TimePassed * 30.0f)), glm::vec3(0,1,0));
         const     glm::mat4 rotZ = glm::rotate(rotY, glm::radians(static_cast<float>(m_TimePassed * 70.0f)), glm::vec3(0,0,1));
+        const     glm::mat4 scal = glm::scale (rotZ, glm::vec3(1.0f, 0.2f, 1.4f));
 
         FrameConstants cpuFrameConstants{};
-        cpuFrameConstants.model         = rotZ;
+        cpuFrameConstants.model         = scal;
         cpuFrameConstants.view          = glm::lookAt(glm::vec3(0,0,5), glm::vec3(0,0,0), glm::vec3(0,1,0));
         cpuFrameConstants.projection    = glm::perspective(glm::radians(45.0f), gameWindowAspect, 0.1f, 100.0f);
         commandList->writeBuffer(m_FrameConstantsBuffer, &cpuFrameConstants, sizeof(cpuFrameConstants));

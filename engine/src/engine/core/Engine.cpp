@@ -2,6 +2,10 @@
 // Created by simon on 28/08/2025.
 //
 
+
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
 #include "engine/Engine.h"
 
 #include <chrono>
@@ -37,7 +41,7 @@ NAMESPACE {
             previousTime = currentTime;
             //std::cout << "DeltaTime: " << deltaTime << "s (" << 1.0f / deltaTime << "FPS)" << std::endl;
 
-            if (m_FPSCalcTimePassed >= 0.1) {
+            if (m_FPSCalcTimePassed >= 0.1 && !m_DeltaTimes.empty()) {
                 m_FPSCalcTimePassed = 0;
                 const double mean = std::accumulate(m_DeltaTimes.begin(), m_DeltaTimes.end(), 0.0) / m_DeltaTimes.size();
                 m_DeltaTimes.clear();

@@ -7,9 +7,17 @@
 #include "core/Macros.h"
 #include "engine/Window.h"
 
+#include <format>
+#include <stb_image.h>
+
 #include <iostream>
+#include <vector>
 
 NAMESPACE {
+
+    constexpr int resolutions[8] = {
+        16, 24, 32, 48, 64, 128, 256, 512
+    };
 
     Window::Window(const int width, const int height, const char* title)
         : m_Width(width), m_Height(height) {
@@ -22,6 +30,15 @@ NAMESPACE {
         if (!m_Window) {
             glfwTerminate();
             throw std::runtime_error("Failed to create GLFW window");
+        }
+
+        GLFWimage icons[std::size(resolutions)];
+        for (int i = 0; i < std::size(resolutions); i++) {
+            icons[i].pixels = stbi_load(std::format("../assets/logo_{}.png", resolutions[i]).c_str(), &icons[i].width, &icons[i].height, nullptr, 4);
+        }
+        glfwSetWindowIcon(m_Window, 1, icons);
+        for (int i = 0; i < std::size(resolutions); i++) {
+            stbi_image_free(icons[i].pixels);
         }
     }
 
