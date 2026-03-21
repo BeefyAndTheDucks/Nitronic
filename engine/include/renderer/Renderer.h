@@ -104,7 +104,8 @@ NAMESPACE {
 
         // ImGui
         ImGuiRenderer* m_ImGuiRenderer;
-        std::vector<ImGuiTexture> m_ImGuiFramebufferTextures;
+        std::vector<ImGuiTexture> m_ImGuiFramebufferColorTextures;
+        std::vector<nvrhi::TextureHandle> m_ImGuiFramebufferDepthTextures;
         bool m_HasGeneratedImGuiFramebuffer = false;
         bool m_ValidGameWindow = false;
 

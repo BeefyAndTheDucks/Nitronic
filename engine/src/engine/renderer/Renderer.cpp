@@ -101,7 +101,7 @@ NAMESPACE {
         m_Device->GetDevice()->waitForIdle();
 
         if (m_HasGeneratedImGuiFramebuffer)
-            for (ImGuiTexture& texture : m_ImGuiFramebufferTextures)
+            for (ImGuiTexture& texture : m_ImGuiFramebufferColorTextures)
                 m_ImGuiRenderer->RemoveTexture(texture);
 
         delete m_ImGuiRenderer;
@@ -110,7 +110,8 @@ NAMESPACE {
 
         m_Framebuffers.clear();
         m_Backbuffers.clear();
-        m_ImGuiFramebufferTextures.clear();
+        m_ImGuiFramebufferColorTextures.clear();
+        m_ImGuiFramebufferDepthTextures.clear();
 
         m_BindingSet = nullptr;
 
@@ -149,7 +150,7 @@ NAMESPACE {
         if (m_ValidGameWindow) {
             if (windowSize.x != m_FramebufferWidth || windowSize.y != m_FramebufferHeight)
                 RegenerateFrambuffers(windowSize.x, windowSize.y);
-            ImGui::Image(m_ImGuiFramebufferTextures[m_SwapChainIndex].textureID, windowSize);
+            ImGui::Image(m_ImGuiFramebufferColorTextures[m_SwapChainIndex].textureID, windowSize);
         }
         ImGui::End();
         ImGui::PopStyleVar();
@@ -165,6 +166,7 @@ NAMESPACE {
             const float gameWindowAspect = m_FramebufferWidth / m_FramebufferHeight;
 
             nvrhi::utils::ClearColorAttachment(m_RenderingCommandList, m_Framebuffers[m_SwapChainIndex], 0, nvrhi::Color(1, 1, 1, 1));
+            nvrhi::utils::ClearDepthStencilAttachment(m_RenderingCommandList, m_Framebuffers[m_SwapChainIndex], 1.0f, 0);
 
             m_ViewProjectionMatrix = camera.GetViewProjectionMatrix(gameWindowAspect);
         }
@@ -180,7 +182,7 @@ NAMESPACE {
     }
 
     void Renderer::EndScene() {
-        m_RenderingCommandList->setTextureState(m_ImGuiFramebufferTextures[m_SwapChainIndex].texture, nvrhi::AllSubresources, nvrhi::ResourceStates::ShaderResource);
+        m_RenderingCommandList->setTextureState(m_ImGuiFramebufferColorTextures[m_SwapChainIndex].texture, nvrhi::AllSubresources, nvrhi::ResourceStates::ShaderResource);
 
         int framebufferWidth, framebufferHeight;
         m_Window->GetFramebufferSize(&framebufferWidth, &framebufferHeight);
@@ -213,16 +215,17 @@ NAMESPACE {
         m_FramebufferHeight = requestedHeight;
 
         if (m_HasGeneratedImGuiFramebuffer)
-            for (ImGuiTexture& texture : m_ImGuiFramebufferTextures)
+            for (ImGuiTexture& texture : m_ImGuiFramebufferColorTextures)
                 m_ImGuiRenderer->RemoveTexture(texture);
 
-        m_ImGuiFramebufferTextures.clear();
+        m_ImGuiFramebufferColorTextures.clear();
+        m_ImGuiFramebufferDepthTextures.clear();
         m_Framebuffers.clear();
 
         // same number of images as the swapchain
-        const nvrhi::TextureDesc textureDesc = nvrhi::TextureDesc()
+        const nvrhi::TextureDesc colorTextureDesc = nvrhi::TextureDesc()
             .setDimension(nvrhi::TextureDimension::Texture2D)
-            .setDebugName("ImGui Window Render Target")
+            .setDebugName("ImGui Window Render Target (Color)")
             .setFormat(nvrhi::Format::SBGRA8_UNORM)
             .setWidth(static_cast<uint32_t>(m_FramebufferWidth))
             .setHeight(static_cast<uint32_t>(m_FramebufferHeight))
@@ -230,30 +233,33 @@ NAMESPACE {
             .setKeepInitialState(true)
             .setIsRenderTarget(true);
 
+        const nvrhi::TextureDesc depthTextureDesc = nvrhi::TextureDesc()
+            .setDimension(nvrhi::TextureDimension::Texture2D)
+            .setDebugName("ImGui Window Render Target (Depth)")
+            .setFormat(nvrhi::Format::D32) // D24S8 if I need stencil
+            .setWidth(static_cast<uint32_t>(m_FramebufferWidth))
+            .setHeight(static_cast<uint32_t>(m_FramebufferHeight))
+            .setInitialState(nvrhi::ResourceStates::DepthWrite)
+            .setKeepInitialState(true)
+            .setIsRenderTarget(true);
+
         for (int i = 0; i < m_SwapChainImages.size(); i++) {
-            const nvrhi::TextureHandle texture = m_Device->GetDevice()->createTexture(textureDesc);
-            m_ImGuiFramebufferTextures.push_back(m_ImGuiRenderer->AddTexture(texture, m_Sampler));
+            const nvrhi::TextureHandle colorTexture = m_Device->GetDevice()->createTexture(colorTextureDesc);
+            m_ImGuiFramebufferColorTextures.push_back(m_ImGuiRenderer->AddTexture(colorTexture, m_Sampler));
+
+            const nvrhi::TextureHandle depthTexture = m_Device->GetDevice()->createTexture(depthTextureDesc);
+            m_ImGuiFramebufferDepthTextures.push_back(depthTexture);
 
             auto framebufferDesc = nvrhi::FramebufferDesc()
-                .addColorAttachment(texture);
+                .addColorAttachment(colorTexture)
+                .setDepthAttachment(depthTexture);
             auto framebuffer = m_Device->GetDevice()->createFramebuffer(framebufferDesc);
             m_Framebuffers.push_back(framebuffer);
         }
 
-        /*for (int i = 0; i < m_SwapChainImages.size(); i++) {
-            auto graphicsState = nvrhi::GraphicsState()
-                .setPipeline(m_GraphicsPipeline)
-                .setFramebuffer(m_Framebuffers[i])
-                .addVertexBuffer(nvrhi::VertexBufferBinding(m_VertexBuffer))
-                .setIndexBuffer(nvrhi::IndexBufferBinding(m_IndexBuffer))
-                .addBindingSet(m_BindingSet)
-                .setViewport(nvrhi::ViewportState().addViewportAndScissorRect(nvrhi::Viewport(m_FramebufferWidth, m_FramebufferHeight)));
-            m_GraphicsStates.push_back(graphicsState);
-        }*/
-
         const nvrhi::CommandListHandle initCommandList = m_Device->GetDevice()->createCommandList();
         initCommandList->open();
-        for (auto& tex : m_ImGuiFramebufferTextures) {
+        for (auto& tex : m_ImGuiFramebufferColorTextures) {
             initCommandList->setTextureState(tex.texture, nvrhi::AllSubresources, nvrhi::ResourceStates::ShaderResource);
         }
 

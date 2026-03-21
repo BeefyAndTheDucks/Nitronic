@@ -124,7 +124,7 @@ NAMESPACE {
 
             m_Camera.transform.position.z = glm::sin(static_cast<float>(m_TotalTimePassed) * 1) * 5.0f;
             m_Camera.transform.position.x = glm::cos(static_cast<float>(m_TotalTimePassed) * 1) * 5.0f;
-            m_Camera.transform.position.y = glm::sin(static_cast<float>(m_TotalTimePassed) * 3) * 1.0f;
+            m_Camera.transform.position.y = glm::sin(static_cast<float>(m_TotalTimePassed) * 3) * 5.0f;
             m_Camera.transform.rotation = glm::quatLookAt(glm::normalize(-m_Camera.transform.position), glm::vec3(0.f,1.f,0.f));
 
             m_Renderer->BeginScene(m_Camera);

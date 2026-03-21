@@ -34,8 +34,11 @@ NAMESPACE {
 
         constexpr nvrhi::RenderState renderState = nvrhi::RenderState()
                 .setDepthStencilState(nvrhi::DepthStencilState()
-                    .setDepthTestEnable(false)
-                    .setStencilEnable(false))
+                    .setDepthTestEnable(true)
+                    .setDepthWriteEnable(true)
+                    .setDepthFunc(nvrhi::ComparisonFunc::Less)
+                    //.setStencilEnable(false)
+                    )
                 .setRasterState(nvrhi::RasterState()
                     .setFrontCounterClockwise(true));
 
