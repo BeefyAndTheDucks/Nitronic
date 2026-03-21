@@ -112,11 +112,11 @@ NAMESPACE {
 
             if (m_FPSCalcTimePassed >= 0.1 && !m_DeltaTimes.empty()) {
                 m_FPSCalcTimePassed = 0;
-                const double mean = std::accumulate(m_DeltaTimes.begin(), m_DeltaTimes.end(), 0.0) / m_DeltaTimes.size();
+                m_LastMeanDT = std::accumulate(m_DeltaTimes.begin(), m_DeltaTimes.end(), 0.0) / m_DeltaTimes.size();
                 m_DeltaTimes.clear();
 
                 std::stringstream ss;
-                ss << "Nitronic Engine - " << 1.0f / mean << "FPS (" << mean * 1000 << "ms)";
+                ss << "Nitronic Engine - " << 1.0f / m_LastMeanDT << "FPS (" << m_LastMeanDT * 1000 << "ms)";
                 m_Window->SetTitle(ss.str().c_str());
             }
 
@@ -128,6 +128,14 @@ NAMESPACE {
             m_Camera.transform.rotation = glm::quatLookAt(glm::normalize(-m_Camera.transform.position), glm::vec3(0.f,1.f,0.f));
 
             m_Renderer->BeginScene(m_Camera);
+
+            ImGui::Begin("Debug");
+            ImGui::Text("FPS: %f", 1.0f / deltaTime);
+            ImGui::Text("DeltaTime (ms): %f", deltaTime * 1000);
+
+            ImGui::Text("FPS (0.1s): %f", 1.0f / m_LastMeanDT);
+            ImGui::Text("DeltaTime (0.1s) (ms): %f", m_LastMeanDT * 1000);
+            ImGui::End();
 
             m_Renderer->RenderModel(m_TestModel);
             m_Renderer->RenderModel(m_TestModel2);

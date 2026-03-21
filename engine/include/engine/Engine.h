@@ -25,6 +25,8 @@ NAMESPACE {
         double m_TotalTimePassed;
         double m_FPSCalcTimePassed;
 
+        double m_LastMeanDT = -1;
+
         std::vector<double> m_DeltaTimes;
 
         Model* m_TestModel;
