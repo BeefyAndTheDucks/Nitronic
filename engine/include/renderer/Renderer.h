@@ -139,10 +139,6 @@ NAMESPACE {
         nvrhi::BindingLayoutHandle m_BindingLayout;
         nvrhi::InputLayoutHandle m_InputLayout;
 
-        // Shaders
-        nvrhi::ShaderHandle m_VertexShader;
-        nvrhi::ShaderHandle m_FragmentShader;
-
         // Buffers
         nvrhi::BufferHandle m_VertexBuffer;
         nvrhi::BufferHandle m_IndexBuffer;

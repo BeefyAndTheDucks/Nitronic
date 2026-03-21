@@ -18,6 +18,7 @@
 #include "core/Macros.h"
 #include "nvrhi/utils.h"
 #include "renderer/ImGuiRenderer.h"
+#include "renderer/Shaders.h"
 
 NAMESPACE {
 
@@ -79,9 +80,6 @@ NAMESPACE {
 
         m_PSOCache.emplace(m_Device->GetDevice(), *m_ShaderCache);
 
-        m_VertexShader = m_ShaderCache->getShader({"Basic", nvrhi::ShaderType::Vertex});
-        m_FragmentShader = m_ShaderCache->getShader({"Basic", nvrhi::ShaderType::Pixel});
-
         nvrhi::VertexAttributeDesc attributes[] = {
             nvrhi::VertexAttributeDesc()
                 .setName("a_Position")
@@ -96,7 +94,7 @@ NAMESPACE {
         };
 
         m_InputLayout = m_Device->GetDevice()->createInputLayout(
-            attributes, std::size(attributes), m_VertexShader);
+            attributes, std::size(attributes), m_ShaderCache->getShader(g_ShaderBasicVertex));
 
         // Create buffers
         auto vertexBufferDesc = nvrhi::BufferDesc()
@@ -172,9 +170,6 @@ NAMESPACE {
 
         m_BindingLayout = nullptr;
         m_InputLayout = nullptr;
-
-        m_VertexShader = nullptr;
-        m_FragmentShader = nullptr;
 
         m_VertexBuffer = nullptr;
         m_IndexBuffer = nullptr;
@@ -362,26 +357,13 @@ NAMESPACE {
                         .setDepthTestEnable(false)
                         .setStencilEnable(false));
 
-            std::vector attributes = {
-                nvrhi::VertexAttributeDesc()
-                    .setName("a_Position")
-                    .setFormat(nvrhi::Format::RGB32_FLOAT)
-                    .setOffset(offsetof(Vertex, position))
-                    .setElementStride(sizeof(Vertex)),
-                nvrhi::VertexAttributeDesc()
-                    .setName("a_TexCoord")
-                    .setFormat(nvrhi::Format::RG32_FLOAT)
-                    .setOffset(offsetof(Vertex, texCoord))
-                    .setElementStride(sizeof(Vertex)),
-            };
-
             PSOKey key{};
-            key.vertexShader    = { "Basic", nvrhi::ShaderType::Vertex };
-            key.fragmentShader  = { "Basic", nvrhi::ShaderType::Pixel };
+            key.vertexShader       = g_ShaderBasicVertex;
+            key.fragmentShader     = g_ShaderBasicFragment;
             key.renderState        = renderState;
             key.bindingLayout      = m_BindingLayout;
             key.framebufferInfo    = m_Backbuffers[0]->getFramebufferInfo();
-            key.vertexAttributes   = attributes;
+            key.vertexAttributes   = g_ShaderBasicAttributes;
             key.primType           = nvrhi::PrimitiveType::TriangleList;
 
             m_ImGuiGraphicsPipeline = m_PSOCache->get(key);

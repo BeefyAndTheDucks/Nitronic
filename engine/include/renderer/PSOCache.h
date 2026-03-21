@@ -120,8 +120,8 @@ NAMESPACE {
 
     private:
         nvrhi::GraphicsPipelineHandle build(const PSOKey &key) {
-            nvrhi::ShaderHandle vs = resolve(key.vertexShader);
-            nvrhi::ShaderHandle fs = resolve(key.fragmentShader);
+            const nvrhi::ShaderHandle vs = resolve(key.vertexShader);
+            const nvrhi::ShaderHandle fs = resolve(key.fragmentShader);
             if (!vs || !fs) return nullptr;
 
             const std::vector<nvrhi::VertexAttributeDesc>& attrs = key.vertexAttributes;

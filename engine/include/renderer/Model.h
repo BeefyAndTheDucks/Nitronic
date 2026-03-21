@@ -13,7 +13,7 @@ NAMESPACE {
 
     class Model {
     public:
-        Model(Vertex vertices[], uint32_t indices[], Transform transform, bool isStatic);
+        Model(Vertex vertices[], uint32_t indices[], Material material, Transform transform, bool isStatic);
         ~Model();
     private:
         Transform m_Transform;
