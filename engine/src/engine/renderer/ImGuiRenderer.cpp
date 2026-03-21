@@ -3,6 +3,7 @@
 //
 
 #include "renderer/ImGuiRenderer.h"
+#include "imgui_impl_glfw.h"
 
 NAMESPACE {
 
@@ -18,6 +19,25 @@ NAMESPACE {
         io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
         CREATE_BACKEND_SWITCH(Init, framebuffer);
+
+        ImGuiPlatformIO& platformIO = ImGui::GetPlatformIO();
+
+        static auto original = platformIO.Platform_CreateWindow;
+        static auto windowIcons = window->GetIcons();
+
+        platformIO.Platform_CreateWindow = [](ImGuiViewport* vp) {
+            if (!original)
+                return;
+
+            original(vp);
+
+            std::vector<GLFWimage> icons;
+            for (const auto &[pixels, width, height] : windowIcons) {
+                icons.push_back({ width, height, pixels });
+            }
+
+            glfwSetWindowIcon(static_cast<GLFWwindow*>(vp->PlatformHandle), static_cast<int>(icons.size()), icons.data());
+        };
     }
 
     ImGuiRenderer::~ImGuiRenderer() {

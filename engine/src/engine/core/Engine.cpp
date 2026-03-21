@@ -2,7 +2,6 @@
 // Created by simon on 28/08/2025.
 //
 
-
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 

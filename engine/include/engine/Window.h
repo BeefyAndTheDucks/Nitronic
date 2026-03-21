@@ -4,12 +4,19 @@
 
 #ifndef NITRONIC_WINDOW_H
 #define NITRONIC_WINDOW_H
-#define GLFW_INCLUDE_NONE
+#include <vector>
+
 #include "GlfwInclude.h"
 
 #include "core/Macros.h"
 
 NAMESPACE {
+
+    struct WindowIcon {
+        unsigned char* pixels;
+        int width;
+        int height;
+    };
 
     class Window {
     public:
@@ -28,6 +35,8 @@ NAMESPACE {
         [[nodiscard]] int GetFramebufferWidth() const;
         [[nodiscard]] int GetFramebufferHeight() const;
 
+        [[nodiscard]] std::vector<WindowIcon> GetIcons() const { return m_Icons; }
+
         [[nodiscard]] bool IsMinimized() const;
 
         void SetTitle(const char* title) const;
@@ -36,6 +45,8 @@ NAMESPACE {
         int m_Height;
 
         GLFWwindow* m_Window;
+
+        std::vector<WindowIcon> m_Icons;
     };
 
 }

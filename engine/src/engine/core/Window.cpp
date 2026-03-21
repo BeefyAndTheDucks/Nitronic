@@ -8,10 +8,8 @@
 #include "engine/Window.h"
 
 #include <format>
-#include <stb_image.h>
 
-#include <iostream>
-#include <vector>
+#include "stb_image.h"
 
 NAMESPACE {
 
@@ -34,15 +32,22 @@ NAMESPACE {
 
         GLFWimage icons[std::size(resolutions)];
         for (int i = 0; i < std::size(resolutions); i++) {
-            icons[i].pixels = stbi_load(std::format("../assets/logo_{}.png", resolutions[i]).c_str(), &icons[i].width, &icons[i].height, nullptr, 4);
+            WindowIcon icon{};
+            icon.pixels = stbi_load(std::format("../assets/logo_{}.png", resolutions[i]).c_str(), &icon.width, &icon.height, nullptr, 4);
+            m_Icons.push_back(icon);
+
+            icons[i].width = icon.width;
+            icons[i].height = icon.height;
+            icons[i].pixels = icon.pixels;
         }
         glfwSetWindowIcon(m_Window, 1, icons);
-        for (int i = 0; i < std::size(resolutions); i++) {
-            stbi_image_free(icons[i].pixels);
-        }
     }
 
     Window::~Window() {
+        for (const WindowIcon& icon : m_Icons) {
+            stbi_image_free(icon.pixels);
+        }
+
         glfwDestroyWindow(m_Window);
         glfwTerminate();
     }
