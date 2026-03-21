@@ -7,8 +7,8 @@
 #include <filesystem>
 #include <iostream>
 #include <queue>
-#include <glm/mat4x4.hpp>
 
+#include "Camera.h"
 #include "core/Enums.h"
 #include "core/Macros.h"
 
@@ -17,13 +17,8 @@
 #include "Model.h"
 #include "PSOCache.h"
 #include "engine/Window.h"
-#include "util/IOUtils.h"
 
 NAMESPACE {
-
-    constexpr size_t g_MaxFramesInFlight = 2;
-
-    constexpr auto g_ShadersDirectory = "../shaders/";
 
     struct SwapChainImage {
         //vk::Image image;
@@ -34,11 +29,6 @@ NAMESPACE {
         float position[2];
         float uv[2];
         float color[3];
-    };
-
-    struct alignas(16) FrameConstants {
-        glm::mat4 view;
-        glm::mat4 projection;
     };
 
     struct NvrhiMessageCallback : nvrhi::IMessageCallback
@@ -59,7 +49,7 @@ NAMESPACE {
         Renderer(RenderingBackend backend, Window* window);
         ~Renderer();
 
-        void BeginScene();
+        void BeginScene(const Camera& camera);
 
         void RenderModel(Model* model);
 
@@ -104,13 +94,11 @@ NAMESPACE {
         std::optional<ShaderCache> m_ShaderCache;
         std::optional<PSOCache> m_PSOCache;
 
-        nvrhi::BindingSetDesc m_BindingSetDesc;
         nvrhi::BindingSetHandle m_BindingSet;
         nvrhi::BindingLayoutHandle m_BindingLayout;
         nvrhi::InputLayoutHandle m_InputLayout;
 
         // Buffers
-        nvrhi::BufferHandle m_FrameConstantsBuffer;
         nvrhi::BufferHandle m_VertexBuffer;
         nvrhi::BufferHandle m_IndexBuffer;
 
@@ -125,6 +113,9 @@ NAMESPACE {
 
         // Command Lists
         nvrhi::CommandListHandle m_RenderingCommandList;
+
+        // Matrices
+        glm::mat4 m_ViewProjectionMatrix;
     };
 
 }

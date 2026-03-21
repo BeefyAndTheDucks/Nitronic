@@ -9,59 +9,15 @@
 
 #include <filesystem>
 
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/ext/matrix_clip_space.hpp>
-#include <glm/ext/matrix_transform.hpp>
-
 #include "imgui.h"
 #include "core/Macros.h"
 #include "nvrhi/utils.h"
+#include "renderer/Camera.h"
+#include "renderer/Constants.h"
 #include "renderer/ImGuiRenderer.h"
 #include "renderer/Shaders.h"
 
 NAMESPACE {
-
-    /*static const Vertex g_Vertices[] = {
-        { {-0.5f,  0.5f, -0.5f}, {0.0f, 0.0f} }, // front face
-        { { 0.5f, -0.5f, -0.5f}, {1.0f, 1.0f} },
-        { {-0.5f, -0.5f, -0.5f}, {0.0f, 1.0f} },
-        { { 0.5f,  0.5f, -0.5f}, {1.0f, 0.0f} },
-
-        { { 0.5f, -0.5f, -0.5f}, {0.0f, 1.0f} }, // right side face
-        { { 0.5f,  0.5f,  0.5f}, {1.0f, 0.0f} },
-        { { 0.5f, -0.5f,  0.5f}, {1.0f, 1.0f} },
-        { { 0.5f,  0.5f, -0.5f}, {0.0f, 0.0f} },
-
-        { {-0.5f,  0.5f,  0.5f}, {0.0f, 0.0f} }, // left side face
-        { {-0.5f, -0.5f, -0.5f}, {1.0f, 1.0f} },
-        { {-0.5f, -0.5f,  0.5f}, {0.0f, 1.0f} },
-        { {-0.5f,  0.5f, -0.5f}, {1.0f, 0.0f} },
-
-        { { 0.5f,  0.5f,  0.5f}, {0.0f, 0.0f} }, // back face
-        { {-0.5f, -0.5f,  0.5f}, {1.0f, 1.0f} },
-        { { 0.5f, -0.5f,  0.5f}, {0.0f, 1.0f} },
-        { {-0.5f,  0.5f,  0.5f}, {1.0f, 0.0f} },
-
-        { {-0.5f,  0.5f, -0.5f}, {0.0f, 1.0f} }, // top face
-        { { 0.5f,  0.5f,  0.5f}, {1.0f, 0.0f} },
-        { { 0.5f,  0.5f, -0.5f}, {1.0f, 1.0f} },
-        { {-0.5f,  0.5f,  0.5f}, {0.0f, 0.0f} },
-
-        { { 0.5f, -0.5f,  0.5f}, {1.0f, 1.0f} }, // bottom face
-        { {-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f} },
-        { { 0.5f, -0.5f, -0.5f}, {1.0f, 0.0f} },
-        { {-0.5f, -0.5f,  0.5f}, {0.0f, 1.0f} },
-    };*/
-
-    /*static const uint32_t g_Indices[] = {
-        0,  1,  2,   0,  3,  1, // front face
-        4,  5,  6,   4,  7,  5, // left face
-        8,  9, 10,   8, 11,  9, // right face
-       12, 13, 14,  12, 15, 13, // back face
-       16, 17, 18,  16, 19, 17, // top face
-       20, 21, 22,  20, 23, 21, // bottom face
-    };*/
 
     Renderer::Renderer(const RenderingBackend backend, Window* window)
         : m_Backend(backend), m_RendererData(nullptr), m_Window(window)
@@ -94,7 +50,7 @@ NAMESPACE {
         };
 
         m_InputLayout = m_Device->GetDevice()->createInputLayout(
-            attributes, std::size(attributes), m_ShaderCache->getShader(g_ShaderBasicVertex));
+            attributes, std::size(attributes), m_ShaderCache->getShader(g_ShaderEmptyVertex));
 
         // Create buffers
         auto vertexBufferDesc = nvrhi::BufferDesc()
@@ -113,15 +69,7 @@ NAMESPACE {
             .setDebugName("Index Buffer");
         m_IndexBuffer = m_Device->GetDevice()->createBuffer(indexBufferDesc);
 
-        auto frameConstantsBufferDesc = nvrhi::utils::CreateStaticConstantBufferDesc(sizeof(FrameConstants), "FrameConstantsBuffer")
-            .setInitialState(nvrhi::ResourceStates::ConstantBuffer)
-            .setKeepInitialState(true);
-        m_FrameConstantsBuffer = m_Device->GetDevice()->createBuffer(frameConstantsBufferDesc);
-
-        m_BindingSetDesc = nvrhi::BindingSetDesc()
-            .addItem(nvrhi::BindingSetItem::ConstantBuffer(0, m_FrameConstantsBuffer));
-
-        if (!nvrhi::utils::CreateBindingSetAndLayout(m_Device->GetDevice(), nvrhi::ShaderType::All, 0, m_BindingSetDesc, m_BindingLayout, m_BindingSet)) {
+        if (!nvrhi::utils::CreateBindingSetAndLayout(m_Device->GetDevice(), nvrhi::ShaderType::All, 0, nvrhi::BindingSetDesc(), m_BindingLayout, m_BindingSet)) {
             throw std::runtime_error("Failed to create binding set and layout.");
         }
 
@@ -171,7 +119,6 @@ NAMESPACE {
 
         m_VertexBuffer = nullptr;
         m_IndexBuffer = nullptr;
-        m_FrameConstantsBuffer = nullptr;
         m_Sampler = nullptr;
 
         for (auto& swapchain : m_SwapChainImages)
@@ -187,7 +134,7 @@ NAMESPACE {
         CREATE_BACKEND_SWITCH(Cleanup);
     }
 
-    void Renderer::BeginScene() {
+    void Renderer::BeginScene(const Camera& camera) {
         if (m_Window->IsMinimized())
             return; // Skip rendering.
 
@@ -207,7 +154,6 @@ NAMESPACE {
         ImGui::End();
         ImGui::PopStyleVar();
 
-        //const float gameWindowAspect = m_FramebufferWidth / m_FramebufferHeight;
 
         m_RenderingCommandList = m_Device->GetDevice()->createCommandList();
         m_RenderingCommandList->open();
@@ -216,14 +162,21 @@ NAMESPACE {
         nvrhi::utils::ClearColorAttachment(m_RenderingCommandList, m_Backbuffers[m_SwapChainIndex], 0, nvrhi::Color(1, 1, 1, 1));
 
         if (m_ValidGameWindow) {
+            const float gameWindowAspect = m_FramebufferWidth / m_FramebufferHeight;
+
             nvrhi::utils::ClearColorAttachment(m_RenderingCommandList, m_Framebuffers[m_SwapChainIndex], 0, nvrhi::Color(1, 1, 1, 1));
+
+            m_ViewProjectionMatrix = camera.GetViewProjectionMatrix(gameWindowAspect);
         }
     }
 
     void Renderer::RenderModel(Model* model) {
+        if (!m_ValidGameWindow)
+            return;
+
         if (!model->IsInitialized())
-            model->Initialize(m_Device->GetDevice(), m_RenderingCommandList, m_PSOCache.value(), m_BindingSetDesc, m_Framebuffers[m_SwapChainIndex]);
-        model->Render(m_RenderingCommandList, m_Framebuffers[m_SwapChainIndex]);
+            model->Initialize(m_Device->GetDevice(), m_RenderingCommandList, m_PSOCache.value(), m_Framebuffers[m_SwapChainIndex]);
+        model->Render(m_RenderingCommandList, m_Framebuffers[m_SwapChainIndex], m_ViewProjectionMatrix);
     }
 
     void Renderer::EndScene() {
@@ -304,11 +257,6 @@ NAMESPACE {
             initCommandList->setTextureState(tex.texture, nvrhi::AllSubresources, nvrhi::ResourceStates::ShaderResource);
         }
 
-        FrameConstants cpuFrameConstants{};
-        cpuFrameConstants.view          = glm::lookAt(glm::vec3(0,0,5), glm::vec3(0,0,0), glm::vec3(0,1,0));
-        cpuFrameConstants.projection    = glm::perspective(glm::radians(45.0f), m_FramebufferWidth / m_FramebufferHeight, 0.1f, 100.0f);
-        initCommandList->writeBuffer(m_FrameConstantsBuffer, &cpuFrameConstants, sizeof(cpuFrameConstants));
-
         initCommandList->commitBarriers();
         initCommandList->close();
         m_Device->GetDevice()->executeCommandList(initCommandList);
@@ -332,12 +280,12 @@ NAMESPACE {
                         .setStencilEnable(false));
 
             PSOKey key{};
-            key.vertexShader       = g_ShaderBasicVertex;
-            key.fragmentShader     = g_ShaderBasicFragment;
+            key.vertexShader       = g_ShaderEmptyVertex;
+            key.fragmentShader     = g_ShaderEmptyFragment;
             key.renderState        = renderState;
             key.bindingLayout      = m_BindingLayout;
             key.framebufferInfo    = m_Backbuffers[0]->getFramebufferInfo();
-            key.vertexAttributes   = g_ShaderBasicAttributes;
+            key.vertexAttributes   = g_ShaderEmptyAttributes;
             key.primType           = nvrhi::PrimitiveType::TriangleList;
 
             m_ImGuiGraphicsPipeline = m_PSOCache->get(key);

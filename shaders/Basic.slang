@@ -1,8 +1,6 @@
-[[vk::binding(0)]]
-cbuffer FrameConstants : register(b0)
+cbuffer ModelConstants : register(b0)
 {
-    float4x4 view;
-    float4x4 projection;
+    float4x4 mvp;
 };
 
 struct Varyings
@@ -30,7 +28,7 @@ Varyings vertexMain(VertexInput input)
     Varyings output;
 
     //float4x4 mvp = mul(projection, mul(view, model));
-    float4x4 mvp = mul(projection, view);
+    //float4x4 mvp = mul(projection, view);
     output.pos = mul(mvp, float4(input.position, 1.0));
 
     // lets use texcoord to index into our color array

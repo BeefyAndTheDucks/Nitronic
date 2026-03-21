@@ -74,6 +74,9 @@ endfunction()
 add_slang_shader(Basic slang vertex vertexMain)
 add_slang_shader(Basic slang fragment fragmentMain)
 
+add_slang_shader(Empty slang vertex vertexMain)
+add_slang_shader(Empty slang fragment fragmentMain)
+
 set(CLEANUP_SCRIPT "${CMAKE_BINARY_DIR}/cleanup_shaders.cmake")
 file(WRITE "${CLEANUP_SCRIPT}" "
     cmake_policy(SET CMP0057 NEW)

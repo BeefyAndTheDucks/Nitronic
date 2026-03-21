@@ -70,15 +70,25 @@ NAMESPACE {
         material.vertexAttributes = g_ShaderBasicAttributes;
 
         auto transform = Transform{};
-        transform.position = glm::vec3(0.0f, 0.0f, 0.0f);
+        transform.position = glm::vec3(1.0f, -1.0f, 0.0f);
         transform.rotation = glm::quat::wxyz(1.0f, 0.0f, 0.0f, 0.0f);
         transform.scale = glm::vec3(1.0f, 1.0f, 1.0f);
 
         m_TestModel = new Model(mesh, material, transform, false);
+
+        transform.position = glm::vec3(-1.0f, 1.0f, 0.0f);
+        m_TestModel2 = new Model(mesh, material, transform, false);
+
+        m_Camera = Camera{};
+        m_Camera.fov = 45.0f;
+        m_Camera.transform.position = glm::vec3(0.0f, 0.0f, -5.0f);
+        m_Camera.transform.scale = glm::vec3(1.f);
+        m_Camera.transform.rotation = glm::quatLookAt(glm::normalize(-m_Camera.transform.position), glm::vec3(0.f,1.f,0.f));
     }
 
     Engine::~Engine() {
         delete m_TestModel;
+        delete m_TestModel2;
 
         delete m_Renderer;
         delete m_Window;
@@ -112,9 +122,15 @@ NAMESPACE {
 
             Window::PollEvents();
 
-            m_Renderer->BeginScene();
+            m_Camera.transform.position.z = glm::sin(static_cast<float>(m_TotalTimePassed) * 1) * 5.0f;
+            m_Camera.transform.position.x = glm::cos(static_cast<float>(m_TotalTimePassed) * 1) * 5.0f;
+            m_Camera.transform.position.y = glm::sin(static_cast<float>(m_TotalTimePassed) * 3) * 1.0f;
+            m_Camera.transform.rotation = glm::quatLookAt(glm::normalize(-m_Camera.transform.position), glm::vec3(0.f,1.f,0.f));
+
+            m_Renderer->BeginScene(m_Camera);
 
             m_Renderer->RenderModel(m_TestModel);
+            m_Renderer->RenderModel(m_TestModel2);
 
             m_Renderer->EndScene();
 

@@ -8,6 +8,7 @@
 #include "ImGuiRendererVk.h"
 
 #include "VulkanInclude.h"
+#include "renderer/Constants.h"
 
 NAMESPACE {
 

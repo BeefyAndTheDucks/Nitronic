@@ -12,6 +12,10 @@
 
 NAMESPACE {
 
+    struct alignas(16) ModelConstants {
+        glm::mat4 mvp;
+    };
+
     class Model {
     public:
         Model(const Mesh &mesh, const Material &material, const Transform &transform, bool isStatic);
@@ -19,15 +23,15 @@ NAMESPACE {
 
         [[nodiscard]] bool IsInitialized() const { return m_Initialized; }
 
-        void Initialize(nvrhi::IDevice* device, const nvrhi::CommandListHandle &commandList, PSOCache& psoCache, const nvrhi::BindingSetDesc &frameConstantsBindingSet, const nvrhi::FramebufferHandle &fb);
+        void Initialize(nvrhi::IDevice *device, const nvrhi::CommandListHandle &commandList, PSOCache& psoCache, const nvrhi::FramebufferHandle &fb);
 
-        void Render(const nvrhi::CommandListHandle &commandList, const nvrhi::FramebufferHandle& fb) const;
+        void Render(const nvrhi::CommandListHandle &commandList, const nvrhi::FramebufferHandle& fb, const glm::mat4& viewProjectionMatrix) const;
     private:
         Transform m_Transform;
         Mesh m_Mesh;
         Material m_Material;
 
-        //nvrhi::BufferHandle m_ObjectConstantsBuffer;
+        nvrhi::BufferHandle m_ModelConstantsBuffer;
 
         nvrhi::GraphicsPipelineHandle m_GraphicsPipeline;
 

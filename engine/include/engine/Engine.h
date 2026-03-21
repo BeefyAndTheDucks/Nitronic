@@ -28,6 +28,8 @@ NAMESPACE {
         std::vector<double> m_DeltaTimes;
 
         Model* m_TestModel;
+        Model* m_TestModel2;
+        Camera m_Camera;
     };
 
 }

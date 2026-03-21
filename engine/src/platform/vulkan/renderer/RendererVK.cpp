@@ -10,6 +10,7 @@
 
 #include "VkMacros.h"
 #include "core/Macros.h"
+#include "renderer/Constants.h"
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 

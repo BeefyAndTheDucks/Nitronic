@@ -25,6 +25,22 @@ NAMESPACE {
             .setElementStride(sizeof(Vertex)),
     };
 
+    constexpr auto g_ShaderEmptyName = "Empty";
+    const ShaderKey g_ShaderEmptyVertex = {g_ShaderEmptyName, nvrhi::ShaderType::Vertex};
+    const ShaderKey g_ShaderEmptyFragment = {g_ShaderEmptyName, nvrhi::ShaderType::Pixel};
+    const std::vector g_ShaderEmptyAttributes = {
+        nvrhi::VertexAttributeDesc()
+            .setName("a_Position")
+            .setFormat(nvrhi::Format::RGB32_FLOAT)
+            .setOffset(offsetof(Vertex, position))
+            .setElementStride(sizeof(Vertex)),
+        nvrhi::VertexAttributeDesc()
+            .setName("a_TexCoord")
+            .setFormat(nvrhi::Format::RG32_FLOAT)
+            .setOffset(offsetof(Vertex, texCoord))
+            .setElementStride(sizeof(Vertex)),
+    };
+
 }
 
 #endif //NITRONIC_SHADERS_H
