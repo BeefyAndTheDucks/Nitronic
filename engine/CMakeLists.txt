@@ -1,4 +1,4 @@
-﻿file(GLOB_RECURSE ENGINE_SOURCES src/engine/*.cpp)
+﻿file(GLOB_RECURSE ENGINE_SOURCES CONFIGURE_DEPENDS src/engine/*.cpp)
 
 add_library(engine ${ENGINE_SOURCES})
 target_include_directories(engine PUBLIC include)
@@ -11,7 +11,8 @@ target_link_libraries(engine
         PUBLIC glfw
         PUBLIC glm
         PUBLIC imgui
-        PUBLIC stb)
+        PUBLIC stb
+        PUBLIC assimp)
 
 if (NITRONIC_WITH_VULKAN)
     file(GLOB_RECURSE VULKAN_ENGINE_SOURCES src/platform/vulkan/*.cpp)

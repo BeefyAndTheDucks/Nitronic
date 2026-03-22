@@ -5,6 +5,7 @@
 #ifndef NITRONIC_RENDERERTYPES_H
 #define NITRONIC_RENDERERTYPES_H
 #include "core/Macros.h"
+#include <glm/glm.hpp>
 
 NAMESPACE {
 
@@ -21,8 +22,9 @@ NAMESPACE {
     };
 
     struct Vertex {
-        float position[3];
-        float texCoord[2];
+        glm::vec3 position;
+        glm::vec3 normal;
+        glm::vec2 texCoord;
     };
 
 }

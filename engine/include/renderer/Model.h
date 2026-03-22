@@ -13,12 +13,14 @@
 NAMESPACE {
 
     struct alignas(16) ModelConstants {
-        glm::mat4 mvp;
+        glm::mat4 viewProj;
+        glm::mat4 model;
+        glm::mat4 normalMatrix;
     };
 
     class Model {
     public:
-        Model(const Mesh &mesh, const Material &material, const Transform &transform, bool isStatic);
+        Model(const Mesh& mesh, const Material& material, const Transform& transform, bool isStatic);
         ~Model() = default;
 
         [[nodiscard]] bool IsInitialized() const { return m_Initialized; }

@@ -20,7 +20,7 @@
 NAMESPACE {
 
     Renderer::Renderer(const RenderingBackend backend, Window* window)
-        : m_Backend(backend), m_RendererData(nullptr), m_Window(window)
+        : m_Backend(backend), m_RendererData(nullptr), m_Window(window), m_ViewProjectionMatrix(glm::identity<glm::mat4>())
     {
         std::cout << "Using " << RenderingBackendToString(backend) << " backend." << std::endl;
 
@@ -53,7 +53,7 @@ NAMESPACE {
             attributes, std::size(attributes), m_ShaderCache->getShader(g_ShaderEmptyVertex));
 
         // Create buffers
-        auto vertexBufferDesc = nvrhi::BufferDesc()
+        const auto vertexBufferDesc = nvrhi::BufferDesc()
             .setByteSize(sizeof(Vertex))
             .setIsVertexBuffer(true)
             .setInitialState(nvrhi::ResourceStates::VertexBuffer)
@@ -61,7 +61,7 @@ NAMESPACE {
             .setDebugName("Vertex Buffer");
         m_VertexBuffer = m_Device->GetDevice()->createBuffer(vertexBufferDesc);
 
-        auto indexBufferDesc = nvrhi::BufferDesc()
+        const auto indexBufferDesc = nvrhi::BufferDesc()
             .setByteSize(sizeof(uint32_t))
             .setIsIndexBuffer(true)
             .setInitialState(nvrhi::ResourceStates::IndexBuffer)
@@ -75,12 +75,12 @@ NAMESPACE {
 
         GenerateBackbuffers();
 
-        nvrhi::CommandListHandle commandList = m_Device->GetDevice()->createCommandList();
+        const nvrhi::CommandListHandle commandList = m_Device->GetDevice()->createCommandList();
 
         commandList->open();
 
-        Vertex vertices[] = { {0.f,  0.f, 0.f, 0.f, 0.f} };
-        uint32_t indices[] = { 0 };
+        constexpr Vertex vertices[] = { {{0.f, 0.f, 0.f}, {0.f, 0.f, 0.f}, {0.f, 0.f}} };
+        constexpr uint32_t indices[] = { 0 };
 
         commandList->writeBuffer(m_VertexBuffer, vertices, sizeof(Vertex));
         commandList->writeBuffer(m_IndexBuffer, indices, sizeof(uint32_t));
@@ -136,12 +136,10 @@ NAMESPACE {
     }
 
     void Renderer::BeginScene(const Camera& camera) {
-        if (m_Window->IsMinimized())
-            return; // Skip rendering.
-
         m_ImGuiRenderer->BeginFrame();
 
-        CREATE_BACKEND_SWITCH(BeginFrame); // not sure if required. maybe prerender and postrender?
+        if (!m_Window->IsMinimized())
+            CREATE_BACKEND_SWITCH(BeginFrame);
 
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
         ImGui::Begin("Game");
@@ -155,12 +153,13 @@ NAMESPACE {
         ImGui::End();
         ImGui::PopStyleVar();
 
-
         m_RenderingCommandList = m_Device->GetDevice()->createCommandList();
         m_RenderingCommandList->open();
 
-        // Clear the screen
-        nvrhi::utils::ClearColorAttachment(m_RenderingCommandList, m_Backbuffers[m_SwapChainIndex], 0, nvrhi::Color(1, 1, 1, 1));
+        if (!m_Window->IsMinimized()) {
+            // Clear the screen
+            nvrhi::utils::ClearColorAttachment(m_RenderingCommandList, m_Backbuffers[m_SwapChainIndex], 0, nvrhi::Color(1, 1, 1, 1));
+        }
 
         if (m_ValidGameWindow) {
             const float gameWindowAspect = m_FramebufferWidth / m_FramebufferHeight;
@@ -187,6 +186,9 @@ NAMESPACE {
         int framebufferWidth, framebufferHeight;
         m_Window->GetFramebufferSize(&framebufferWidth, &framebufferHeight);
 
+        framebufferWidth = std::max(framebufferWidth, 1);
+        framebufferHeight = std::max(framebufferHeight, 1);
+
         const auto graphicsState = nvrhi::GraphicsState()
             .setPipeline(m_ImGuiGraphicsPipeline)
             .setFramebuffer(m_Backbuffers[m_SwapChainIndex])
@@ -201,7 +203,8 @@ NAMESPACE {
         m_RenderingCommandList->close();
         m_Device->GetDevice()->executeCommandList(m_RenderingCommandList);
 
-        CREATE_BACKEND_SWITCH(PresentFrame);
+        if (!m_Window->IsMinimized())
+            CREATE_BACKEND_SWITCH(PresentFrame);
 
         m_Device->GetDevice()->runGarbageCollection();
 

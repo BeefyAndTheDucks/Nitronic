@@ -19,6 +19,11 @@ NAMESPACE {
             .setOffset(offsetof(Vertex, position))
             .setElementStride(sizeof(Vertex)),
         nvrhi::VertexAttributeDesc()
+            .setName("a_Normal")
+            .setFormat(nvrhi::Format::RGB32_FLOAT)
+            .setOffset(offsetof(Vertex, normal))
+            .setElementStride(sizeof(Vertex)),
+        nvrhi::VertexAttributeDesc()
             .setName("a_TexCoord")
             .setFormat(nvrhi::Format::RG32_FLOAT)
             .setOffset(offsetof(Vertex, texCoord))
@@ -33,6 +38,11 @@ NAMESPACE {
             .setName("a_Position")
             .setFormat(nvrhi::Format::RGB32_FLOAT)
             .setOffset(offsetof(Vertex, position))
+            .setElementStride(sizeof(Vertex)),
+        nvrhi::VertexAttributeDesc()
+            .setName("a_Normal")
+            .setFormat(nvrhi::Format::RGB32_FLOAT)
+            .setOffset(offsetof(Vertex, normal))
             .setElementStride(sizeof(Vertex)),
         nvrhi::VertexAttributeDesc()
             .setName("a_TexCoord")

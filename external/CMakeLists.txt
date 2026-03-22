@@ -1,13 +1,29 @@
-﻿set(third_party_folder "Third-Party Libraries")
+﻿include(FetchContent)
+
+set(third_party_folder "Third-Party Libraries")
 
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
-if (NOT TARGET glfw)
-    add_subdirectory(GLFW)
-    set_target_properties(glfw PROPERTIES FOLDER ${third_party_folder})
-    if (TARGET update_mappings)
-        set_target_properties(update_mappings PROPERTIES FOLDER ${third_party_folder})
-    endif()
+FetchContent_Declare(glfw
+        GIT_REPOSITORY https://github.com/glfw/glfw
+        GIT_TAG 3.4
+)
+
+FetchContent_Declare(glm
+        GIT_REPOSITORY https://github.com/g-truc/glm
+        GIT_TAG 1.0.3
+)
+
+FetchContent_Declare(assimp
+        GIT_REPOSITORY https://github.com/assimp/assimp
+        GIT_TAG v6.0.4
+)
+
+FetchContent_MakeAvailable(glfw glm assimp)
+
+set_target_properties(glfw PROPERTIES FOLDER ${third_party_folder})
+if (TARGET update_mappings)
+    set_target_properties(update_mappings PROPERTIES FOLDER ${third_party_folder})
 endif()
 
 set(NVRHI_WITH_DX11 "${NITRONIC_WITH_DX11}" CACHE BOOL "" FORCE)
@@ -15,8 +31,6 @@ set(NVRHI_WITH_DX12 "${NITRONIC_WITH_DX12}" CACHE BOOL "" FORCE)
 set(NVRHI_WITH_VULKAN "${NITRONIC_WITH_VULKAN}" CACHE BOOL "" FORCE)
 
 add_subdirectory(nvrhi)
-
-add_subdirectory(glm)
 
 
 # imgui

@@ -9,7 +9,7 @@
 
 NAMESPACE {
 
-    Model::Model(const Mesh& mesh, const Material& material, const Transform& transform, const bool isStatic)
+    Model::Model(const Mesh& mesh, const Material& material, const Transform& transform, bool isStatic)
         : m_Transform(transform), m_Mesh(mesh), m_Material(material), m_IsStatic(isStatic) {}
 
     void Model::Initialize(nvrhi::IDevice *device, const nvrhi::CommandListHandle &commandList, PSOCache& psoCache, const nvrhi::FramebufferHandle &fb) {
@@ -58,7 +58,11 @@ NAMESPACE {
 
     void Model::Render(const nvrhi::CommandListHandle &commandList, const nvrhi::FramebufferHandle& fb, const glm::mat4& viewProjectionMatrix) const {
         ModelConstants modelConstants{};
-        modelConstants.mvp = viewProjectionMatrix * m_Transform.GetMatrix();
+        modelConstants.viewProj = viewProjectionMatrix;
+        modelConstants.model = m_Transform.GetMatrix();
+
+        // if this is a performance hit, cache the result and only update if transform updates.
+        modelConstants.normalMatrix = glm::transpose(glm::inverse(glm::mat3(modelConstants.model)));
 
         commandList->writeBuffer(m_ModelConstantsBuffer, &modelConstants, sizeof(modelConstants));
 
