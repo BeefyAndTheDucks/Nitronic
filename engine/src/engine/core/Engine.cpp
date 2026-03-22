@@ -77,7 +77,7 @@ NAMESPACE {
             previousTime = currentTime;
             //std::cout << "DeltaTime: " << deltaTime << "s (" << 1.0f / deltaTime << "FPS)" << std::endl;
 
-            if (m_FPSCalcTimePassed >= 0.1 && !m_DeltaTimes.empty()) {
+            if (m_FPSCalcTimePassed >= 1 && !m_DeltaTimes.empty()) {
                 m_FPSCalcTimePassed = 0;
                 m_LastMeanDT = std::accumulate(m_DeltaTimes.begin(), m_DeltaTimes.end(), 0.0) / static_cast<double>(m_DeltaTimes.size());
                 m_DeltaTimes.clear();
@@ -122,8 +122,8 @@ NAMESPACE {
             ImGui::Text("FPS: %f", 1.0f / deltaTime);
             ImGui::Text("DeltaTime (ms): %f", deltaTime * 1000);
 
-            ImGui::Text("FPS (0.1s): %f", 1.0f / m_LastMeanDT);
-            ImGui::Text("DeltaTime (0.1s) (ms): %f", m_LastMeanDT * 1000);
+            ImGui::Text("FPS (1s): %f", 1.0f / m_LastMeanDT);
+            ImGui::Text("DeltaTime (1s) (ms): %f", m_LastMeanDT * 1000);
             ImGui::End();
 
             m_MonkeyModel->GetMutableTransform()->position.y = -glm::sin(static_cast<float>(m_TotalTimePassed) * 7) * 0.25f;
