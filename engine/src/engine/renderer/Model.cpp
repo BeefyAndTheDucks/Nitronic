@@ -20,7 +20,7 @@ NAMESPACE {
 
         m_Mesh.Initialize(device, commandList);
 
-        const auto modelConstantsBufferDesc = nvrhi::utils::CreateVolatileConstantBufferDesc(sizeof(ModelConstants), "ModelConstants Buffer", g_MaxFramesInFlight * 2)
+        const auto modelConstantsBufferDesc = nvrhi::utils::CreateVolatileConstantBufferDesc(sizeof(ModelConstants), "ModelConstants Buffer", g_MaxFramesInFlight + 1)
             .setInitialState(nvrhi::ResourceStates::ConstantBuffer)
             .setKeepInitialState(true);
         m_ModelConstantsBuffer = device->createBuffer(modelConstantsBufferDesc);
