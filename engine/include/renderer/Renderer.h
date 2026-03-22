@@ -97,6 +97,8 @@ NAMESPACE {
 
         nvrhi::BindingLayoutHandle m_BindingLayout;
 
+        nvrhi::BindingSetHandle m_BindingSet;
+
         // ImGui
         ImGuiRenderer* m_ImGuiRenderer;
         std::vector<ImGuiTexture> m_ImGuiFramebufferColorTextures;

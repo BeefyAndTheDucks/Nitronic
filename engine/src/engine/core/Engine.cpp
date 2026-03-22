@@ -24,8 +24,8 @@ NAMESPACE {
 
         auto assetImporter = AssetImporter();
 
-        auto monkey = assetImporter.ImportMesh("../assets/Monkey.obj");
-        auto cube = assetImporter.ImportMesh("../assets/Cube.obj");
+        auto monkeyMesh = assetImporter.ImportMesh("../assets/Monkey.obj");
+        auto cubeMesh = assetImporter.ImportMesh("../assets/Cube.obj");
 
         auto material = Material{};
         material.fragmentShader = g_ShaderBasicFragment;
@@ -37,21 +37,25 @@ NAMESPACE {
         transform.rotation = glm::quat::wxyz(1.0f, 0.0f, 0.0f, 0.0f);
         transform.scale = glm::vec3(1.0f, 1.0f, 1.0f);
 
-        m_TestModel = new Model(*monkey, material, transform, false);
+        m_MonkeyModel = new Model(*monkeyMesh, material, transform, false);
 
         transform.position = glm::vec3(-1.0f, 1.0f, 0.0f);
-        m_TestModel2 = new Model(*cube, material, transform, false);
+        m_CubeModel = new Model(*cubeMesh, material, transform, false);
 
-        m_Camera = Camera{};
-        m_Camera.fov = 45.0f;
-        m_Camera.transform.position = glm::vec3(0.0f, 0.0f, -5.0f);
-        m_Camera.transform.scale = glm::vec3(1.f);
-        m_Camera.transform.rotation = glm::quatLookAt(glm::normalize(-m_Camera.transform.position), glm::vec3(0.f,1.f,0.f));
+        auto camera = Camera{};
+        camera.fov = 45.0f;
+        camera.transform.position = glm::vec3(0.0f, 0.0f, -5.0f);
+        camera.transform.scale = glm::vec3(1.f);
+        camera.transform.rotation = glm::quatLookAt(glm::normalize(-camera.transform.position), glm::vec3(0.f,1.f,0.f));
+
+        m_Scene = new Scene();
+        m_Scene->camera = camera;
+        m_Scene->AddModel(*m_MonkeyModel);
+        m_Scene->AddModel(*m_CubeModel);
     }
 
     Engine::~Engine() {
-        delete m_TestModel;
-        delete m_TestModel2;
+        delete m_Scene;
 
         delete m_Renderer;
         delete m_Window;
@@ -75,7 +79,7 @@ NAMESPACE {
 
             if (m_FPSCalcTimePassed >= 0.1 && !m_DeltaTimes.empty()) {
                 m_FPSCalcTimePassed = 0;
-                m_LastMeanDT = std::accumulate(m_DeltaTimes.begin(), m_DeltaTimes.end(), 0.0) / m_DeltaTimes.size();
+                m_LastMeanDT = std::accumulate(m_DeltaTimes.begin(), m_DeltaTimes.end(), 0.0) / static_cast<double>(m_DeltaTimes.size());
                 m_DeltaTimes.clear();
 
                 std::stringstream ss;
@@ -85,12 +89,12 @@ NAMESPACE {
 
             Window::PollEvents();
 
-            m_Camera.transform.position.z = glm::sin(static_cast<float>(m_TotalTimePassed) * 1) * 5.0f;
-            m_Camera.transform.position.x = glm::cos(static_cast<float>(m_TotalTimePassed) * 1) * 5.0f;
-            m_Camera.transform.position.y = glm::sin(static_cast<float>(m_TotalTimePassed) * 3) * 5.0f;
-            m_Camera.transform.rotation = glm::quatLookAt(glm::normalize(-m_Camera.transform.position), glm::vec3(0.f,1.f,0.f));
+            m_Scene->camera.transform.position.z = glm::sin(static_cast<float>(m_TotalTimePassed) * 1) * 5.0f;
+            m_Scene->camera.transform.position.x = glm::cos(static_cast<float>(m_TotalTimePassed) * 1) * 5.0f;
+            m_Scene->camera.transform.position.y = glm::sin(static_cast<float>(m_TotalTimePassed) * 3) * 5.0f;
+            m_Scene->camera.transform.rotation = glm::quatLookAt(glm::normalize(-m_Scene->camera.transform.position), glm::vec3(0.f,1.f,0.f));
 
-            m_Renderer->BeginScene(m_Camera);
+            m_Renderer->BeginScene(m_Scene->camera);
 
             if (ImGui::BeginMainMenuBar()) {
 
@@ -122,8 +126,11 @@ NAMESPACE {
             ImGui::Text("DeltaTime (0.1s) (ms): %f", m_LastMeanDT * 1000);
             ImGui::End();
 
-            m_Renderer->RenderModel(m_TestModel);
-            m_Renderer->RenderModel(m_TestModel2);
+            m_MonkeyModel->GetMutableTransform()->position.y = -glm::sin(static_cast<float>(m_TotalTimePassed) * 7) * 0.25f;
+            m_CubeModel  ->GetMutableTransform()->position.y =  glm::sin(static_cast<float>(m_TotalTimePassed) * 7) * 0.25f;
+
+            for (auto& model : m_Scene->models)
+                m_Renderer->RenderModel(&model);
 
             m_Renderer->EndScene();
 

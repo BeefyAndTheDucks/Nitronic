@@ -5,10 +5,11 @@
 #ifndef NITRONIC_ENGINE_H
 #define NITRONIC_ENGINE_H
 #include "core/Macros.h"
+#include "core/Enums.h"
 #include "renderer/Renderer.h"
 
 #include "Window.h"
-#include "core/Enums.h"
+#include "Scene.h"
 
 NAMESPACE {
 
@@ -31,9 +32,10 @@ NAMESPACE {
 
         bool m_ShowingDemoWindow = false;
 
-        Model* m_TestModel;
-        Model* m_TestModel2;
-        Camera m_Camera;
+        Model* m_CubeModel;
+        Model* m_MonkeyModel;
+
+        Scene* m_Scene;
     };
 
 }

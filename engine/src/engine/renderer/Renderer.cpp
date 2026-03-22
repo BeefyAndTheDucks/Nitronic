@@ -35,7 +35,7 @@ NAMESPACE {
 
         m_PSOCache.emplace(m_Device->GetDevice(), *m_ShaderCache);
 
-        if (nvrhi::BindingSetHandle unusedBindingSet; !nvrhi::utils::CreateBindingSetAndLayout(m_Device->GetDevice(), nvrhi::ShaderType::All, 0, nvrhi::BindingSetDesc(), m_BindingLayout, unusedBindingSet)) {
+        if (nvrhi::BindingSetHandle unusedBindingSet; !nvrhi::utils::CreateBindingSetAndLayout(m_Device->GetDevice(), nvrhi::ShaderType::All, 0, nvrhi::BindingSetDesc(), m_BindingLayout, m_BindingSet)) {
             throw std::runtime_error("Failed to create binding set and layout.");
         }
 
@@ -66,6 +66,7 @@ NAMESPACE {
         m_ImGuiFramebufferColorTextures.clear();
         m_ImGuiFramebufferDepthTextures.clear();
 
+        m_BindingSet = nullptr;
         m_BindingLayout = nullptr;
         m_Sampler = nullptr;
 
@@ -138,11 +139,8 @@ NAMESPACE {
 
         const auto graphicsState = nvrhi::GraphicsState()
             .setPipeline(m_ImGuiGraphicsPipeline)
-            .setFramebuffer(m_Backbuffers[m_SwapChainIndex]);
-            //.addVertexBuffer(nvrhi::VertexBufferBinding(m_VertexBuffer))
-            //.setIndexBuffer(nvrhi::IndexBufferBinding(m_IndexBuffer))
-            //.addBindingSet(m_BindingSet)
-            //.setViewport(nvrhi::ViewportState().addViewportAndScissorRect(nvrhi::Viewport(static_cast<float>(framebufferWidth), static_cast<float>(framebufferHeight))));
+            .setFramebuffer(m_Backbuffers[m_SwapChainIndex])
+            .addBindingSet(m_BindingSet);
         m_RenderingCommandList->setGraphicsState(graphicsState);
 
         m_ImGuiRenderer->Render(m_RenderingCommandList);
