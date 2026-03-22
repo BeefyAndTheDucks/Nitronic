@@ -40,6 +40,9 @@ NAMESPACE {
         [[nodiscard]] bool IsMinimized() const;
 
         void SetTitle(const char* title) const;
+
+        void Close() const { glfwSetWindowShouldClose(m_Window, true); }
+        void CancelClose() const { glfwSetWindowShouldClose(m_Window, false); }
     private:
         int m_Width;
         int m_Height;

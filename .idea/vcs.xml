@@ -2,6 +2,24 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-debug-llvm/_deps/assimp-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-debug-llvm/_deps/glfw-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-debug-llvm/_deps/glm-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-debug-msvc/_deps/assimp-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-debug-msvc/_deps/glfw-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-debug-msvc/_deps/glm-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-debug-wsl/_deps/assimp-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-debug-wsl/_deps/glfw-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-debug-wsl/_deps/glm-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-release-llvm/_deps/assimp-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-release-llvm/_deps/glfw-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-release-llvm/_deps/glm-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-release-msvc/_deps/assimp-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-release-msvc/_deps/glfw-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-release-msvc/_deps/glm-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-release-wsl/_deps/assimp-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-release-wsl/_deps/glfw-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-release-wsl/_deps/glm-src" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/imgui" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/nvrhi" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/nvrhi/rtxmu" vcs="Git" />

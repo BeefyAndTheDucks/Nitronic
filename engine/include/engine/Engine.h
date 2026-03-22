@@ -29,6 +29,8 @@ NAMESPACE {
 
         std::vector<double> m_DeltaTimes;
 
+        bool m_ShowingDemoWindow = false;
+
         Model* m_TestModel;
         Model* m_TestModel2;
         Camera m_Camera;

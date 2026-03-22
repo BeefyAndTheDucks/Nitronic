@@ -92,6 +92,28 @@ NAMESPACE {
 
             m_Renderer->BeginScene(m_Camera);
 
+            if (ImGui::BeginMainMenuBar()) {
+
+                if (ImGui::BeginMenu("File")) {
+                    if (ImGui::MenuItem("Quit", "Alt+F4")) {
+                        m_Window->Close();
+                    }
+                    ImGui::EndMenu();
+                }
+
+                if (ImGui::BeginMenu("Help")) {
+                    if (ImGui::MenuItem(m_ShowingDemoWindow ? "Close ImGui Demo Window" : "Open ImGui Demo Window")) {
+                        m_ShowingDemoWindow = !m_ShowingDemoWindow;
+                    }
+                    ImGui::EndMenu();
+                }
+
+                ImGui::EndMainMenuBar();
+            }
+
+            if (m_ShowingDemoWindow)
+                ImGui::ShowDemoWindow();
+
             ImGui::Begin("Debug");
             ImGui::Text("FPS: %f", 1.0f / deltaTime);
             ImGui::Text("DeltaTime (ms): %f", deltaTime * 1000);
