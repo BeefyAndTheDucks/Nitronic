@@ -20,7 +20,7 @@ NAMESPACE {
 
     class ImGuiRenderer {
     public:
-        ImGuiRenderer(RenderingBackend backend, Window* window, RendererData* rendererData, DeviceData* deviceData, const nvrhi::FramebufferHandle& framebuffer);
+        ImGuiRenderer(RenderingBackend backend, Window* window, RendererData* rendererData, DeviceData* deviceData);
         ~ImGuiRenderer();
 
         void BeginFrame() const;
@@ -29,7 +29,7 @@ NAMESPACE {
         [[nodiscard]] ImGuiTexture AddTexture(const nvrhi::TextureHandle &texture, const nvrhi::SamplerHandle &sampler) const;
         void RemoveTexture(const ImGuiTexture& texture) const;
     private:
-        CREATE_BACKEND_FUNCTIONS(void, Init, const nvrhi::FramebufferHandle& framebuffer)
+        CREATE_BACKEND_FUNCTIONS(void, Init)
         CREATE_BACKEND_FUNCTIONS(void, Shutdown)
 
         CREATE_BACKEND_FUNCTIONS(static void, BeginFrame)

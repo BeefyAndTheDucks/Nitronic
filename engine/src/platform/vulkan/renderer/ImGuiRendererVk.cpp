@@ -12,14 +12,11 @@
 
 NAMESPACE {
 
-    void ImGuiRenderer::InitVk(const nvrhi::FramebufferHandle &framebuffer) {
+    void ImGuiRenderer::InitVk() {
         m_ImGuiRendererData = new ImGuiRendererDataVk();
 
         const auto rendererDataVk = RENDERER_DATA;
         const auto deviceDataVk = DEVICE_DATA;
-        const auto imGuiRendererDataVk = IMGUI_RENDERER_DATA;
-
-        imGuiRendererDataVk->renderPass = framebuffer->getNativeObject(nvrhi::ObjectTypes::VK_RenderPass);
 
         vk::DescriptorPoolSize poolSizes[] =
         {
@@ -32,6 +29,12 @@ NAMESPACE {
         for (const vk::DescriptorPoolSize& poolSize : poolSizes)
             descriptorPoolSize += poolSize.descriptorCount;
 
+        const auto colorFormat = rendererDataVk->swapChainImageFormat;
+
+        vk::PipelineRenderingCreateInfoKHR pipelineRenderingInfo = vk::PipelineRenderingCreateInfoKHR()
+            .setColorAttachmentCount(1)
+            .setPColorAttachmentFormats(&colorFormat);
+
         ImGui_ImplVulkan_InitInfo initInfo{};
         initInfo.ApiVersion = VK_API_VERSION_1_3;
         initInfo.Instance = rendererDataVk->instance;
@@ -43,8 +46,9 @@ NAMESPACE {
         initInfo.MinImageCount = 2;
         initInfo.ImageCount = g_MaxFramesInFlight;
         initInfo.Allocator = nullptr;
-        initInfo.PipelineInfoMain.RenderPass = imGuiRendererDataVk->renderPass;
-        initInfo.PipelineInfoMain.Subpass = 0;
+        initInfo.UseDynamicRendering = true;
+        initInfo.PipelineInfoForViewports.PipelineRenderingCreateInfo = pipelineRenderingInfo;
+        initInfo.PipelineInfoMain.PipelineRenderingCreateInfo = pipelineRenderingInfo;
         initInfo.PipelineInfoMain.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 
         ImGui_ImplVulkan_Init(&initInfo);

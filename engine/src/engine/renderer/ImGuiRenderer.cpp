@@ -7,7 +7,7 @@
 
 NAMESPACE {
 
-    ImGuiRenderer::ImGuiRenderer(const RenderingBackend backend, Window* window, RendererData* rendererData, DeviceData* deviceData, const nvrhi::FramebufferHandle &framebuffer)
+    ImGuiRenderer::ImGuiRenderer(const RenderingBackend backend, Window* window, RendererData* rendererData, DeviceData* deviceData)
         : m_ImGuiRendererData(nullptr), m_RendererData(rendererData), m_DeviceData(deviceData), m_Window(window), m_Backend(backend)
     {
         IMGUI_CHECKVERSION();
@@ -18,7 +18,7 @@ NAMESPACE {
         io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
         io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
-        CREATE_BACKEND_SWITCH(Init, framebuffer);
+        CREATE_BACKEND_SWITCH(Init);
 
         ImGuiPlatformIO& platformIO = ImGui::GetPlatformIO();
 

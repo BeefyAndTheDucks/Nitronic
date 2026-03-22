@@ -119,7 +119,7 @@ NAMESPACE {
         }
 
     private:
-        nvrhi::GraphicsPipelineHandle build(const PSOKey &key) {
+        nvrhi::GraphicsPipelineHandle build(const PSOKey &key) const {
             const nvrhi::ShaderHandle vs = resolve(key.vertexShader);
             const nvrhi::ShaderHandle fs = resolve(key.fragmentShader);
             if (!vs || !fs) return nullptr;
@@ -134,68 +134,12 @@ NAMESPACE {
                 .setInputLayout(m_Device->createInputLayout(attrs.data(), static_cast<uint32_t>(attrs.size()), vs))
                 .addBindingLayout(key.bindingLayout);
 
-            // Create a framebuffer temporarily. This is not used for rendering,
-            // rather it serves as a way to tell the pipeline the formats used.
-            const nvrhi::FramebufferHandle fb = createCompatibleFramebuffer(key.framebufferInfo);
-            if (!fb) return nullptr;
-
-            return m_Device->createGraphicsPipeline(desc, fb);
+            return m_Device->createGraphicsPipeline(desc, key.framebufferInfo);
         }
 
         nvrhi::ShaderHandle resolve(const ShaderKey& key) const {
             if (key.stage == nvrhi::ShaderType::None) return nullptr;
             return m_ShaderCache.getShader(key);
-        }
-
-        // Creates a transient framebuffer.
-        nvrhi::FramebufferHandle createCompatibleFramebuffer(const nvrhi::FramebufferInfoEx& info) const {
-            std::vector<nvrhi::TextureHandle> textures;
-            nvrhi::FramebufferDesc desc{};
-
-            for (auto colorFormat : info.colorFormats)
-            {
-                if (colorFormat == nvrhi::Format::UNKNOWN) break;
-
-                // 1×1 dummy texture — just for the format signature.
-                nvrhi::TextureDesc td;
-                td.width       = 1;
-                td.height      = 1;
-                td.format      = colorFormat;
-                td.isRenderTarget = true;
-                td.debugName   = "PSOCache::dummyColor";
-
-                nvrhi::TextureHandle tex = m_Device->createTexture(td);
-                if (!tex) return nullptr;
-
-                nvrhi::FramebufferAttachment attachment = nvrhi::FramebufferAttachment()
-                    .setTexture(tex)
-                    .setFormat(colorFormat);
-
-                textures.push_back(tex);
-                desc.addColorAttachment(attachment);
-            }
-
-            if (info.depthFormat != nvrhi::Format::UNKNOWN)
-            {
-                nvrhi::TextureDesc td;
-                td.width       = 1;
-                td.height      = 1;
-                td.format      = info.depthFormat;
-                td.isRenderTarget = true;
-                td.debugName   = "PSOCache::dummyDepth";
-
-                nvrhi::TextureHandle tex = m_Device->createTexture(td);
-                if (!tex) return nullptr;
-
-                nvrhi::FramebufferAttachment attachment = nvrhi::FramebufferAttachment()
-                    .setTexture(tex)
-                    .setFormat(info.depthFormat);
-
-                textures.push_back(tex);
-                desc.setDepthAttachment(attachment);
-            }
-
-            return m_Device->createFramebuffer(desc);
         }
 
     private:

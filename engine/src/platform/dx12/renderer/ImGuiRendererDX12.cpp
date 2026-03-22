@@ -6,7 +6,7 @@
 
 NAMESPACE {
 
-    void ImGuiRenderer::InitDX12(const nvrhi::FramebufferHandle& framebuffer) {
+    void ImGuiRenderer::InitDX12() {
 
     }
 

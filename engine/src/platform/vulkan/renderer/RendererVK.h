@@ -30,6 +30,7 @@ NAMESPACE {
         std::vector<const char*> instanceExtensions;
 
         vk::SwapchainKHR nativeSwapChain;
+        vk::Format swapChainImageFormat;
 
         std::vector<vk::Semaphore> acquireSemaphores;
         std::vector<vk::Semaphore> presentSemaphores;

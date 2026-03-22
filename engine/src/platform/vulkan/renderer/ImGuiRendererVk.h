@@ -11,7 +11,6 @@
 NAMESPACE {
 
     struct ImGuiRendererDataVk : ImGuiRendererData {
-        vk::RenderPass renderPass;
     };
 
 }

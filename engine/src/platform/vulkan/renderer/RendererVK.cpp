@@ -92,6 +92,8 @@ NAMESPACE {
         vk::PresentModeKHR presentMode = ChooseSwapPresentMode(swapChainSupport.presentModes);
         vk::Extent2D extent = ChooseSwapExtent(swapChainSupport.capabilities, window);
 
+        rendererData->swapChainImageFormat = surfaceFormat.format;
+
         uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
         if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount) {
             imageCount = swapChainSupport.capabilities.maxImageCount;

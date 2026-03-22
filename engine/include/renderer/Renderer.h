@@ -95,13 +95,7 @@ NAMESPACE {
         std::optional<ShaderCache> m_ShaderCache;
         std::optional<PSOCache> m_PSOCache;
 
-        nvrhi::BindingSetHandle m_BindingSet;
         nvrhi::BindingLayoutHandle m_BindingLayout;
-        nvrhi::InputLayoutHandle m_InputLayout;
-
-        // Buffers
-        nvrhi::BufferHandle m_VertexBuffer;
-        nvrhi::BufferHandle m_IndexBuffer;
 
         // ImGui
         ImGuiRenderer* m_ImGuiRenderer;

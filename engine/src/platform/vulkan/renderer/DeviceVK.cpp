@@ -10,6 +10,8 @@ NAMESPACE {
 
     std::vector deviceExtensions = {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+        VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
+        VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME
     };
 
     SwapChainSupportDetails QuerySwapChainSupport(const vk::PhysicalDevice device, const vk::SurfaceKHR surface) {
@@ -141,6 +143,8 @@ NAMESPACE {
         vulkan12Features.pNext = &vulkan11Features;
 
         vk::PhysicalDeviceVulkan13Features vulkan13Features{};
+        vulkan13Features.dynamicRendering = VK_TRUE;
+        vulkan13Features.synchronization2 = VK_TRUE;
         vulkan13Features.pNext = &vulkan12Features;
 
         vk::DeviceCreateInfo deviceCreateInfo{};
