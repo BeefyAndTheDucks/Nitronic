@@ -40,7 +40,7 @@ NAMESPACE {
             icons[i].height = icon.height;
             icons[i].pixels = icon.pixels;
         }
-        glfwSetWindowIcon(m_Window, 1, icons);
+        glfwSetWindowIcon(m_Window, std::size(resolutions), icons);
     }
 
     Window::~Window() {
