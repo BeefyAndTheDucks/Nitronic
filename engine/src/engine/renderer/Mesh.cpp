@@ -2,18 +2,19 @@
 // Created by simon on 21/03/2026.
 //
 
+#include "engine/Log.h"
+
 #include "renderer/Mesh.h"
 
-#include <iostream>
-
-NAMESPACE {
+NAMESPACE
+{
 
     Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices)
         : m_Vertices(vertices), m_Indices(indices) {}
 
     void Mesh::Initialize(nvrhi::IDevice* device, nvrhi::ICommandList* commandList) {
         if (m_Initialized) {
-            std::cout << "Mesh already initialized." << std::endl;
+            ENGINE_WARN("Mesh already initialized.");
             return;
         }
 

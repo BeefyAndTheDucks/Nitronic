@@ -21,7 +21,7 @@ NAMESPACE {
     Renderer::Renderer(const RenderingBackend backend, Window* window)
         : m_Backend(backend), m_Window(window), m_RendererData(nullptr), m_ViewProjectionMatrix(glm::identity<glm::mat4>())
     {
-        std::cout << "Using " << RenderingBackendToString(backend) << " backend." << std::endl;
+        ENGINE_INFO("Using {} backend.", RenderingBackendToString(backend));
 
         CREATE_BACKEND_SWITCH(Init);
         m_Device = std::make_unique<Device>(m_Backend, m_RendererData.get());

@@ -12,6 +12,7 @@
 #include "core/Macros.h"
 
 #include "engine/Window.h"
+#include "engine/Log.h"
 
 #include "Camera.h"
 #include "Device.h"
@@ -19,7 +20,8 @@
 #include "Model.h"
 #include "PSOCache.h"
 
-NAMESPACE {
+NAMESPACE
+{
 
     struct SwapChainImage {
         nvrhi::TextureHandle nvrhiHandle;
@@ -33,8 +35,22 @@ NAMESPACE {
             return s_Instance;
         }
 
-        void message(nvrhi::MessageSeverity severity, const char* messageText) override {
-            std::cout << "NVRHI: " << messageText << std::endl;
+        void message(const nvrhi::MessageSeverity severity, const char* messageText) override {
+            switch (severity)
+            {
+                case nvrhi::MessageSeverity::Info:
+                    ENGINE_INFO("Nvrhi: {}", messageText);
+                    break;
+                case nvrhi::MessageSeverity::Warning:
+                    ENGINE_WARN("Nvrhi: {}", messageText);
+                    break;
+                case nvrhi::MessageSeverity::Error:
+                    ENGINE_ERROR("Nvrhi: {}", messageText);
+                    break;
+                case nvrhi::MessageSeverity::Fatal:
+                    ENGINE_CRITICAL("Nvrhi: {}", messageText);
+                    break;
+            }
         }
     };
 

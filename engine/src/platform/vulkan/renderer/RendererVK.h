@@ -8,14 +8,14 @@
 #include "renderer/Renderer.h"
 
 #include "VulkanInclude.h"
+#include "VkHelpers.h"
 
 #ifndef VK_CHECK
 #define VK_CHECK(x) \
     do { \
         VkResult err__ = (x); \
         if (err__ != VK_SUCCESS) { \
-            std::cerr << "Vulkan error: " << err__ << " at " << __FILE__ \
-                      << ":" << __LINE__ << std::endl; \
+            ENGINE_ERROR("Vulkan error: {} at {}:{}", VkResultToString(err__), __FILE__, __LINE__); \
             std::abort(); \
         } \
     } while (0)

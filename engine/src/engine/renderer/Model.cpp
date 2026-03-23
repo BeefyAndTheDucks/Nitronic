@@ -2,6 +2,8 @@
 // Created by simon on 21/03/2026.
 //
 
+#include "engine/Log.h"
+
 #include "renderer/Model.h"
 #include "renderer/Constants.h"
 
@@ -14,7 +16,7 @@ NAMESPACE {
 
     void Model::Initialize(nvrhi::IDevice *device, const nvrhi::CommandListHandle &commandList, PSOCache& psoCache, const nvrhi::FramebufferHandle &fb) {
         if (m_Initialized) {
-            std::cout << "Model already initialized." << std::endl;
+            ENGINE_WARN("Model already initialized.");
             return;
         }
 

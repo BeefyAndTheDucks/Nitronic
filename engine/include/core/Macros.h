@@ -5,7 +5,9 @@
 #ifndef NITRONIC_MACROS_H
 #define NITRONIC_MACROS_H
 
-#define NAMESPACE namespace Nitronic
+#define NAMESPACE_NAME Nitronic
+
+#define NAMESPACE namespace NAMESPACE_NAME
 
 #ifdef NITRONIC_WITH_VULKAN
     #define CREATE_BACKEND_FUNCTION_VK(retType, name, ...) retType name##Vk(__VA_ARGS__);

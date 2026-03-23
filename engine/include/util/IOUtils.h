@@ -6,14 +6,13 @@
 #define NITRONIC_IOUTILS_H
 #include <filesystem>
 #include <fstream>
-#include <iostream>
 #include <vector>
 
 static std::vector<char> readFile(const std::filesystem::path& filePath) {
     std::ifstream file(filePath, std::ios::ate | std::ios::binary);
 
     if (!file.is_open()) {
-        std::cout << std::filesystem::current_path() << std::endl;
+        ENGINE_ERROR("Failed to open file: {} from {}", filePath.string(), std::filesystem::current_path().string());
         throw std::runtime_error("failed to open file!");
     }
 

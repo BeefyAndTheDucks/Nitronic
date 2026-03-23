@@ -2,23 +2,26 @@
 // Created by simon on 28/08/2025.
 //
 
-#define STB_IMAGE_IMPLEMENTATION
-// ReSharper disable once CppUnusedIncludeDirective
-#include <stb_image.h>
-
 #include "engine/Engine.h"
 
 #include <chrono>
 #include <numeric>
 
+#define STB_IMAGE_IMPLEMENTATION
+// ReSharper disable once CppUnusedIncludeDirective
+#include <stb_image.h>
+
 #include "engine/AssetImporter.h"
-#include "renderer/Constants.h"
+#include "engine/Log.h"
+
 #include "renderer/Shaders.h"
 
 NAMESPACE {
 
     Engine::Engine(const int windowWidth, const int windowHeight, const char* windowTitle, RenderingBackend backend)
         : m_TotalTimePassed(0), m_FPSCalcTimePassed(0) {
+        Log::Init();
+
         m_Window = std::make_unique<Window>(windowWidth, windowHeight, windowTitle);
         m_Renderer = std::make_unique<Renderer>(backend, m_Window.get());
 

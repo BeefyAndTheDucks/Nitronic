@@ -2,37 +2,34 @@
 // Created by simon on 02/09/2025.
 //
 
-#include <iostream>
-#include <nvrhi/d3d11.h>
-
 #include "renderer/Renderer.h"
 #include "core/Macros.h"
-#include "util/IOUtils.h"
 
-NAMESPACE {
+NAMESPACE
+{
 
     void Renderer::InitDX11() {
-        std::cout << "Init DX11" << std::endl;
+        ENGINE_INFO("Init DX11");
     }
 
     void Renderer::InitAfterDeviceCreationDX11() {
-        std::cout << "Init after device creation DX11" << std::endl;
+        ENGINE_INFO("Init after device creation DX11");
     }
 
     void Renderer::BeginFrameDX11() {
-        std::cout << "BeginFrame DX11" << std::endl;
+        ENGINE_INFO("BeginFrame DX11");
     }
 
     void Renderer::PresentFrameDX11() {
-        std::cout << "PresentFrame DX11" << std::endl;
+        ENGINE_INFO("PresentFrame DX11");
     }
 
     void Renderer::CleanupPreDeviceDX11() {
-        std::cout << "Cleanup pre device DX11" << std::endl;
+        ENGINE_INFO("Cleanup pre device DX11");
     }
 
     void Renderer::CleanupDX11() {
-        std::cout << "Cleanup DX11" << std::endl;
+        ENGINE_INFO("Cleanup DX11");
     }
 
 }

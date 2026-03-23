@@ -118,7 +118,7 @@ NAMESPACE {
             throw std::runtime_error("No suitable Vulkan-compatible GPU found.");
         }
 
-        std::cout << "Using device " << devices[0].getProperties().deviceName << std::endl;
+        ENGINE_INFO("Using device {}", devices[0].getProperties().deviceName.data());
 
         DEVICE_DATA_OWNED->queueFamilyIndices = FindQueueFamilies(DEVICE_DATA_OWNED->physicalDevice, RENDERER_DATA->surface);
 

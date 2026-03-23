@@ -19,7 +19,12 @@ FetchContent_Declare(assimp
         GIT_TAG v6.0.4
 )
 
-FetchContent_MakeAvailable(glfw glm assimp)
+FetchContent_Declare(spdlog
+        GIT_REPOSITORY https://github.com/gabime/spdlog
+        GIT_TAG v1.17.0
+)
+
+FetchContent_MakeAvailable(glfw glm assimp spdlog)
 
 set_target_properties(glfw PROPERTIES FOLDER ${third_party_folder})
 if (TARGET update_mappings)

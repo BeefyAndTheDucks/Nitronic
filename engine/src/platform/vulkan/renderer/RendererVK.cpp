@@ -16,25 +16,21 @@ VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
 // Optional DebugUtils callback (used only if VK_EXT_debug_utils is enabled)
 static VKAPI_ATTR VkBool32 VKAPI_CALL DebugUtilsMessengerCallback(
-    vk::DebugUtilsMessageSeverityFlagBitsEXT      messageSeverity,
-    vk::DebugUtilsMessageTypeFlagsEXT             messageTypes,
-    const vk::DebugUtilsMessengerCallbackDataEXT* pCallbackData,
-    void*                                       pUserData)
+    const vk::DebugUtilsMessageSeverityFlagBitsEXT messageSeverity, vk::DebugUtilsMessageTypeFlagsEXT,
+    const vk::DebugUtilsMessengerCallbackDataEXT* pCallbackData, void*)
 {
-    std::string message = "Vulkan: " + std::string(pCallbackData->pMessage);
-
     switch (messageSeverity) {
-        //case vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose:
-        //    std::cout << "[VERBOSE] " << message << std::endl;
-        //    break;
+        case vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose:
+            ENGINE_TRACE("Vulkan: {}", pCallbackData->pMessage);
+            break;
         case vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo:
-            std::cout << "[INFO] " << message << std::endl;
+            ENGINE_INFO("Vulkan: {}", pCallbackData->pMessage);
             break;
         case vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning:
-            std::cout << "[WARNING] " << message << std::endl;
+            ENGINE_WARN("Vulkan: {}", pCallbackData->pMessage);
             break;
         case vk::DebugUtilsMessageSeverityFlagBitsEXT::eError:
-            std::cerr << "[ERROR] " << message << std::endl;
+            ENGINE_ERROR("Vulkan: {}", pCallbackData->pMessage);
             break;
         default:
             break;
@@ -180,7 +176,7 @@ NAMESPACE {
     }
 
     void Renderer::InitVk() {
-        std::cout << "Init Vulkan" << std::endl;
+        ENGINE_INFO("Init Vulkan");
 
         m_RendererData = std::make_unique<RendererDataVk>();
 
@@ -295,6 +291,7 @@ NAMESPACE {
             }
 
             VkSurfaceKHR rawSurface = VK_NULL_HANDLE;
+
             VK_CHECK(glfwCreateWindowSurface(
                 RENDERER_DATA_OWNED->instance,
                 m_Window->GetNativeWindow(),
@@ -303,14 +300,14 @@ NAMESPACE {
             ));
             RENDERER_DATA_OWNED->surface = rawSurface;
 
-            std::cout << "Vulkan initialized." << std::endl;
+            ENGINE_INFO("Vulkan initialized.");
         }
         catch (const vk::SystemError& e) {
-            std::cerr << "Vulkan error during instance creation: " << e.what() << std::endl;
+            ENGINE_CRITICAL("Vulkan error during instance creation: {}", e.what());
             throw;
         }
         catch (const std::exception& e) {
-            std::cerr << "Error during Vulkan init: " << e.what() << std::endl;
+            ENGINE_CRITICAL("Error during Vulkan init: {}", e.what());
             throw;
         }
     }
@@ -385,13 +382,13 @@ NAMESPACE {
                     return;
                 }
                 if (res != vk::Result::eSuccess && res != vk::Result::eSuboptimalKHR) {
-                    std::cerr << "Failed to present swap chain image: " << vk::to_string(res) << std::endl;
+                    ENGINE_CRITICAL("Failed to present swap chain image: {}", vk::to_string(res));
                     std::abort();
                 }
 
                 break;
             } catch (const vk::SystemError& e) {
-                std::cerr << "Vulkan error during present: " << e.what() << std::endl;
+                ENGINE_CRITICAL("Vulkan error during present: {}", e.what());
                 std::abort();
             }
         }
