@@ -5,7 +5,7 @@
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 
-#include "core/AssetImporter.h"
+#include "engine/AssetImporter.h"
 
 NAMESPACE {
     

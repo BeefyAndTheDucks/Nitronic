@@ -3,15 +3,15 @@
 //
 
 #define STB_IMAGE_IMPLEMENTATION
+// ReSharper disable once CppUnusedIncludeDirective
 #include <stb_image.h>
 
 #include "engine/Engine.h"
 
 #include <chrono>
-#include <iostream>
 #include <numeric>
 
-#include "core/AssetImporter.h"
+#include "engine/AssetImporter.h"
 #include "renderer/Constants.h"
 #include "renderer/Shaders.h"
 
