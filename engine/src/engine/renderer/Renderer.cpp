@@ -19,21 +19,21 @@
 NAMESPACE {
 
     Renderer::Renderer(const RenderingBackend backend, Window* window)
-        : m_Backend(backend), m_RendererData(nullptr), m_Window(window), m_ViewProjectionMatrix(glm::identity<glm::mat4>())
+        : m_Backend(backend), m_Window(window), m_RendererData(nullptr), m_ViewProjectionMatrix(glm::identity<glm::mat4>())
     {
         std::cout << "Using " << RenderingBackendToString(backend) << " backend." << std::endl;
 
         CREATE_BACKEND_SWITCH(Init);
-        m_Device = new Device(m_Backend, m_RendererData);
+        m_Device = std::make_unique<Device>(m_Backend, m_RendererData.get());
         CREATE_BACKEND_SWITCH(InitAfterDeviceCreation);
 
-        m_ShaderCache.emplace(
+        m_ShaderCache = std::make_unique<ShaderCache>(
             m_Device->GetDevice(),
             g_ShadersDirectory,
             backend
         );
 
-        m_PSOCache.emplace(m_Device->GetDevice(), *m_ShaderCache);
+        m_PSOCache = std::make_unique<PSOCache>(m_Device->GetDevice(), *m_ShaderCache);
 
         if (nvrhi::BindingSetHandle unusedBindingSet; !nvrhi::utils::CreateBindingSetAndLayout(m_Device->GetDevice(), nvrhi::ShaderType::All, 0, nvrhi::BindingSetDesc(), m_BindingLayout, m_BindingSet)) {
             throw std::runtime_error("Failed to create binding set and layout.");
@@ -41,7 +41,7 @@ NAMESPACE {
 
         GenerateBackbuffers();
 
-        m_ImGuiRenderer = new ImGuiRenderer(backend, window, m_RendererData, m_Device->GetDeviceData());
+        m_ImGuiRenderer = std::make_unique<ImGuiRenderer>(backend, window, m_RendererData.get(), m_Device->GetDeviceData());
 
         const nvrhi::SamplerDesc samplerDesc = nvrhi::SamplerDesc()
             .setAllAddressModes(nvrhi::SamplerAddressMode::Repeat)
@@ -57,7 +57,7 @@ NAMESPACE {
             for (ImGuiTexture& texture : m_ImGuiFramebufferColorTextures)
                 m_ImGuiRenderer->RemoveTexture(texture);
 
-        delete m_ImGuiRenderer;
+        m_ImGuiRenderer.reset();
 
         m_ImGuiGraphicsPipeline = nullptr;
 
@@ -79,7 +79,7 @@ NAMESPACE {
         m_Device->GetDevice()->runGarbageCollection();
 
         CREATE_BACKEND_SWITCH(CleanupPreDevice);
-        delete m_Device;
+        m_Device.reset();
         CREATE_BACKEND_SWITCH(Cleanup);
     }
 
@@ -119,13 +119,13 @@ NAMESPACE {
         }
     }
 
-    void Renderer::RenderModel(Model* model) {
+    void Renderer::RenderModel(Model& model) {
         if (!m_ValidGameWindow)
             return;
 
-        if (!model->IsInitialized())
-            model->Initialize(m_Device->GetDevice(), m_RenderingCommandList, m_PSOCache.value(), m_Framebuffers[m_SwapChainIndex]);
-        model->Render(m_RenderingCommandList, m_Framebuffers[m_SwapChainIndex], m_ViewProjectionMatrix);
+        if (!model.IsInitialized())
+            model.Initialize(m_Device->GetDevice(), m_RenderingCommandList, *m_PSOCache, m_Framebuffers[m_SwapChainIndex]);
+        model.Render(m_RenderingCommandList, m_Framebuffers[m_SwapChainIndex], m_ViewProjectionMatrix);
     }
 
     void Renderer::EndScene() {

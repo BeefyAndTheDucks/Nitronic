@@ -33,25 +33,4 @@ inline const char* RenderingBackendToString(const RenderingBackend backend) {
     }
 }
 
-enum class ShaderType {
-    Fragment,
-    Vertex
-};
-
-inline const char* ShaderTypeToString(const ShaderType type) {
-    switch (type) {
-        case ShaderType::Fragment: return "Fragment";
-        case ShaderType::Vertex: return "Vertex";
-        default: return "Unknown";
-    }
-}
-
-constexpr nvrhi::ShaderType ShaderTypeToNvrhiShaderType(const ShaderType type) {
-    switch (type) {
-        case ShaderType::Fragment: return nvrhi::ShaderType::Pixel;
-        case ShaderType::Vertex: return nvrhi::ShaderType::Vertex;
-        default: return nvrhi::ShaderType::None;
-    }
-}
-
 #endif //NITRONIC_ENUMS_H

@@ -10,15 +10,16 @@
 NAMESPACE {
 
     struct Camera {
-        Transform transform;
-        float fov;
+        float fov = 45;
 
         float nearPlane = 0.1f;
         float farPlane = 100.0f;
 
-        glm::mat4 GetViewMatrix() const;
-        glm::mat4 GetProjectionMatrix(float aspect) const;
-        glm::mat4 GetViewProjectionMatrix(float aspect) const;
+        Transform transform{};
+
+        [[nodiscard]] glm::mat4 GetViewMatrix() const;
+        [[nodiscard]] glm::mat4 GetProjectionMatrix(float aspect) const;
+        [[nodiscard]] glm::mat4 GetViewProjectionMatrix(float aspect) const;
     };
 
 }

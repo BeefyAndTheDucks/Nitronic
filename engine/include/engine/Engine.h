@@ -16,26 +16,22 @@ NAMESPACE {
     class Engine {
     public:
         Engine(int windowWidth, int windowHeight, const char* windowTitle, RenderingBackend backend = RenderingBackend::Vulkan);
-        ~Engine();
+        ~Engine() = default;
 
         void Run();
     private:
-        Window* m_Window;
-        Renderer* m_Renderer;
+        std::unique_ptr<Window> m_Window;
+        std::unique_ptr<Renderer> m_Renderer;
 
         double m_TotalTimePassed;
         double m_FPSCalcTimePassed;
 
-        double m_LastMeanDT = -1;
-
         std::vector<double> m_DeltaTimes;
+        double m_LastMeanDT = -1;
 
         bool m_ShowingDemoWindow = false;
 
-        Model* m_CubeModel;
-        Model* m_MonkeyModel;
-
-        Scene* m_Scene;
+        std::unique_ptr<Scene> m_Scene;
     };
 
 }

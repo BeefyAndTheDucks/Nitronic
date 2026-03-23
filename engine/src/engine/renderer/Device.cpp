@@ -7,10 +7,8 @@
 NAMESPACE {
 
     Device::Device(const RenderingBackend backend, RendererData* rendererData)
-        : m_Backend(backend)
+        : m_RendererData(rendererData), m_Backend(backend)
     {
-        m_RendererData = rendererData;
-
         CREATE_BACKEND_SWITCH(CreateDevice);
     }
 

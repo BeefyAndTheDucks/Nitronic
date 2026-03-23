@@ -9,7 +9,7 @@
 
 NAMESPACE {
     
-    Mesh* AssetImporter::ImportMesh(const std::filesystem::path &file) {
+    Mesh* AssetImporter::ImportMesh(const std::filesystem::path& file) {
         const aiScene* scene = m_Importer.ReadFile(file.string(), 
             aiProcess_Triangulate |
             aiProcess_GenNormals |

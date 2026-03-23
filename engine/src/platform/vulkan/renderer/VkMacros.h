@@ -40,6 +40,10 @@ NAMESPACE {
         return ptr;
     }
 
+#define RENDERER_DATA_OWNED GetRendererDataChecked(m_RendererData.get(), __FILE__, __LINE__)
+#define DEVICE_DATA_OWNED GetDeviceDataChecked(m_DeviceData.get(), __FILE__, __LINE__)
+#define IMGUI_RENDERER_DATA_OWNED GetImGuiRendererDataChecked(m_ImGuiRendererData.get(), __FILE__, __LINE__)
+
 #define RENDERER_DATA GetRendererDataChecked(m_RendererData, __FILE__, __LINE__)
 #define DEVICE_DATA GetDeviceDataChecked(m_DeviceData, __FILE__, __LINE__)
 #define IMGUI_RENDERER_DATA GetImGuiRendererDataChecked(m_ImGuiRendererData, __FILE__, __LINE__)

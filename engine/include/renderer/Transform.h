@@ -11,11 +11,11 @@
 NAMESPACE {
 
     struct Transform {
-        glm::vec3 position;
-        glm::quat rotation;
-        glm::vec3 scale;
+        glm::vec3 position = glm::vec3(0.f);
+        glm::quat rotation = glm::quat(1.f, 0.f, 0.f, 0.f);
+        glm::vec3 scale = glm::vec3(1.f);
 
-        glm::mat4 GetMatrix() const;
+        [[nodiscard]] glm::mat4 GetMatrix() const;
     };
 
 }

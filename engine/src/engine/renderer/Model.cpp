@@ -72,7 +72,9 @@ NAMESPACE {
             .addVertexBuffer(nvrhi::VertexBufferBinding(m_Mesh.GetVertexBuffer()))
             .setIndexBuffer(nvrhi::IndexBufferBinding(m_Mesh.GetIndexBuffer()))
             .addBindingSet(m_BindingSet)
-            .setViewport(nvrhi::ViewportState().addViewportAndScissorRect(nvrhi::Viewport(fb->getFramebufferInfo().width, fb->getFramebufferInfo().height)));
+            .setViewport(nvrhi::ViewportState().addViewportAndScissorRect(nvrhi::Viewport(
+                static_cast<float>(fb->getFramebufferInfo().width),
+                static_cast<float>(fb->getFramebufferInfo().height))));
 
         commandList->setGraphicsState(graphicsState);
 

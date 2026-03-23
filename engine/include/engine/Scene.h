@@ -12,11 +12,11 @@ NAMESPACE {
 
     struct Scene {
     public:
-        void AddModel(const Model& model) { models.push_back(model); }
+        void AddModel(std::unique_ptr<Model> model) { models.push_back(std::move(model)); }
 
     public:
         Camera camera;
-        std::vector<Model> models;
+        std::vector<std::unique_ptr<Model>> models;
     };
 
 }

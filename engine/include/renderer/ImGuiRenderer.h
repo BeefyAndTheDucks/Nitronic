@@ -4,10 +4,15 @@
 
 #ifndef NITRONIC_IMGUIRENDERER_H
 #define NITRONIC_IMGUIRENDERER_H
+#include <memory>
+
 #include <imgui.h>
+
 #include "core/Enums.h"
 #include "core/Macros.h"
+
 #include "engine/Window.h"
+
 #include "renderer/RendererTypes.h"
 
 NAMESPACE {
@@ -38,12 +43,12 @@ NAMESPACE {
         CREATE_BACKEND_FUNCTIONS([[nodiscard]] static ImGuiTexture, AddTexture, const nvrhi::TextureHandle &texture, const nvrhi::SamplerHandle &sampler)
         CREATE_BACKEND_FUNCTIONS(static void, RemoveTexture, const ImGuiTexture& texture)
     private:
-        ImGuiRendererData* m_ImGuiRendererData;
+        std::unique_ptr<ImGuiRendererData> m_ImGuiRendererData;
 
-        RendererData* m_RendererData;
-        DeviceData* m_DeviceData;
+        RendererData* m_RendererData; // Borrowed from Renderer
+        DeviceData* m_DeviceData; // Borrowed from Device
 
-        Window* m_Window;
+        Window* m_Window; // Borrowed from Engine
         RenderingBackend m_Backend;
     };
 

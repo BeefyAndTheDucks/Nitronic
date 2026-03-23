@@ -19,8 +19,8 @@ NAMESPACE {
 
     Engine::Engine(const int windowWidth, const int windowHeight, const char* windowTitle, RenderingBackend backend)
         : m_TotalTimePassed(0), m_FPSCalcTimePassed(0) {
-        m_Window = new Window(windowWidth, windowHeight, windowTitle);
-        m_Renderer = new Renderer(backend, m_Window);
+        m_Window = std::make_unique<Window>(windowWidth, windowHeight, windowTitle);
+        m_Renderer = std::make_unique<Renderer>(backend, m_Window.get());
 
         auto assetImporter = AssetImporter();
 
@@ -37,10 +37,10 @@ NAMESPACE {
         transform.rotation = glm::quat::wxyz(1.0f, 0.0f, 0.0f, 0.0f);
         transform.scale = glm::vec3(1.0f, 1.0f, 1.0f);
 
-        m_MonkeyModel = new Model(*monkeyMesh, material, transform, false);
+        auto monkeyModel = std::make_unique<Model>(*monkeyMesh, material, transform, false);
 
         transform.position = glm::vec3(-1.0f, 1.0f, 0.0f);
-        m_CubeModel = new Model(*cubeMesh, material, transform, false);
+        auto cubeModel = std::make_unique<Model>(*cubeMesh, material, transform, false);
 
         auto camera = Camera{};
         camera.fov = 45.0f;
@@ -48,17 +48,10 @@ NAMESPACE {
         camera.transform.scale = glm::vec3(1.f);
         camera.transform.rotation = glm::quatLookAt(glm::normalize(-camera.transform.position), glm::vec3(0.f,1.f,0.f));
 
-        m_Scene = new Scene();
+        m_Scene = std::make_unique<Scene>();
         m_Scene->camera = camera;
-        m_Scene->AddModel(*m_MonkeyModel);
-        m_Scene->AddModel(*m_CubeModel);
-    }
-
-    Engine::~Engine() {
-        delete m_Scene;
-
-        delete m_Renderer;
-        delete m_Window;
+        m_Scene->AddModel(std::move(monkeyModel));
+        m_Scene->AddModel(std::move(cubeModel));
     }
 
     void Engine::Run() {
@@ -75,16 +68,11 @@ NAMESPACE {
             m_FPSCalcTimePassed += deltaTime;
             m_DeltaTimes.push_back(deltaTime);
             previousTime = currentTime;
-            //std::cout << "DeltaTime: " << deltaTime << "s (" << 1.0f / deltaTime << "FPS)" << std::endl;
 
             if (m_FPSCalcTimePassed >= 1 && !m_DeltaTimes.empty()) {
                 m_FPSCalcTimePassed = 0;
                 m_LastMeanDT = std::accumulate(m_DeltaTimes.begin(), m_DeltaTimes.end(), 0.0) / static_cast<double>(m_DeltaTimes.size());
                 m_DeltaTimes.clear();
-
-                std::stringstream ss;
-                ss << "Nitronic Engine - " << 1.0f / m_LastMeanDT << "FPS (" << m_LastMeanDT * 1000 << "ms)";
-                m_Window->SetTitle(ss.str().c_str());
             }
 
             Window::PollEvents();
@@ -116,7 +104,7 @@ NAMESPACE {
             }
 
             if (m_ShowingDemoWindow)
-                ImGui::ShowDemoWindow();
+                ImGui::ShowDemoWindow(&m_ShowingDemoWindow);
 
             ImGui::Begin("Debug");
             ImGui::Text("FPS: %f", 1.0f / deltaTime);
@@ -126,11 +114,15 @@ NAMESPACE {
             ImGui::Text("DeltaTime (1s) (ms): %f", m_LastMeanDT * 1000);
             ImGui::End();
 
-            m_MonkeyModel->GetMutableTransform()->position.y = -glm::sin(static_cast<float>(m_TotalTimePassed) * 7) * 0.25f;
-            m_CubeModel  ->GetMutableTransform()->position.y =  glm::sin(static_cast<float>(m_TotalTimePassed) * 7) * 0.25f;
+            int sign = 1;
+            // Update models
+            for (const auto& model : m_Scene->models) {
+                model->GetMutableTransform()->position.y = sign * glm::sin(static_cast<float>(m_TotalTimePassed) * 7) * 0.25f;
+                sign = -sign;
+            }
 
             for (auto& model : m_Scene->models)
-                m_Renderer->RenderModel(&model);
+                m_Renderer->RenderModel(*model);
 
             m_Renderer->EndScene();
 

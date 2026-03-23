@@ -6,30 +6,23 @@
 #define NITRONIC_RENDERER_H
 #include <filesystem>
 #include <iostream>
-#include <optional>
 #include <queue>
 
-#include "Camera.h"
 #include "core/Enums.h"
 #include "core/Macros.h"
 
+#include "engine/Window.h"
+
+#include "Camera.h"
 #include "Device.h"
 #include "ImGuiRenderer.h"
 #include "Model.h"
 #include "PSOCache.h"
-#include "engine/Window.h"
 
 NAMESPACE {
 
     struct SwapChainImage {
-        //vk::Image image;
         nvrhi::TextureHandle nvrhiHandle;
-    };
-
-    struct ImGuiVertex {
-        float position[2];
-        float uv[2];
-        float color[3];
     };
 
     struct NvrhiMessageCallback : nvrhi::IMessageCallback
@@ -52,14 +45,14 @@ NAMESPACE {
 
         void BeginScene(const Camera& camera);
 
-        void RenderModel(Model* model);
+        void RenderModel(Model& model);
 
         void EndScene();
 
         void RegenerateFrambuffers(float requestedWidth, float requestedHeight);
 
-        [[nodiscard]] RendererData* GetRendererData() const { return m_RendererData; }
-        [[nodiscard]] Device* GetDevice() const { return m_Device; }
+        [[nodiscard]] RendererData* GetRendererData() const { return m_RendererData.get(); }
+        [[nodiscard]] Device* GetDevice() const { return m_Device.get(); }
 
     private:
         CREATE_BACKEND_FUNCTIONS(void, Init)
@@ -73,37 +66,44 @@ NAMESPACE {
 
     private:
         RenderingBackend m_Backend;
-        RendererData* m_RendererData;
+        Window* m_Window; // Borrowed from Engine
 
-        Device* m_Device;
-        Window* m_Window;
+        // Data
+        std::unique_ptr<RendererData> m_RendererData;
+        std::unique_ptr<Device> m_Device;
 
+        // Swapchain
         std::vector<SwapChainImage> m_SwapChainImages;
         uint32_t m_SwapChainIndex = static_cast<uint32_t>(-1);
 
-        std::vector<nvrhi::FramebufferHandle> m_Backbuffers;
-
+        // Framebuffers
         std::vector<nvrhi::FramebufferHandle> m_Framebuffers;
+        std::vector<nvrhi::FramebufferHandle> m_Backbuffers;
         float m_FramebufferWidth = -1, m_FramebufferHeight = -1;
+        bool m_HasGeneratedImGuiFramebuffer = false;
 
+        // Frames
         std::queue<nvrhi::EventQueryHandle> m_FramesInFlight;
         std::vector<nvrhi::EventQueryHandle> m_QueryPool;
 
+        // Graphics Pipelines
         bool m_HasImGuiGraphicsPipeline = false;
         nvrhi::GraphicsPipelineHandle m_ImGuiGraphicsPipeline;
 
-        std::optional<ShaderCache> m_ShaderCache;
-        std::optional<PSOCache> m_PSOCache;
+        // Caches
+        std::unique_ptr<ShaderCache> m_ShaderCache;
+        std::unique_ptr<PSOCache> m_PSOCache;
 
+        // Bindings
         nvrhi::BindingLayoutHandle m_BindingLayout;
-
         nvrhi::BindingSetHandle m_BindingSet;
 
         // ImGui
-        ImGuiRenderer* m_ImGuiRenderer;
+        std::unique_ptr<ImGuiRenderer> m_ImGuiRenderer;
+
         std::vector<ImGuiTexture> m_ImGuiFramebufferColorTextures;
         std::vector<nvrhi::TextureHandle> m_ImGuiFramebufferDepthTextures;
-        bool m_HasGeneratedImGuiFramebuffer = false;
+
         bool m_ValidGameWindow = false;
 
         // Textures

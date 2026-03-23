@@ -17,7 +17,7 @@ static std::vector<char> readFile(const std::filesystem::path& filePath) {
         throw std::runtime_error("failed to open file!");
     }
 
-    const size_t fileSize = file.tellg();
+    const std::streamsize fileSize = file.tellg();
     std::vector<char> buffer(fileSize);
 
     file.seekg(0);

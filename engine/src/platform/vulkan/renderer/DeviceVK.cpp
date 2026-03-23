@@ -92,8 +92,8 @@ NAMESPACE {
 
     void Device::CreateDeviceVk()
     {
-        m_DeviceData = new DeviceDataVk();
-        DEVICE_DATA->surface = RENDERER_DATA->surface;
+        m_DeviceData = std::make_unique<DeviceDataVk>();
+        DEVICE_DATA_OWNED->surface = RENDERER_DATA->surface;
 
         std::vector<vk::PhysicalDevice> devices = RENDERER_DATA->instance.enumeratePhysicalDevices();
         if (devices.empty()) {
@@ -113,17 +113,17 @@ NAMESPACE {
             throw std::runtime_error("No suitable Vulkan-compatible GPU found.");
 
         if (candidates.rbegin()->first > 0) {
-            DEVICE_DATA->physicalDevice = candidates.rbegin()->second;
+            DEVICE_DATA_OWNED->physicalDevice = candidates.rbegin()->second;
         } else {
             throw std::runtime_error("No suitable Vulkan-compatible GPU found.");
         }
 
         std::cout << "Using device " << devices[0].getProperties().deviceName << std::endl;
 
-        DEVICE_DATA->queueFamilyIndices = FindQueueFamilies(DEVICE_DATA->physicalDevice, RENDERER_DATA->surface);
+        DEVICE_DATA_OWNED->queueFamilyIndices = FindQueueFamilies(DEVICE_DATA_OWNED->physicalDevice, RENDERER_DATA->surface);
 
         std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
-        std::set uniqueQueueFamilies = { DEVICE_DATA->queueFamilyIndices.graphicsFamily.value(), DEVICE_DATA->queueFamilyIndices.presentFamily.value() };
+        std::set uniqueQueueFamilies = { DEVICE_DATA_OWNED->queueFamilyIndices.graphicsFamily.value(), DEVICE_DATA_OWNED->queueFamilyIndices.presentFamily.value() };
         float queuePriority = 1.0f;
         for (uint32_t queueFamily : uniqueQueueFamilies) {
             vk::DeviceQueueCreateInfo queueCreateInfo{};
@@ -156,16 +156,16 @@ NAMESPACE {
         deviceCreateInfo.ppEnabledExtensionNames = deviceExtensions.data();
         deviceCreateInfo.pNext = &vulkan13Features;
 
-        DEVICE_DATA->logicalDevice = DEVICE_DATA->physicalDevice.createDevice(deviceCreateInfo);
-        DEVICE_DATA->graphicsQueue = DEVICE_DATA->logicalDevice.getQueue(DEVICE_DATA->queueFamilyIndices.graphicsFamily.value(), 0);
-        DEVICE_DATA->presentQueue = DEVICE_DATA->logicalDevice.getQueue(DEVICE_DATA->queueFamilyIndices.presentFamily.value(), 0);
+        DEVICE_DATA_OWNED->logicalDevice = DEVICE_DATA_OWNED->physicalDevice.createDevice(deviceCreateInfo);
+        DEVICE_DATA_OWNED->graphicsQueue = DEVICE_DATA_OWNED->logicalDevice.getQueue(DEVICE_DATA_OWNED->queueFamilyIndices.graphicsFamily.value(), 0);
+        DEVICE_DATA_OWNED->presentQueue = DEVICE_DATA_OWNED->logicalDevice.getQueue(DEVICE_DATA_OWNED->queueFamilyIndices.presentFamily.value(), 0);
 
         nvrhi::vulkan::DeviceDesc deviceDesc{};
         deviceDesc.errorCB = &NvrhiMessageCallback::GetInstance();
-        deviceDesc.physicalDevice = DEVICE_DATA->physicalDevice;
-        deviceDesc.device = DEVICE_DATA->logicalDevice;
-        deviceDesc.graphicsQueue = DEVICE_DATA->graphicsQueue;
-        deviceDesc.graphicsQueueIndex = DEVICE_DATA->queueFamilyIndices.graphicsFamily.value();
+        deviceDesc.physicalDevice = DEVICE_DATA_OWNED->physicalDevice;
+        deviceDesc.device = DEVICE_DATA_OWNED->logicalDevice;
+        deviceDesc.graphicsQueue = DEVICE_DATA_OWNED->graphicsQueue;
+        deviceDesc.graphicsQueueIndex = DEVICE_DATA_OWNED->queueFamilyIndices.graphicsFamily.value();
         deviceDesc.deviceExtensions = deviceExtensions.data();
         deviceDesc.numDeviceExtensions = std::size(deviceExtensions);
         deviceDesc.instance = RENDERER_DATA->instance;
@@ -184,7 +184,7 @@ NAMESPACE {
     void Device::DestroyDeviceVk()
     {
         m_Device = nullptr;
-        DEVICE_DATA->logicalDevice.destroy();
+        DEVICE_DATA_OWNED->logicalDevice.destroy();
     }
 
 }

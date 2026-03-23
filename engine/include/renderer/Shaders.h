@@ -4,8 +4,9 @@
 
 #ifndef NITRONIC_SHADERS_H
 #define NITRONIC_SHADERS_H
+#include <nvrhi/nvrhi.h>
+
 #include "Renderer.h"
-#include "nvrhi/nvrhi.h"
 
 NAMESPACE {
 

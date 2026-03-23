@@ -143,8 +143,8 @@ NAMESPACE {
         }
 
     private:
-        nvrhi::IDevice*   m_Device;
-        ShaderCache&      m_ShaderCache;
+        nvrhi::IDevice*   m_Device; // Borrowed from Renderer
+        ShaderCache&      m_ShaderCache; // Borrowed from Renderer
 
         mutable std::shared_mutex m_Mutex;
         std::unordered_map<PSOKey, nvrhi::GraphicsPipelineHandle, PSOKeyHash> m_Cache;

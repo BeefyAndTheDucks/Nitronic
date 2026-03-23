@@ -123,7 +123,8 @@ NAMESPACE {
         }
 
     private:
-        nvrhi::IDevice* m_Device;
+        nvrhi::IDevice* m_Device; // Borrowed from Renderer
+
         std::filesystem::path m_ShadersDir;
         std::string m_Extension;
 

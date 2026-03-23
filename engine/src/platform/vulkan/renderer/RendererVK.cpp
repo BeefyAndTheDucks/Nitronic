@@ -182,7 +182,7 @@ NAMESPACE {
     void Renderer::InitVk() {
         std::cout << "Init Vulkan" << std::endl;
 
-        m_RendererData = new RendererDataVk();
+        m_RendererData = std::make_unique<RendererDataVk>();
 
         try {
             vk::detail::DynamicLoader dl;
@@ -287,8 +287,8 @@ NAMESPACE {
             createInfo.pNext                   = enableDebugUtils ? &debugUtilsCreateInfo : nullptr;
 
             // Create the instance and initialize the dispatcher with instance-level functions
-            RENDERER_DATA->instance = vk::createInstance(createInfo);
-            VULKAN_HPP_DEFAULT_DISPATCHER.init(RENDERER_DATA->instance);
+            RENDERER_DATA_OWNED->instance = vk::createInstance(createInfo);
+            VULKAN_HPP_DEFAULT_DISPATCHER.init(RENDERER_DATA_OWNED->instance);
 
             if (!m_Window) {
                 throw std::runtime_error("Window is null");
@@ -296,12 +296,12 @@ NAMESPACE {
 
             VkSurfaceKHR rawSurface = VK_NULL_HANDLE;
             VK_CHECK(glfwCreateWindowSurface(
-                RENDERER_DATA->instance,
+                RENDERER_DATA_OWNED->instance,
                 m_Window->GetNativeWindow(),
                 nullptr,
                 &rawSurface
             ));
-            RENDERER_DATA->surface = rawSurface;
+            RENDERER_DATA_OWNED->surface = rawSurface;
 
             std::cout << "Vulkan initialized." << std::endl;
         }
@@ -316,7 +316,7 @@ NAMESPACE {
     }
 
     void Renderer::InitAfterDeviceCreationVk() {
-        m_SwapChainImages = CreateSwapChain(m_Device, m_Window, RENDERER_DATA->surface, RENDERER_DATA);
+        m_SwapChainImages = CreateSwapChain(m_Device.get(), m_Window, RENDERER_DATA_OWNED->surface, RENDERER_DATA_OWNED);
         m_SwapChainIndex = 0;
     }
 
@@ -325,9 +325,9 @@ NAMESPACE {
 
         constexpr int maxAttempts = 3;
         for (int attempt = 0; attempt < maxAttempts; attempt++) {
-            const auto& semaphore = RENDERER_DATA->acquireSemaphores[RENDERER_DATA->acquireSemaphoreIndex];
+            const auto& semaphore = RENDERER_DATA_OWNED->acquireSemaphores[RENDERER_DATA_OWNED->acquireSemaphoreIndex];
             res = DEVICE_DATA_FROM_BASE(m_Device->GetDeviceData())->logicalDevice.acquireNextImageKHR(
-                RENDERER_DATA->nativeSwapChain,
+                RENDERER_DATA_OWNED->nativeSwapChain,
                 std::numeric_limits<uint64_t>::max() - 1, // timeout
                 semaphore,
                 vk::Fence(),
@@ -335,7 +335,7 @@ NAMESPACE {
 
             if (res == vk::Result::eErrorOutOfDateKHR && attempt < maxAttempts)
             {
-                m_SwapChainImages = CreateSwapChain(m_Device, m_Window, RENDERER_DATA->surface, RENDERER_DATA);
+                m_SwapChainImages = CreateSwapChain(m_Device.get(), m_Window, RENDERER_DATA_OWNED->surface, RENDERER_DATA_OWNED);
                 m_SwapChainIndex = 0;
                 GenerateBackbuffers();
             }
@@ -343,8 +343,8 @@ NAMESPACE {
                 break;
         }
 
-        const auto& semaphore = RENDERER_DATA->acquireSemaphores[RENDERER_DATA->acquireSemaphoreIndex];
-        RENDERER_DATA->acquireSemaphoreIndex = (RENDERER_DATA->acquireSemaphoreIndex + 1) % RENDERER_DATA->acquireSemaphores.size();
+        const auto& semaphore = RENDERER_DATA_OWNED->acquireSemaphores[RENDERER_DATA_OWNED->acquireSemaphoreIndex];
+        RENDERER_DATA_OWNED->acquireSemaphoreIndex = (RENDERER_DATA_OWNED->acquireSemaphoreIndex + 1) % RENDERER_DATA_OWNED->acquireSemaphores.size();
 
         if (res == vk::Result::eSuccess || res == vk::Result::eSuboptimalKHR) // Suboptimal is considered a success
         {
@@ -365,21 +365,21 @@ NAMESPACE {
 
         constexpr int maxAttempts = 3;
         for (int attempt = 0; attempt < maxAttempts; attempt++) {
-            const auto& semaphore = RENDERER_DATA->presentSemaphores[m_SwapChainIndex];
+            const auto& semaphore = RENDERER_DATA_OWNED->presentSemaphores[m_SwapChainIndex];
             vulkanNvrhiDevice->queueSignalSemaphore(nvrhi::CommandQueue::Graphics, semaphore, 0);
 
             // NVRHI buffers the semaphores and signals them when something is submitted to a queue.
             // Call 'executeCommandLists' with no command lists to actually signal the semaphore.
             vulkanNvrhiDevice->executeCommandLists(nullptr, 0);
             presentInfo.pWaitSemaphores = &semaphore;
-            presentInfo.pSwapchains = &RENDERER_DATA->nativeSwapChain;
+            presentInfo.pSwapchains = &RENDERER_DATA_OWNED->nativeSwapChain;
             presentInfo.pImageIndices = &m_SwapChainIndex;
 
             try {
-                vk::Result res = DEVICE_DATA_FROM_BASE(m_Device->GetDeviceData())->presentQueue.presentKHR(&presentInfo);
+                const vk::Result res = DEVICE_DATA_FROM_BASE(m_Device->GetDeviceData())->presentQueue.presentKHR(&presentInfo);
 
                 if (res == vk::Result::eErrorOutOfDateKHR) {
-                    m_SwapChainImages = CreateSwapChain(m_Device, m_Window, RENDERER_DATA->surface, RENDERER_DATA);
+                    m_SwapChainImages = CreateSwapChain(m_Device.get(), m_Window, RENDERER_DATA_OWNED->surface, RENDERER_DATA_OWNED);
                     m_SwapChainIndex = 0;
                     GenerateBackbuffers();
                     return;
@@ -419,30 +419,30 @@ NAMESPACE {
     }
 
     void Renderer::CleanupPreDeviceVk() {
-        if (RENDERER_DATA->nativeSwapChain) {
-            DEVICE_DATA_FROM_BASE(m_Device->GetDeviceData())->logicalDevice.destroySwapchainKHR(RENDERER_DATA->nativeSwapChain);
-            RENDERER_DATA->nativeSwapChain = VK_NULL_HANDLE;
+        if (RENDERER_DATA_OWNED->nativeSwapChain) {
+            DEVICE_DATA_FROM_BASE(m_Device->GetDeviceData())->logicalDevice.destroySwapchainKHR(RENDERER_DATA_OWNED->nativeSwapChain);
+            RENDERER_DATA_OWNED->nativeSwapChain = VK_NULL_HANDLE;
         }
 
-        for (vk::Semaphore semaphore : RENDERER_DATA->acquireSemaphores) {
+        for (vk::Semaphore semaphore : RENDERER_DATA_OWNED->acquireSemaphores) {
             DEVICE_DATA_FROM_BASE(m_Device->GetDeviceData())->logicalDevice.destroySemaphore(semaphore);
         }
 
-        for (vk::Semaphore semaphore : RENDERER_DATA->presentSemaphores) {
+        for (vk::Semaphore semaphore : RENDERER_DATA_OWNED->presentSemaphores) {
             DEVICE_DATA_FROM_BASE(m_Device->GetDeviceData())->logicalDevice.destroySemaphore(semaphore);
         }
     }
 
 
     void Renderer::CleanupVk() {
-        if (RENDERER_DATA->surface) {
-            RENDERER_DATA->instance.destroySurfaceKHR(RENDERER_DATA->surface);
-            RENDERER_DATA->surface = VK_NULL_HANDLE;
+        if (RENDERER_DATA_OWNED->surface) {
+            RENDERER_DATA_OWNED->instance.destroySurfaceKHR(RENDERER_DATA_OWNED->surface);
+            RENDERER_DATA_OWNED->surface = VK_NULL_HANDLE;
         }
 
-        if (RENDERER_DATA->instance) {
-            RENDERER_DATA->instance.destroy();
-            RENDERER_DATA->instance = VK_NULL_HANDLE;
+        if (RENDERER_DATA_OWNED->instance) {
+            RENDERER_DATA_OWNED->instance.destroy();
+            RENDERER_DATA_OWNED->instance = VK_NULL_HANDLE;
         }
     }
 

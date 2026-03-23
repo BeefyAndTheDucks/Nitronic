@@ -13,7 +13,7 @@
 NAMESPACE {
 
     void ImGuiRenderer::InitVk() {
-        m_ImGuiRendererData = new ImGuiRendererDataVk();
+        m_ImGuiRendererData = std::make_unique<ImGuiRendererDataVk>();
 
         const auto rendererDataVk = RENDERER_DATA;
         const auto deviceDataVk = DEVICE_DATA;
