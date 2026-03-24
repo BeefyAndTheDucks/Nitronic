@@ -5,7 +5,7 @@ cbuffer ModelConstants : register(b0)
   float4x4 normalMatrix;
 };
 
-struct Varyings
+struct FragmentInput
 {
     float4 pos : SV_Position;
     float3 normal : NORMAL;
@@ -20,9 +20,9 @@ struct VertexInput
 };
 
 [shader("vertex")]
-Varyings vertexMain(VertexInput input)
+FragmentInput vertexMain(VertexInput input)
 {
-    Varyings output;
+    FragmentInput output;
     float4x4 mvp = mul(viewProj, model);
     output.pos = mul(mvp, float4(input.position, 1.0));
     output.worldPos = mul(model, float4(input.position, 1.0)).xyz;
@@ -31,7 +31,7 @@ Varyings vertexMain(VertexInput input)
 }
 
 [shader("fragment")]
-float4 fragmentMain(Varyings input) : SV_Target
+float4 fragmentMain(FragmentInput input) : SV_Target
 {
     float3 N = normalize(input.normal);
     float3 L = normalize(float3(5,5,5) - input.worldPos);
@@ -41,7 +41,4 @@ float4 fragmentMain(Varyings input) : SV_Target
 
     float3 color = (ambient + diffuse) * float3(1.0, 1.0, 1.0);
     return float4(color, 1.0);
-
-    /*float3 N = normalize(input.normal);
-    return float4(N * 0.5 + 0.5, 1.0); // remap -1..1 to 0..1*/
 }

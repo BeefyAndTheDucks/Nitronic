@@ -1,4 +1,4 @@
-struct Varyings
+struct FragmentInput
 {
 };
 
@@ -10,14 +10,14 @@ struct VertexInput
 };
 
 [shader("vertex")]
-Varyings vertexMain(VertexInput input)
+FragmentInput vertexMain(VertexInput input)
 {
-    Varyings output;
+    FragmentInput output;
     return output;
 }
 
 [shader("fragment")]
-float4 fragmentMain(Varyings input) : SV_Target
+float4 fragmentMain(FragmentInput input) : SV_Target
 {
     return float4(1.0);
 }
