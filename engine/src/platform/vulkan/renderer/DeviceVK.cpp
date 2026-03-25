@@ -183,12 +183,6 @@ NAMESPACE {
 
     void Device::DestroyDeviceVk()
     {
-        if (DEVICE_DATA_OWNED->tracyCtx)
-        {
-            TracyVkDestroy(DEVICE_DATA_OWNED->tracyCtx);
-            DEVICE_DATA_OWNED->tracyCtx = nullptr;
-        }
-
         m_Device = nullptr;
         DEVICE_DATA_OWNED->logicalDevice.destroy();
     }
