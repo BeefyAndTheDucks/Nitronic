@@ -2,8 +2,6 @@
 // Created by simon on 02/09/2025.
 //
 
-#include <iostream>
-
 #include "engine/GlfwInclude.h"
 
 #include "RendererVK.h"
@@ -325,7 +323,7 @@ NAMESPACE {
             const auto& semaphore = RENDERER_DATA_OWNED->acquireSemaphores[RENDERER_DATA_OWNED->acquireSemaphoreIndex];
             res = DEVICE_DATA_FROM_BASE(m_Device->GetDeviceData())->logicalDevice.acquireNextImageKHR(
                 RENDERER_DATA_OWNED->nativeSwapChain,
-                std::numeric_limits<uint64_t>::max() - 1, // timeout
+                10, // timeout
                 semaphore,
                 vk::Fence(),
                 &m_SwapChainIndex);

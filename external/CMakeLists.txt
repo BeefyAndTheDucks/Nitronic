@@ -7,24 +7,43 @@ set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 FetchContent_Declare(glfw
         GIT_REPOSITORY https://github.com/glfw/glfw
         GIT_TAG 3.4
+        GIT_SHALLOW TRUE
 )
 
 FetchContent_Declare(glm
         GIT_REPOSITORY https://github.com/g-truc/glm
         GIT_TAG 1.0.3
+        GIT_SHALLOW TRUE
 )
 
 FetchContent_Declare(assimp
         GIT_REPOSITORY https://github.com/assimp/assimp
         GIT_TAG v6.0.4
+        GIT_SHALLOW TRUE
 )
 
 FetchContent_Declare(spdlog
         GIT_REPOSITORY https://github.com/gabime/spdlog
         GIT_TAG v1.17.0
+        GIT_SHALLOW TRUE
 )
 
-FetchContent_MakeAvailable(glfw glm assimp spdlog)
+FetchContent_Declare(tracy
+        GIT_REPOSITORY https://github.com/wolfpld/tracy.git
+        GIT_TAG v0.13.1
+        GIT_SHALLOW TRUE
+)
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+    message("-- Enabling Tracy profiler due to build type set to ${CMAKE_BUILD_TYPE}")
+    set (TRACY_ENABLE ON CACHE BOOL "" FORCE)
+    set (TRACY_NO_EXIT OFF CACHE BOOL "" FORCE)
+else()
+    message("-- Disabling Tracy profiler due to build type set to ${CMAKE_BUILD_TYPE}")
+    set (TRACY_ENABLE OFF CACHE BOOL "" FORCE)
+endif()
+
+FetchContent_MakeAvailable(glfw glm assimp spdlog tracy)
 
 set_target_properties(glfw PROPERTIES FOLDER ${third_party_folder})
 if (TARGET update_mappings)

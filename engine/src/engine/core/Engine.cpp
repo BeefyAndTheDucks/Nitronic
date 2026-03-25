@@ -11,6 +11,8 @@
 // ReSharper disable once CppUnusedIncludeDirective
 #include <stb_image.h>
 
+#include <tracy/Tracy.hpp>
+
 #include "engine/AssetImporter.h"
 #include "engine/Log.h"
 
@@ -64,18 +66,25 @@ NAMESPACE {
         time_point previousTime = clock::now();
 
         while (!m_Window->ShouldClose()) {
-            time_point currentTime = clock::now();
-            std::chrono::duration<double> elapsed = currentTime - previousTime;
-            const double deltaTime = elapsed.count(); // seconds
-            m_TotalTimePassed += deltaTime;
-            m_FPSCalcTimePassed += deltaTime;
-            m_DeltaTimes.push_back(deltaTime);
-            previousTime = currentTime;
+            ZoneScopedN("Main Loop");
 
-            if (m_FPSCalcTimePassed >= 1 && !m_DeltaTimes.empty()) {
-                m_FPSCalcTimePassed = 0;
-                m_LastMeanDT = std::accumulate(m_DeltaTimes.begin(), m_DeltaTimes.end(), 0.0) / static_cast<double>(m_DeltaTimes.size());
-                m_DeltaTimes.clear();
+            double deltaTime;
+            {
+                ZoneScopedN("Calculate FPS");
+
+                time_point currentTime = clock::now();
+                std::chrono::duration<double> elapsed = currentTime - previousTime;
+                deltaTime = elapsed.count(); // seconds
+                m_TotalTimePassed += deltaTime;
+                m_FPSCalcTimePassed += deltaTime;
+                m_DeltaTimes.push_back(deltaTime);
+                previousTime = currentTime;
+
+                if (m_FPSCalcTimePassed >= 1 && !m_DeltaTimes.empty()) {
+                    m_FPSCalcTimePassed = 0;
+                    m_LastMeanDT = std::accumulate(m_DeltaTimes.begin(), m_DeltaTimes.end(), 0.0) / static_cast<double>(m_DeltaTimes.size());
+                    m_DeltaTimes.clear();
+                }
             }
 
             Window::PollEvents();
@@ -87,35 +96,38 @@ NAMESPACE {
 
             m_Renderer->BeginScene(m_Scene->camera);
 
-            if (ImGui::BeginMainMenuBar()) {
+            {
+                ZoneScopedN("ImGui");
 
-                if (ImGui::BeginMenu("File")) {
-                    if (ImGui::MenuItem("Quit", "Alt+F4")) {
-                        m_Window->Close();
+                if (ImGui::BeginMainMenuBar()) {
+                    if (ImGui::BeginMenu("File")) {
+                        if (ImGui::MenuItem("Quit", "Alt+F4")) {
+                            m_Window->Close();
+                        }
+                        ImGui::EndMenu();
                     }
-                    ImGui::EndMenu();
+
+                    if (ImGui::BeginMenu("Help")) {
+                        if (ImGui::MenuItem(m_ShowingDemoWindow ? "Close ImGui Demo Window" : "Open ImGui Demo Window")) {
+                            m_ShowingDemoWindow = !m_ShowingDemoWindow;
+                        }
+                        ImGui::EndMenu();
+                    }
+
+                    ImGui::EndMainMenuBar();
                 }
 
-                if (ImGui::BeginMenu("Help")) {
-                    if (ImGui::MenuItem(m_ShowingDemoWindow ? "Close ImGui Demo Window" : "Open ImGui Demo Window")) {
-                        m_ShowingDemoWindow = !m_ShowingDemoWindow;
-                    }
-                    ImGui::EndMenu();
-                }
+                if (m_ShowingDemoWindow)
+                    ImGui::ShowDemoWindow(&m_ShowingDemoWindow);
 
-                ImGui::EndMainMenuBar();
+                ImGui::Begin("Debug");
+                ImGui::Text("FPS: %f", 1.0f / deltaTime);
+                ImGui::Text("DeltaTime (ms): %f", deltaTime * 1000);
+
+                ImGui::Text("FPS (1s): %f", 1.0f / m_LastMeanDT);
+                ImGui::Text("DeltaTime (1s) (ms): %f", m_LastMeanDT * 1000);
+                ImGui::End();
             }
-
-            if (m_ShowingDemoWindow)
-                ImGui::ShowDemoWindow(&m_ShowingDemoWindow);
-
-            ImGui::Begin("Debug");
-            ImGui::Text("FPS: %f", 1.0f / deltaTime);
-            ImGui::Text("DeltaTime (ms): %f", deltaTime * 1000);
-
-            ImGui::Text("FPS (1s): %f", 1.0f / m_LastMeanDT);
-            ImGui::Text("DeltaTime (1s) (ms): %f", m_LastMeanDT * 1000);
-            ImGui::End();
 
             int sign = 1;
             // Update models
@@ -130,6 +142,8 @@ NAMESPACE {
             m_Renderer->EndScene();
 
             m_Window->SwapBuffers();
+
+            FrameMark;
         }
     }
 

@@ -2,11 +2,10 @@
 // Created by simon on 02/09/2025.
 //
 
-#include <iostream>
-
 #include "renderer/Renderer.h"
 
 #include <filesystem>
+#include <tracy/Tracy.hpp>
 
 #include "imgui.h"
 #include "core/Macros.h"
@@ -16,11 +15,14 @@
 #include "renderer/ImGuiRenderer.h"
 #include "renderer/Shaders.h"
 
-NAMESPACE {
+NAMESPACE
+{
 
     Renderer::Renderer(const RenderingBackend backend, Window* window)
         : m_Backend(backend), m_Window(window), m_RendererData(nullptr), m_ViewProjectionMatrix(glm::identity<glm::mat4>())
     {
+        ZoneScoped
+
         ENGINE_INFO("Using {} backend.", RenderingBackendToString(backend));
 
         CREATE_BACKEND_SWITCH(Init);
@@ -84,6 +86,8 @@ NAMESPACE {
     }
 
     void Renderer::BeginScene(const Camera& camera) {
+        ZoneScoped;
+
         m_ImGuiRenderer->BeginFrame();
 
         if (!m_Window->IsMinimized())
@@ -120,6 +124,8 @@ NAMESPACE {
     }
 
     void Renderer::RenderModel(Model& model) {
+        ZoneScoped;
+
         if (!m_ValidGameWindow)
             return;
 
@@ -129,6 +135,8 @@ NAMESPACE {
     }
 
     void Renderer::EndScene() {
+        ZoneScoped;
+
         m_RenderingCommandList->setTextureState(m_ImGuiFramebufferColorTextures[m_SwapChainIndex].texture, nvrhi::AllSubresources, nvrhi::ResourceStates::ShaderResource);
 
         int framebufferWidth, framebufferHeight;
@@ -157,6 +165,8 @@ NAMESPACE {
     }
 
     void Renderer::RegenerateFrambuffers(const float requestedWidth, const float requestedHeight) {
+        ZoneScoped;
+
         m_Device->GetDevice()->waitForIdle();
 
         m_FramebufferWidth = requestedWidth;
@@ -219,6 +229,8 @@ NAMESPACE {
     }
 
     void Renderer::GenerateBackbuffers() {
+        ZoneScoped;
+
         m_Backbuffers.clear();
 
         for (auto&[swapChainNvrhiHandle] : m_SwapChainImages) {

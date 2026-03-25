@@ -8,10 +8,11 @@
 #include "engine/Window.h"
 
 #include <format>
+#include <stb_image.h>
+#include <tracy/Tracy.hpp>
 
-#include "stb_image.h"
-
-NAMESPACE {
+NAMESPACE
+{
 
     constexpr int resolutions[8] = {
         16, 24, 32, 48, 64, 128, 256, 512
@@ -53,6 +54,8 @@ NAMESPACE {
     }
 
     void Window::PollEvents() {
+        ZoneScoped;
+
         glfwPollEvents();
     }
 
