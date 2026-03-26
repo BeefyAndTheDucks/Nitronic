@@ -15,7 +15,7 @@ NAMESPACE {
 
     class Engine {
     public:
-        Engine(int windowWidth, int windowHeight, const char* windowTitle, RenderingBackend backend = RenderingBackend::Vulkan);
+        Engine(int windowWidth, int windowHeight, const char* windowTitle, int argc, char* argv[], RenderingBackend backend = RenderingBackend::Vulkan);
         ~Engine() = default;
 
         void Run();

@@ -9,34 +9,23 @@
 #include "ImGuiRendererVk.h"
 #include "core/Macros.h"
 
-#include <iostream>
-
 NAMESPACE {
 
     inline RendererDataVk* GetRendererDataChecked(RendererData* base, const char* file, const int line) {
         auto* ptr = dynamic_cast<RendererDataVk*>(base);
-        if (!ptr) {
-            ENGINE_CRITICAL("Failed to get RendererData at {}:{}", file, line);
-            std::abort();
-        }
+        ENGINE_ASSERT(ptr, "Failed to get RendererData at {}:{}", file, line);
         return ptr;
     }
 
     inline DeviceDataVk* GetDeviceDataChecked(DeviceData* base, const char* file, const int line) {
         auto* ptr = dynamic_cast<DeviceDataVk*>(base);
-        if (!ptr) {
-            ENGINE_CRITICAL("Failed to get DeviceData at {}:{}", file, line);
-            std::abort();
-        }
+        ENGINE_ASSERT(ptr, "Failed to get DeviceData at {}:{}", file, line);
         return ptr;
     }
 
     inline ImGuiRendererDataVk* GetImGuiRendererDataChecked(ImGuiRendererData* base, const char* file, const int line) {
         auto* ptr = dynamic_cast<ImGuiRendererDataVk*>(base);
-        if (!ptr) {
-            ENGINE_CRITICAL("Failed to get ImGuiRendererData at {}:{}", file, line);
-            std::abort();
-        }
+        ENGINE_ASSERT(ptr, "Failed to get ImGuiRendererData at {}:{}", file, line);
         return ptr;
     }
 

@@ -379,15 +379,11 @@ NAMESPACE {
                     GenerateBackbuffers();
                     return;
                 }
-                if (res != vk::Result::eSuccess && res != vk::Result::eSuboptimalKHR) {
-                    ENGINE_CRITICAL("Failed to present swap chain image: {}", vk::to_string(res));
-                    std::abort();
-                }
+                ENGINE_ASSERT(res == vk::Result::eSuccess || res == vk::Result::eSuboptimalKHR, "Failed to present swap chain image: {}", vk::to_string(res));
 
                 break;
             } catch (const vk::SystemError& e) {
-                ENGINE_CRITICAL("Vulkan error during present: {}", e.what());
-                std::abort();
+                ENGINE_ABORT("Vulkan error during present: {}", e.what());
             }
         }
 

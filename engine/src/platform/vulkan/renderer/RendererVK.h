@@ -15,8 +15,7 @@
     do { \
         VkResult err__ = (x); \
         if (err__ != VK_SUCCESS) { \
-            ENGINE_ERROR("Vulkan error: {} at {}:{}", VkResultToString(err__), __FILE__, __LINE__); \
-            std::abort(); \
+            ENGINE_ABORT("Vulkan error: {} at {}:{}", VkResultToString(err__), __FILE__, __LINE__); \
         } \
     } while (0)
 #endif

@@ -4,8 +4,8 @@
 
 #include "engine/Engine.h"
 
-int main(int argc, char *argv[]) {
-    auto* engine = new Nitronic::Engine(1280, 720, "Nitronic Sandbox");
+int main(const int argc, char* argv[]) {
+    auto* engine = new Nitronic::Engine(1280, 720, "Nitronic Sandbox", argc, argv);
 
     engine->Run();
 

@@ -7,11 +7,7 @@
 #include "core/Macros.h"
 
 NAMESPACE {
-
     constexpr size_t g_MaxFramesInFlight = 2;
-    constexpr auto g_ShadersDirectory = "../shaders/";
-    constexpr auto g_AssetsDirectory = "../assets/";
-
 }
 
 #endif //NITRONIC_CONSTANTS_H

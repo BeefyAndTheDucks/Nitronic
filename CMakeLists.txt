@@ -1,9 +1,9 @@
-﻿cmake_minimum_required(VERSION 3.10)
-project(Nitronic LANGUAGES CXX)
+﻿cmake_minimum_required(VERSION 3.26)
+project(Nitronic VERSION 0.1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS ON)
+#set(CMAKE_CXX_EXTENSIONS ON)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
@@ -17,6 +17,10 @@ option(NITRONIC_WITH_VULKAN "Enable the Vulkan version of Nitronic" ON)
 
 message("-- Nitronic Graphics APIs: Vulkan - ${NITRONIC_WITH_VULKAN}, DX12 - ${NITRONIC_WITH_DX12}, DX11 - ${NITRONIC_WITH_DX11}")
 
+# Define paths
+set(SHADERS_DIR "shaders")
+set(ASSETS_DIR "assets")
+
 add_subdirectory(external)
 
 add_subdirectory(engine)
@@ -24,10 +28,6 @@ add_subdirectory(engine)
 add_subdirectory(editor)
 
 add_subdirectory(sandbox)
-
-# Define paths
-set(SHADERS_DIR "shaders")
-set(ASSETS_DIR "assets")
 
 set(ALL_SHADER_OUTPUTS "")
 function(add_slang_shader SHADER_NAME SHADER_TYPE STAGE ENTRY_POINT)
@@ -100,17 +100,27 @@ add_custom_target(
 
 add_dependencies(engine compile_shaders)
 
+#add_custom_target(copy_assets
+#        COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_BINARY_DIR}/${ASSETS_DIR}"
+#        COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/${ASSETS_DIR}"
+#        COMMAND ${CMAKE_COMMAND} -E copy_directory
+#        "${CMAKE_CURRENT_SOURCE_DIR}/${ASSETS_DIR}"
+#        "${CMAKE_BINARY_DIR}/${ASSETS_DIR}"
+#        COMMENT "Syncing assets to build directory..."
+#)
+
 add_custom_target(copy_assets
-        COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_BINARY_DIR}/${ASSETS_DIR}"
-        COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/${ASSETS_DIR}"
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
+    COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
         "${CMAKE_CURRENT_SOURCE_DIR}/${ASSETS_DIR}"
         "${CMAKE_BINARY_DIR}/${ASSETS_DIR}"
-        COMMENT "Syncing assets to build directory..."
+    COMMENT "Syncing assets to build directory..."
 )
 
-add_dependencies(compile_shaders copy_assets)
+add_dependencies(engine compile_shaders)
 add_dependencies(engine copy_assets)
+
+install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${ASSETS_DIR}/" DESTINATION "${ASSETS_DIR}")
+install(DIRECTORY "${CMAKE_BINARY_DIR}/${SHADERS_DIR}/" DESTINATION "${SHADERS_DIR}")
 
 #file(COPY assets DESTINATION ${CMAKE_BINARY_DIR})
 

@@ -14,7 +14,8 @@ target_link_libraries(engine
         PUBLIC stb
         PUBLIC assimp
         PUBLIC spdlog
-        PUBLIC Tracy::TracyClient)
+        PUBLIC Tracy::TracyClient
+        PUBLIC platform_folders)
 
 if (NITRONIC_WITH_VULKAN)
     file(GLOB_RECURSE VULKAN_ENGINE_SOURCES src/platform/vulkan/*.cpp)

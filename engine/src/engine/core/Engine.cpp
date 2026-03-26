@@ -13,6 +13,7 @@
 
 #include <tracy/Tracy.hpp>
 
+#include "core/Constants.h"
 #include "engine/AssetImporter.h"
 #include "engine/Log.h"
 
@@ -20,17 +21,25 @@
 
 NAMESPACE {
 
-    Engine::Engine(const int windowWidth, const int windowHeight, const char* windowTitle, RenderingBackend backend)
+    Engine::Engine(int windowWidth, int windowHeight, const char* windowTitle, int argc, char* argv[], RenderingBackend backend)
         : m_TotalTimePassed(0), m_FPSCalcTimePassed(0) {
+        std::filesystem::current_path(
+            std::filesystem::path(argv[0]).parent_path()
+        );
+
         Log::Init();
+
+        ENGINE_INFO("Current path: {}", std::filesystem::current_path().string());
+
+        ENGINE_INFO("Initializing Engine");
 
         m_Window = std::make_unique<Window>(windowWidth, windowHeight, windowTitle);
         m_Renderer = std::make_unique<Renderer>(backend, m_Window.get());
 
         auto assetImporter = AssetImporter();
 
-        auto monkeyMesh = assetImporter.ImportMesh("../assets/Monkey.obj");
-        auto cubeMesh = assetImporter.ImportMesh("../assets/Cube.obj");
+        auto monkeyMesh = assetImporter.ImportMesh("Monkey.obj");
+        auto cubeMesh = assetImporter.ImportMesh("Cube.obj");
 
         auto material = Material{};
         material.fragmentShader = g_ShaderBasicFragment;
@@ -57,6 +66,8 @@ NAMESPACE {
         m_Scene->camera = camera;
         m_Scene->AddModel(std::move(monkeyModel));
         m_Scene->AddModel(std::move(cubeModel));
+
+        ENGINE_INFO("Engine Initialized");
     }
 
     void Engine::Run() {

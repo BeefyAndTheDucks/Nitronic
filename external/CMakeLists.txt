@@ -3,6 +3,14 @@
 set(third_party_folder "Third-Party Libraries")
 
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+
+set(ASSIMP_INSTALL OFF CACHE BOOL "" FORCE)
+set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
+set(GLM_BUILD_INSTALL OFF CACHE BOOL "" FORCE)
+set(PLATFORMFOLDERS_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
+set(SPDLOG_INSTALL OFF CACHE BOOL "" FORCE)
+set(NVRHI_INSTALL OFF CACHE BOOL "" FORCE)
 
 FetchContent_Declare(glfw
         GIT_REPOSITORY https://github.com/glfw/glfw
@@ -34,6 +42,12 @@ FetchContent_Declare(tracy
         GIT_SHALLOW TRUE
 )
 
+FetchContent_Declare(platform_folders
+        GIT_REPOSITORY https://github.com/sago007/PlatformFolders
+        GIT_TAG 4.3.0
+        GIT_SHALLOW TRUE
+)
+
 if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
     message("-- Enabling Tracy profiler due to build type set to ${CMAKE_BUILD_TYPE}")
     set (TRACY_ENABLE ON CACHE BOOL "" FORCE)
@@ -43,7 +57,9 @@ else()
     set (TRACY_ENABLE OFF CACHE BOOL "" FORCE)
 endif()
 
-FetchContent_MakeAvailable(glfw glm assimp spdlog tracy)
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+
+FetchContent_MakeAvailable(glfw glm assimp spdlog tracy platform_folders)
 
 set_target_properties(glfw PROPERTIES FOLDER ${third_party_folder})
 if (TARGET update_mappings)
@@ -59,55 +75,52 @@ add_subdirectory(nvrhi)
 
 # imgui
 
-if (NOT TARGET imgui)
-    file(GLOB IMGUI_SOURCES imgui/*.cpp)
 
-    if (NITRONIC_WITH_DX11)
-        list(APPEND IMGUI_SOURCES imgui/backends/imgui_impl_dx11.cpp)
+file(GLOB IMGUI_SOURCES imgui/*.cpp)
+
+if (NITRONIC_WITH_DX11)
+    list(APPEND IMGUI_SOURCES imgui/backends/imgui_impl_dx11.cpp)
+endif()
+
+if (NITRONIC_WITH_DX12)
+    list(APPEND IMGUI_SOURCES imgui/backends/imgui_impl_dx12.cpp)
+endif()
+
+if (NITRONIC_WITH_VULKAN)
+    list(APPEND IMGUI_SOURCES imgui/backends/imgui_impl_vulkan.cpp)
+endif()
+
+add_library(imgui STATIC ${IMGUI_SOURCES} imgui/backends/imgui_impl_glfw.cpp)
+target_include_directories(imgui PUBLIC imgui imgui/backends)
+target_link_libraries(imgui PUBLIC glfw)
+
+if (NITRONIC_WITH_DX11)
+    target_link_libraries(imgui PUBLIC d3d11)
+endif()
+
+if (NITRONIC_WITH_DX12)
+    target_link_libraries(imgui PUBLIC d3d12)
+endif()
+
+if (NITRONIC_WITH_VULKAN)
+    find_package(Vulkan REQUIRED)
+    if (TARGET Vulkan-Headers)
+        target_link_libraries(imgui PUBLIC Vulkan-Headers Vulkan::Vulkan)
+    elseif (TARGET Vulkan::Headers)
+        target_link_libraries(imgui PUBLIC Vulkan::Headers Vulkan::Vulkan)
+    else()
+        target_link_libraries(imgui PUBLIC Vulkan::Vulkan)
     endif()
+endif()
 
-    if (NITRONIC_WITH_DX12)
-        list(APPEND IMGUI_SOURCES imgui/backends/imgui_impl_dx12.cpp)
-    endif()
-
-    if (NITRONIC_WITH_VULKAN)
-        list(APPEND IMGUI_SOURCES imgui/backends/imgui_impl_vulkan.cpp)
-    endif()
-
-    add_library(imgui STATIC ${IMGUI_SOURCES} imgui/backends/imgui_impl_glfw.cpp)
-    target_include_directories(imgui PUBLIC imgui imgui/backends)
-    target_link_libraries(imgui PUBLIC glfw)
-
-    if (NITRONIC_WITH_DX11)
-        target_link_libraries(imgui PUBLIC d3d11)
-    endif()
-
-    if (NITRONIC_WITH_DX12)
-        target_link_libraries(imgui PUBLIC d3d12)
-    endif()
-
-    if (NITRONIC_WITH_VULKAN)
-        find_package(Vulkan REQUIRED)
-        if (TARGET Vulkan-Headers)
-            target_link_libraries(imgui PUBLIC Vulkan-Headers Vulkan::Vulkan)
-        elseif (TARGET Vulkan::Headers)
-            target_link_libraries(imgui PUBLIC Vulkan::Headers Vulkan::Vulkan)
-        else()
-            target_link_libraries(imgui PUBLIC Vulkan::Vulkan)
-        endif()
-    endif()
-
-    set_target_properties(imgui PROPERTIES FOLDER ${third_party_folder})
-    if (TARGET update_mappings)
-        set_target_properties(update_mappings PROPERTIES FOLDER ${third_party_folder})
-    endif()
+set_target_properties(imgui PROPERTIES FOLDER ${third_party_folder})
+if (TARGET update_mappings)
+    set_target_properties(update_mappings PROPERTIES FOLDER ${third_party_folder})
 endif()
 
 
 
 # stb
 
-if (NOT TARGET stb)
-    add_library(stb INTERFACE)
-    target_include_directories(stb INTERFACE stb)
-endif()
+add_library(stb INTERFACE)
+target_include_directories(stb INTERFACE stb)

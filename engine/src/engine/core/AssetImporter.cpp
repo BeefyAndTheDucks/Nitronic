@@ -7,10 +7,13 @@
 
 #include "engine/AssetImporter.h"
 
-NAMESPACE {
+#include "core/Constants.h"
+
+NAMESPACE
+{
     
     Mesh* AssetImporter::ImportMesh(const std::filesystem::path& file) {
-        const aiScene* scene = m_Importer.ReadFile(file.string(), 
+        const aiScene* scene = m_Importer.ReadFile(g_AssetsDirectory + file.string(),
             aiProcess_Triangulate |
             aiProcess_GenNormals |
             aiProcess_CalcTangentSpace |
