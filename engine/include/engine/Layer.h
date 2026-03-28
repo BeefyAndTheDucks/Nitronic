@@ -9,6 +9,11 @@
 
 NAMESPACE {
 
+    // Forward decls
+    class Renderer;
+    class Window;
+    class Engine;
+
     class Layer
     {
     public:
@@ -21,8 +26,14 @@ NAMESPACE {
         virtual void OnImGuiRender() = 0;
 
         [[nodiscard]] const std::string& GetDebugName() const { return m_DebugName; }
+    protected:
+        [[nodiscard]] Engine* GetEngine() const { return m_Engine; }
     private:
+        friend class Engine;
+
         std::string m_DebugName;
+
+        Engine* m_Engine;
     };
 
 }

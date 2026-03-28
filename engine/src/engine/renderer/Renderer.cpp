@@ -6,14 +6,16 @@
 
 #include <filesystem>
 #include <tracy/Tracy.hpp>
+#include <imgui.h>
+#include <nvrhi/utils.h>
 
-#include "imgui.h"
-#include "core/Macros.h"
-#include "core/Constants.h"
-#include "nvrhi/utils.h"
 #include "renderer/Camera.h"
 #include "renderer/ImGuiRenderer.h"
 #include "renderer/Shaders.h"
+
+#include "core/Macros.h"
+#include "core/Constants.h"
+#include "renderer/RendererConstants.h"
 
 NAMESPACE
 {
@@ -55,18 +57,14 @@ NAMESPACE
         m_Device->GetDevice()->runGarbageCollection();
         m_Device->GetDevice()->waitForIdle();
 
-        if (m_HasGeneratedImGuiFramebuffer)
-            for (ImGuiTexture& texture : m_ImGuiFramebufferColorTextures)
-                m_ImGuiRenderer->RemoveTexture(texture);
+        m_3DRenderTarget = nullptr;
 
         m_ImGuiRenderer.reset();
 
         m_ImGuiGraphicsPipeline = nullptr;
 
-        m_Framebuffers.clear();
         m_Backbuffers.clear();
-        m_ImGuiFramebufferColorTextures.clear();
-        m_ImGuiFramebufferDepthTextures.clear();
+        m_BackbufferDepthStencilTextures.clear();
 
         m_BindingSet = nullptr;
         m_BindingLayout = nullptr;
@@ -85,65 +83,216 @@ NAMESPACE
         CREATE_BACKEND_SWITCH(Cleanup);
     }
 
+    void Renderer::BuildOffscreenFramebufferImages(OffscreenFramebuffer& fb, uint32_t width, uint32_t height) const
+    {
+        ZoneScoped;
+
+        fb.m_Width = width;
+        fb.m_Height = height;
+
+        const nvrhi::TextureDesc colorTextureDesc = nvrhi::TextureDesc()
+            .setDimension(nvrhi::TextureDimension::Texture2D)
+            .setDebugName(fb.m_DebugName + " Color")
+            .setFormat(fb.m_ColorFormat)
+            .setWidth(width)
+            .setHeight(height)
+            .setInitialState(nvrhi::ResourceStates::ShaderResource)
+            .setKeepInitialState(true)
+            .setIsRenderTarget(true);
+
+        const nvrhi::TextureDesc depthStencilTextureDesc = nvrhi::TextureDesc()
+            .setDimension(nvrhi::TextureDimension::Texture2D)
+            .setDebugName(fb.m_DebugName + " Depth/Stencil")
+            .setFormat(fb.m_DepthStencilFormat)
+            .setWidth(width)
+            .setHeight(height)
+            .setInitialState(nvrhi::ResourceStates::DepthWrite)
+            .setKeepInitialState(true)
+            .setIsRenderTarget(true);
+
+        for (size_t i = 0; i < m_SwapChainImages.size(); i++)
+        {
+            const nvrhi::TextureHandle colorTexture = m_Device->GetDevice()->createTexture(colorTextureDesc);
+            fb.m_ColorImGuiTextures.push_back(m_ImGuiRenderer->AddTexture(colorTexture, m_Sampler));
+
+            const nvrhi::TextureHandle depthStencilTexture = m_Device->GetDevice()->createTexture(depthStencilTextureDesc);
+            fb.m_DepthStencilTextures.push_back(depthStencilTexture);
+
+            auto framebufferDesc = nvrhi::FramebufferDesc()
+                .addColorAttachment(colorTexture)
+                .setDepthAttachment(depthStencilTexture);
+            fb.m_Framebuffers.push_back(m_Device->GetDevice()->createFramebuffer(framebufferDesc));
+        }
+
+        // Transition color textures to ShaderResource
+        const nvrhi::CommandListHandle initCommandList = m_Device->GetDevice()->createCommandList();
+        initCommandList->open();
+        for (auto& tex : fb.m_ColorImGuiTextures) {
+            initCommandList->setTextureState(tex.texture, nvrhi::AllSubresources, nvrhi::ResourceStates::ShaderResource);
+        }
+        initCommandList->commitBarriers();
+        initCommandList->close();
+        m_Device->GetDevice()->executeCommandList(initCommandList);
+    }
+
+    std::unique_ptr<OffscreenFramebuffer> Renderer::CreateOffscreenFramebuffer(const OffscreenFramebufferDesc& desc) const
+    {
+        ZoneScoped;
+
+        auto fb = std::make_unique<OffscreenFramebuffer>();
+        fb->m_DebugName = desc.debugName;
+        fb->m_ColorFormat = desc.colorFormat;
+        fb->m_DepthStencilFormat = desc.depthStencilFormat;
+
+        BuildOffscreenFramebufferImages(*fb, desc.width, desc.height);
+
+        return fb;
+    }
+
+    void Renderer::ResizeOffscreenFramebuffer(OffscreenFramebuffer& fb, const uint32_t width, const uint32_t height) const
+    {
+        ZoneScoped;
+
+        if (fb.m_Width == width && fb.m_Height == height)
+            return;
+
+        m_Device->GetDevice()->waitForIdle();
+
+        // Release old resources
+        for (auto& tex : fb.m_ColorImGuiTextures)
+            m_ImGuiRenderer->RemoveTexture(tex);
+
+        fb.m_ColorImGuiTextures.clear();
+        fb.m_DepthStencilTextures.clear();
+        fb.m_Framebuffers.clear();
+
+        BuildOffscreenFramebufferImages(fb, width, height);
+    }
+
+    void Renderer::DestroyOffscreenFramebuffer(OffscreenFramebuffer& fb) const
+    {
+        ZoneScoped;
+
+        m_Device->GetDevice()->waitForIdle();
+
+        for (auto& tex : fb.m_ColorImGuiTextures)
+            m_ImGuiRenderer->RemoveTexture(tex);
+
+        fb.m_ColorImGuiTextures.clear();
+        fb.m_DepthStencilTextures.clear();
+        fb.m_Framebuffers.clear();
+        fb.m_Width = 0;
+        fb.m_Height = 0;
+    }
+
+    void Renderer::Set3DRenderTarget(OffscreenFramebuffer* target)
+    {
+        m_3DRenderTarget = target;
+    }
+
+    void Renderer::RequestOffscreenResize(OffscreenFramebuffer& fb, const uint32_t width, const uint32_t height)
+    {
+        if (fb.m_Width == width && fb.m_Height == height)
+            return;
+
+        for (auto& pending : m_PendingResizes) {
+            if (pending.fb == &fb) {
+                pending.width = width;
+                pending.height = height;
+                return;
+            }
+        }
+        m_PendingResizes.push_back({ &fb, width, height });
+    }
+
+    void Renderer::FlushPendingResizes()
+    {
+        if (m_PendingResizes.empty())
+            return;
+
+        m_Device->GetDevice()->waitForIdle();
+
+        for (auto& [fb, width, height] : m_PendingResizes)
+            ResizeOffscreenFramebuffer(*fb, width, height);
+
+        m_PendingResizes.clear();
+    }
+
     void Renderer::BeginScene(const Camera& camera) {
         ZoneScoped;
+
+        FlushPendingResizes();
 
         m_ImGuiRenderer->BeginFrame();
 
         if (!m_Window->IsMinimized())
             CREATE_BACKEND_SWITCH(BeginFrame);
 
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-        ImGui::Begin("Game");
-        const ImVec2 windowSize = ImGui::GetContentRegionAvail();
-        m_ValidGameWindow = windowSize.x > 0 && windowSize.y > 0;
-        if (m_ValidGameWindow) {
-            if (windowSize.x != m_FramebufferWidth || windowSize.y != m_FramebufferHeight)
-                RegenerateFrambuffers(windowSize.x, windowSize.y);
-            ImGui::Image(m_ImGuiFramebufferColorTextures[m_SwapChainIndex].textureID, windowSize);
-        }
-        ImGui::End();
-        ImGui::PopStyleVar();
-
         m_RenderingCommandList = m_Device->GetDevice()->createCommandList();
         m_RenderingCommandList->open();
 
         if (!m_Window->IsMinimized()) {
             // Clear the screen
-            nvrhi::utils::ClearColorAttachment(m_RenderingCommandList, m_Backbuffers[m_SwapChainIndex], 0, nvrhi::Color(1, 1, 1, 1));
+            nvrhi::utils::ClearColorAttachment(m_RenderingCommandList, m_Backbuffers[m_SwapChainIndex], 0, nvrhi::Color(1.0f, 1.0f, 1.0f, 1.0f));
+            nvrhi::utils::ClearDepthStencilAttachment(m_RenderingCommandList, m_Backbuffers[m_SwapChainIndex], 1.0f, 0);
         }
 
-        if (m_ValidGameWindow) {
-            const float gameWindowAspect = m_FramebufferWidth / m_FramebufferHeight;
+        if (m_3DRenderTarget && m_3DRenderTarget->IsValid())
+        {
+            // Offscreen mode, render to the offscreen framebuffer
+            const nvrhi::FramebufferHandle fb = m_3DRenderTarget->GetFramebuffer(m_SwapChainIndex);
+            nvrhi::utils::ClearColorAttachment(m_RenderingCommandList, fb, 0, nvrhi::Color(1, 1, 1, 1));
+            nvrhi::utils::ClearDepthStencilAttachment(m_RenderingCommandList, fb, 1.0f, 0);
 
-            nvrhi::utils::ClearColorAttachment(m_RenderingCommandList, m_Framebuffers[m_SwapChainIndex], 0, nvrhi::Color(1, 1, 1, 1));
-            nvrhi::utils::ClearDepthStencilAttachment(m_RenderingCommandList, m_Framebuffers[m_SwapChainIndex], 1.0f, 0);
-
-            m_ViewProjectionMatrix = camera.GetViewProjectionMatrix(gameWindowAspect);
+            m_ViewProjectionMatrix = camera.GetViewProjectionMatrix(m_3DRenderTarget->GetAspectRatio());
+        } else if (!m_3DRenderTarget)
+        {
+            // Direct mode, render to swapchain/backbuffer
+            int fbW, fbH;
+            m_Window->GetFramebufferSize(&fbW, &fbH);
+            fbW = glm::max(fbW, 1);
+            fbH = glm::max(fbH, 1);
+            const float aspectRatio = static_cast<float>(fbW) / static_cast<float>(fbH);
+            m_ViewProjectionMatrix = camera.GetViewProjectionMatrix(aspectRatio);
         }
     }
 
-    void Renderer::RenderModel(Model& model) {
+    void Renderer::RenderModel(Model& model) const
+    {
         ZoneScoped;
 
-        if (!m_ValidGameWindow)
-            return;
+        nvrhi::FramebufferHandle targetFB;
+
+        if (m_3DRenderTarget)
+        {
+            if (!m_3DRenderTarget->IsValid())
+                return;
+            targetFB = m_3DRenderTarget->GetFramebuffer(m_SwapChainIndex);
+        } else
+            targetFB = m_Backbuffers[m_SwapChainIndex];
 
         if (!model.IsInitialized())
-            model.Initialize(m_Device->GetDevice(), m_RenderingCommandList, *m_PSOCache, m_Framebuffers[m_SwapChainIndex]);
-        model.Render(m_RenderingCommandList, m_Framebuffers[m_SwapChainIndex], m_ViewProjectionMatrix);
+            model.Initialize(m_Device->GetDevice(), m_RenderingCommandList, *m_PSOCache, targetFB);
+        else if (!model.IsCompatibleWith(targetFB))
+            model.RebuildPipeline(*m_PSOCache, targetFB);
+
+        model.Render(m_RenderingCommandList, targetFB, m_ViewProjectionMatrix);
     }
 
     void Renderer::EndScene() {
         ZoneScoped;
 
-        m_RenderingCommandList->setTextureState(m_ImGuiFramebufferColorTextures[m_SwapChainIndex].texture, nvrhi::AllSubresources, nvrhi::ResourceStates::ShaderResource);
+        // Transition offscreen color texture to ShaderResource for ImGui sampling
+        if (m_3DRenderTarget && m_3DRenderTarget->IsValid()) {
+            const auto& tex = m_3DRenderTarget->GetImGuiTexture(m_SwapChainIndex);
+            m_RenderingCommandList->setTextureState(tex.texture, nvrhi::AllSubresources, nvrhi::ResourceStates::ShaderResource);
+        }
 
         int framebufferWidth, framebufferHeight;
         m_Window->GetFramebufferSize(&framebufferWidth, &framebufferHeight);
 
-        framebufferWidth = std::max(framebufferWidth, 1);
-        framebufferHeight = std::max(framebufferHeight, 1);
+        framebufferWidth = glm::max(framebufferWidth, 1);
+        framebufferHeight = glm::max(framebufferHeight, 1);
 
         const auto graphicsState = nvrhi::GraphicsState()
             .setPipeline(m_ImGuiGraphicsPipeline)
@@ -164,86 +313,38 @@ NAMESPACE
         m_RenderingCommandList = nullptr;
     }
 
-    void Renderer::RegenerateFrambuffers(const float requestedWidth, const float requestedHeight) {
-        ZoneScoped;
-
-        m_Device->GetDevice()->waitForIdle();
-
-        m_FramebufferWidth = requestedWidth;
-        m_FramebufferHeight = requestedHeight;
-
-        if (m_HasGeneratedImGuiFramebuffer)
-            for (ImGuiTexture& texture : m_ImGuiFramebufferColorTextures)
-                m_ImGuiRenderer->RemoveTexture(texture);
-
-        m_ImGuiFramebufferColorTextures.clear();
-        m_ImGuiFramebufferDepthTextures.clear();
-        m_Framebuffers.clear();
-
-        // same number of images as the swapchain
-        const nvrhi::TextureDesc colorTextureDesc = nvrhi::TextureDesc()
-            .setDimension(nvrhi::TextureDimension::Texture2D)
-            .setDebugName("ImGui Window Render Target (Color)")
-            .setFormat(nvrhi::Format::SBGRA8_UNORM)
-            .setWidth(static_cast<uint32_t>(m_FramebufferWidth))
-            .setHeight(static_cast<uint32_t>(m_FramebufferHeight))
-            .setInitialState(nvrhi::ResourceStates::ShaderResource)
-            .setKeepInitialState(true)
-            .setIsRenderTarget(true);
-
-        const nvrhi::TextureDesc depthTextureDesc = nvrhi::TextureDesc()
-            .setDimension(nvrhi::TextureDimension::Texture2D)
-            .setDebugName("ImGui Window Render Target (Depth)")
-            .setFormat(nvrhi::Format::D32) // D24S8 if I need stencil
-            .setWidth(static_cast<uint32_t>(m_FramebufferWidth))
-            .setHeight(static_cast<uint32_t>(m_FramebufferHeight))
-            .setInitialState(nvrhi::ResourceStates::DepthWrite)
-            .setKeepInitialState(true)
-            .setIsRenderTarget(true);
-
-        for (int i = 0; i < m_SwapChainImages.size(); i++) {
-            const nvrhi::TextureHandle colorTexture = m_Device->GetDevice()->createTexture(colorTextureDesc);
-            m_ImGuiFramebufferColorTextures.push_back(m_ImGuiRenderer->AddTexture(colorTexture, m_Sampler));
-
-            const nvrhi::TextureHandle depthTexture = m_Device->GetDevice()->createTexture(depthTextureDesc);
-            m_ImGuiFramebufferDepthTextures.push_back(depthTexture);
-
-            auto framebufferDesc = nvrhi::FramebufferDesc()
-                .addColorAttachment(colorTexture)
-                .setDepthAttachment(depthTexture);
-            auto framebuffer = m_Device->GetDevice()->createFramebuffer(framebufferDesc);
-            m_Framebuffers.push_back(framebuffer);
-        }
-
-        const nvrhi::CommandListHandle initCommandList = m_Device->GetDevice()->createCommandList();
-        initCommandList->open();
-        for (auto& tex : m_ImGuiFramebufferColorTextures) {
-            initCommandList->setTextureState(tex.texture, nvrhi::AllSubresources, nvrhi::ResourceStates::ShaderResource);
-        }
-
-        initCommandList->commitBarriers();
-        initCommandList->close();
-        m_Device->GetDevice()->executeCommandList(initCommandList);
-
-        m_HasGeneratedImGuiFramebuffer = true;
-    }
-
     void Renderer::GenerateBackbuffers() {
         ZoneScoped;
 
         m_Backbuffers.clear();
+        m_BackbufferDepthStencilTextures.clear();
+
+        const auto& firstImageDesc = m_SwapChainImages[0].nvrhiHandle->getDesc();
+
+        const nvrhi::TextureDesc depthStencilDesc = nvrhi::TextureDesc()
+            .setDimension(nvrhi::TextureDimension::Texture2D)
+            .setDebugName("Backbuffer Depth")
+            .setFormat(g_DepthStencilFormat)
+            .setWidth(firstImageDesc.width)
+            .setHeight(firstImageDesc.height)
+            .setInitialState(nvrhi::ResourceStates::DepthWrite)
+            .setKeepInitialState(true)
+            .setIsRenderTarget(true);
 
         for (auto&[swapChainNvrhiHandle] : m_SwapChainImages) {
+            auto depthStencilTexture = m_Device->GetDevice()->createTexture(depthStencilDesc);
+
             auto framebufferDesc = nvrhi::FramebufferDesc()
-                .addColorAttachment(swapChainNvrhiHandle);
+                .addColorAttachment(swapChainNvrhiHandle)
+                .setDepthAttachment(depthStencilTexture);
             m_Backbuffers.push_back(m_Device->GetDevice()->createFramebuffer(framebufferDesc));
+            m_BackbufferDepthStencilTextures.push_back(depthStencilTexture);
         }
 
         if (!m_HasImGuiGraphicsPipeline) {
             constexpr nvrhi::RenderState renderState = nvrhi::RenderState()
                     .setDepthStencilState(nvrhi::DepthStencilState()
-                        .setDepthTestEnable(false)
-                        .setStencilEnable(false));
+                        .setDepthTestEnable(false));
 
             PSOKey key{};
             key.vertexShader       = g_ShaderEmptyVertex;

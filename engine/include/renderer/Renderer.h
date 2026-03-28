@@ -5,7 +5,6 @@
 #ifndef NITRONIC_RENDERER_H
 #define NITRONIC_RENDERER_H
 #include <filesystem>
-#include <iostream>
 #include <queue>
 
 #include "core/Enums.h"
@@ -18,6 +17,7 @@
 #include "Device.h"
 #include "ImGuiRenderer.h"
 #include "Model.h"
+#include "OffscreenFramebuffer.h"
 #include "PSOCache.h"
 
 NAMESPACE
@@ -61,14 +61,29 @@ NAMESPACE
 
         void BeginScene(const Camera& camera);
 
-        void RenderModel(Model& model);
+        void RenderModel(Model& model) const;
 
         void EndScene();
 
-        void RegenerateFrambuffers(float requestedWidth, float requestedHeight);
+        /// Creates a new offscreen framebuffer. Caller owns the returned pointer.
+        [[nodiscard]] std::unique_ptr<OffscreenFramebuffer> CreateOffscreenFramebuffer(const OffscreenFramebufferDesc& desc) const;
+
+        /// Resizes an existing offscreen framebuffer. Handles GPU sync internally.
+        void ResizeOffscreenFramebuffer(OffscreenFramebuffer& fb, uint32_t width, uint32_t height) const;
+
+        /// Destroys the GPU resources held by the framebuffer. Call before destroying.
+        void DestroyOffscreenFramebuffer(OffscreenFramebuffer& fb) const;
+
+        /// Sets the render target for 3D model rendering.
+        /// Pass nullptr to render to the SwapChain backbuffer instead of a custom offscreen FrameBuffer.
+        void Set3DRenderTarget(OffscreenFramebuffer* target);
+
+        /// Queues a resize, which will be applied at the start of the next frame.
+        void RequestOffscreenResize(OffscreenFramebuffer& fb, uint32_t width, uint32_t height);
 
         [[nodiscard]] RendererData* GetRendererData() const { return m_RendererData.get(); }
         [[nodiscard]] Device* GetDevice() const { return m_Device.get(); }
+        [[nodiscard]] uint32_t GetSwapChainIndex() const { return m_SwapChainIndex; }
 
     private:
         CREATE_BACKEND_FUNCTIONS(void, Init)
@@ -79,6 +94,8 @@ NAMESPACE
         CREATE_BACKEND_FUNCTIONS(void, Cleanup)
 
         void GenerateBackbuffers();
+        void BuildOffscreenFramebufferImages(OffscreenFramebuffer& fb, uint32_t width, uint32_t height) const;
+        void FlushPendingResizes();
 
     private:
         RenderingBackend m_Backend;
@@ -93,10 +110,19 @@ NAMESPACE
         uint32_t m_SwapChainIndex = static_cast<uint32_t>(-1);
 
         // Framebuffers
-        std::vector<nvrhi::FramebufferHandle> m_Framebuffers;
         std::vector<nvrhi::FramebufferHandle> m_Backbuffers;
-        float m_FramebufferWidth = -1, m_FramebufferHeight = -1;
-        bool m_HasGeneratedImGuiFramebuffer = false;
+        std::vector<nvrhi::TextureHandle> m_BackbufferDepthStencilTextures;
+
+        // 3D render target, nullptr = swapchain
+        OffscreenFramebuffer* m_3DRenderTarget = nullptr;
+
+        // Pending resizes (applied between frames)
+        struct PendingResize {
+            OffscreenFramebuffer* fb;
+            uint32_t width;
+            uint32_t height;
+        };
+        std::vector<PendingResize> m_PendingResizes;
 
         // Frames
         std::queue<nvrhi::EventQueryHandle> m_FramesInFlight;
@@ -116,11 +142,6 @@ NAMESPACE
 
         // ImGui
         std::unique_ptr<ImGuiRenderer> m_ImGuiRenderer;
-
-        std::vector<ImGuiTexture> m_ImGuiFramebufferColorTextures;
-        std::vector<nvrhi::TextureHandle> m_ImGuiFramebufferDepthTextures;
-
-        bool m_ValidGameWindow = false;
 
         // Textures
         nvrhi::SamplerHandle m_Sampler;

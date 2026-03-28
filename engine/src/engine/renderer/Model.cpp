@@ -5,7 +5,7 @@
 #include "engine/Log.h"
 
 #include "renderer/Model.h"
-#include "renderer/Constants.h"
+#include "renderer/RendererConstants.h"
 
 #include "nvrhi/utils.h"
 
@@ -54,8 +54,49 @@ NAMESPACE {
         key.framebufferInfo = fb->getFramebufferInfo();
 
         m_GraphicsPipeline = psoCache.get(key);
+        m_CachedFramebufferInfo = fb->getFramebufferInfo();
 
         m_Initialized = true;
+    }
+
+    bool Model::IsCompatibleWith(const nvrhi::FramebufferHandle& fb) const
+    {
+        if (!m_Initialized) return false;
+        const auto& info = fb->getFramebufferInfo();
+
+        if (m_CachedFramebufferInfo.colorFormats.size() != info.colorFormats.size()) return false;
+
+        for (size_t i = 0; i < m_CachedFramebufferInfo.colorFormats.size(); ++i)
+        {
+            if (m_CachedFramebufferInfo.colorFormats[i] != info.colorFormats[i])
+                return false;
+        }
+
+        return m_CachedFramebufferInfo.depthFormat == info.depthFormat
+            && m_CachedFramebufferInfo.sampleCount == info.sampleCount;
+    }
+
+    void Model::RebuildPipeline(PSOCache& psoCache, const nvrhi::FramebufferHandle& fb)
+    {
+        constexpr nvrhi::RenderState renderState = nvrhi::RenderState()
+                .setDepthStencilState(nvrhi::DepthStencilState()
+                    .setDepthTestEnable(true)
+                    .setDepthWriteEnable(true)
+                    .setDepthFunc(nvrhi::ComparisonFunc::Less))
+                .setRasterState(nvrhi::RasterState()
+                    .setFrontCounterClockwise(true));
+
+        PSOKey key{};
+        key.vertexShader = m_Material.vertexShader;
+        key.fragmentShader = m_Material.fragmentShader;
+        key.renderState = renderState;
+        key.primType = nvrhi::PrimitiveType::TriangleList;
+        key.vertexAttributes = m_Material.vertexAttributes;
+        key.bindingLayout = m_BindingLayout;
+        key.framebufferInfo = fb->getFramebufferInfo();
+
+        m_GraphicsPipeline = psoCache.get(key);
+        m_CachedFramebufferInfo = fb->getFramebufferInfo();
     }
 
     void Model::Render(const nvrhi::CommandListHandle &commandList, const nvrhi::FramebufferHandle& fb, const glm::mat4& viewProjectionMatrix) const {

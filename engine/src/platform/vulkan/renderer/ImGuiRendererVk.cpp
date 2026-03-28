@@ -8,7 +8,7 @@
 #include "ImGuiRendererVk.h"
 
 #include "VulkanInclude.h"
-#include "renderer/Constants.h"
+#include "renderer/RendererConstants.h"
 
 NAMESPACE {
 
@@ -31,9 +31,14 @@ NAMESPACE {
 
         const auto colorFormat = rendererDataVk->swapChainImageFormat;
 
+        nvrhi::FormatInfo const& depthStencilFormatInfo = nvrhi::getFormatInfo(g_DepthStencilFormat);
+        const auto depthStencilFormat = static_cast<vk::Format>(nvrhi::vulkan::convertFormat(g_DepthStencilFormat));
+
         vk::PipelineRenderingCreateInfoKHR pipelineRenderingInfo = vk::PipelineRenderingCreateInfoKHR()
             .setColorAttachmentCount(1)
-            .setPColorAttachmentFormats(&colorFormat);
+            .setPColorAttachmentFormats(&colorFormat)
+            .setDepthAttachmentFormat(depthStencilFormatInfo.hasDepth ? depthStencilFormat : vk::Format::eUndefined)
+            .setStencilAttachmentFormat(depthStencilFormatInfo.hasStencil ? depthStencilFormat : vk::Format::eUndefined);
 
         ImGui_ImplVulkan_InitInfo initInfo{};
         initInfo.ApiVersion = VK_API_VERSION_1_3;
@@ -50,6 +55,7 @@ NAMESPACE {
         initInfo.PipelineInfoForViewports.PipelineRenderingCreateInfo = pipelineRenderingInfo;
         initInfo.PipelineInfoMain.PipelineRenderingCreateInfo = pipelineRenderingInfo;
         initInfo.PipelineInfoMain.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+        initInfo.CheckVkResultFn = [](const VkResult result) { VK_CHECK(result); };
 
         ImGui_ImplVulkan_Init(&initInfo);
     }

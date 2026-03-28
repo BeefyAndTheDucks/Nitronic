@@ -100,6 +100,7 @@ NAMESPACE {
     {
         ENGINE_TRACE("Adding layer {} to engine", layer->GetDebugName());
         m_Layers.push_back(layer);
+        layer->m_Engine = this;
         layer->OnAttach(*m_Scene);
     }
 

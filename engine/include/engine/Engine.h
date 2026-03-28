@@ -23,6 +23,9 @@ NAMESPACE {
 
         void AddLayer(Layer* layer);
         void RemoveLayer(Layer* layer);
+
+        [[nodiscard]] Renderer* GetRenderer() const { return m_Renderer.get(); }
+        [[nodiscard]] Window* GetWindow() const { return m_Window.get(); }
     private:
         std::unique_ptr<Window> m_Window;
         std::unique_ptr<Renderer> m_Renderer;

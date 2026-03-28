@@ -50,7 +50,7 @@ NAMESPACE {
 
         ImGui::NewFrame();
 
-        ImGui::DockSpaceOverViewport();
+        ImGui::DockSpaceOverViewport(0, nullptr, ImGuiDockNodeFlags_PassthruCentralNode);
     }
 
     void ImGuiRenderer::Render(const nvrhi::CommandListHandle &commandList) const {
