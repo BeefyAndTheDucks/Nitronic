@@ -8,6 +8,8 @@
 #include <fstream>
 #include <vector>
 
+#include "engine/Log.h"
+
 static std::vector<char> readFile(const std::filesystem::path& filePath) {
     std::ifstream file(filePath, std::ios::ate | std::ios::binary);
 
