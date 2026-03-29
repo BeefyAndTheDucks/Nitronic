@@ -36,7 +36,7 @@ NAMESPACE {
 
         m_Input = std::make_unique<Input>(*m_EventBus);
 
-        m_Scene = std::make_unique<Scene>();
+        m_RenderingScene = std::make_unique<RendererScene>();
 
         ENGINE_TRACE("Engine Initialized");
     }
@@ -45,7 +45,7 @@ NAMESPACE {
     {
         for (Layer* layer : m_Layers)
         {
-            layer->OnDetach(*m_Scene);
+            layer->OnDetach(*m_RenderingScene);
             delete layer;
         }
     }
@@ -76,15 +76,15 @@ NAMESPACE {
                 ZoneScopedN("Update Layers");
 
                 for (Layer* layer : m_Layers)
-                    layer->OnUpdate(*m_Scene, deltaTime);
+                    layer->OnUpdate(*m_RenderingScene, deltaTime);
             }
 
-            m_Renderer->BeginScene(m_Scene->camera);
+            m_Renderer->BeginScene(m_RenderingScene->camera);
 
             {
                 ZoneScopedN("Render Models");
 
-                for (auto& model : m_Scene->models)
+                for (auto& model : m_RenderingScene->models)
                     m_Renderer->RenderModel(*model);
             }
 
@@ -108,7 +108,7 @@ NAMESPACE {
         ENGINE_TRACE("Adding layer {} to engine", layer->GetDebugName());
         m_Layers.push_back(layer);
         layer->m_Engine = this;
-        layer->OnAttach(*m_Scene);
+        layer->OnAttach(*m_RenderingScene);
     }
 
     void Engine::RemoveLayer(Layer* layer)
@@ -118,7 +118,7 @@ NAMESPACE {
         auto it = std::ranges::find(m_Layers, layer);
         if (it != m_Layers.end()) {
             m_Layers.erase(it);
-            layer->OnDetach(*m_Scene);
+            layer->OnDetach(*m_RenderingScene);
         } else
             ENGINE_WARN("Cannot remove layer {}. (Not found)", layer->GetDebugName());
     }

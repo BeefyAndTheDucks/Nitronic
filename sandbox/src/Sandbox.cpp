@@ -11,7 +11,7 @@ class SandboxLayer : public Nitronic::Layer
 public:
     SandboxLayer() : Layer("SandboxLayer") {}
 
-    void OnAttach(Nitronic::Scene& scene) override
+    void OnAttach(Nitronic::RendererScene& scene) override
     {
         auto assetImporter = Nitronic::AssetImporter();
 
@@ -29,12 +29,12 @@ public:
         scene.AddModel(std::move(monkeyModel));
     }
 
-    void OnDetach(Nitronic::Scene& scene) override
+    void OnDetach(Nitronic::RendererScene& scene) override
     {
 
     }
 
-    void OnUpdate(Nitronic::Scene& scene, const double deltaTimeSeconds) override
+    void OnUpdate(Nitronic::RendererScene& scene, const double deltaTimeSeconds) override
     {
         m_TotalTimePassed += deltaTimeSeconds;
 

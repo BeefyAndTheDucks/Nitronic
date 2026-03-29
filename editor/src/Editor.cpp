@@ -11,7 +11,7 @@ class EditorLayer : public Nitronic::Layer {
 public:
     EditorLayer() : Layer("EditorLayer") {}
 
-    void OnAttach(Nitronic::Scene& scene) override
+    void OnAttach(Nitronic::RendererScene& scene) override
     {
         auto assetImporter = Nitronic::AssetImporter();
 
@@ -36,14 +36,14 @@ public:
         GetEngine()->GetRenderer()->Set3DRenderTarget(m_GameFramebuffer.get());
     }
 
-    void OnDetach(Nitronic::Scene& scene) override
+    void OnDetach(Nitronic::RendererScene& scene) override
     {
         GetEngine()->GetRenderer()->Set3DRenderTarget(nullptr);
         GetEngine()->GetRenderer()->DestroyOffscreenFramebuffer(*m_GameFramebuffer);
         m_GameFramebuffer.reset();
     }
 
-    void OnUpdate(Nitronic::Scene& scene, const double deltaTimeSeconds) override
+    void OnUpdate(Nitronic::RendererScene& scene, const double deltaTimeSeconds) override
     {
         m_LastDeltaTime = deltaTimeSeconds;
         m_TotalTimePassed += deltaTimeSeconds;
@@ -90,7 +90,7 @@ public:
 
             double scrollX, scrollY;
             Nitronic::Input::MouseScrollDelta(scrollX, scrollY);
-            m_MoveSpeedMultiplier += static_cast<float>(scrollY) * m_MoveSpeedMultiplier * 0.01f;
+            m_MoveSpeedMultiplier += static_cast<float>(scrollY) * m_MoveSpeedMultiplier * 0.1f;
             if (scrollY != 0.0f)
                 APP_TRACE("Move speed: {}", m_MoveSpeedMultiplier);
 

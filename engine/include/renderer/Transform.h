@@ -16,6 +16,12 @@ NAMESPACE {
         glm::vec3 scale = glm::vec3(1.f);
 
         [[nodiscard]] glm::mat4 GetMatrix() const;
+    private:
+        void AddChild(Transform* child);
+        void RemoveChild(Transform* child);
+    private:
+        Transform* m_Parent = nullptr;
+        std::vector<Transform*> m_Children;
     };
 
 }
