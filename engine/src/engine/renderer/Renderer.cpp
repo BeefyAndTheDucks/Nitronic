@@ -20,7 +20,7 @@
 NAMESPACE
 {
 
-    Renderer::Renderer(const RenderingBackend backend, Window* window)
+    Renderer::Renderer(const RenderingBackend backend, Window* window, EventBus& eventBus)
         : m_Backend(backend), m_Window(window), m_RendererData(nullptr), m_ViewProjectionMatrix(glm::identity<glm::mat4>())
     {
         ZoneScoped
@@ -45,7 +45,7 @@ NAMESPACE
 
         GenerateBackbuffers();
 
-        m_ImGuiRenderer = std::make_unique<ImGuiRenderer>(backend, window, m_RendererData.get(), m_Device->GetDeviceData());
+        m_ImGuiRenderer = std::make_unique<ImGuiRenderer>(backend, window, m_RendererData.get(), m_Device->GetDeviceData(), eventBus);
 
         const nvrhi::SamplerDesc samplerDesc = nvrhi::SamplerDesc()
             .setAllAddressModes(nvrhi::SamplerAddressMode::Repeat)

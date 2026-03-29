@@ -28,16 +28,17 @@ NAMESPACE {
 
         Log::Init();
 
-        ENGINE_INFO("Current path: {}", std::filesystem::current_path().string());
+        ENGINE_TRACE("Current path: {}", std::filesystem::current_path().string());
 
-        ENGINE_INFO("Initializing Engine");
+        m_EventBus = std::make_unique<EventBus>();
+        m_Window = std::make_unique<Window>(windowWidth, windowHeight, windowTitle, *m_EventBus);
+        m_Renderer = std::make_unique<Renderer>(backend, m_Window.get(), *m_EventBus);
 
-        m_Window = std::make_unique<Window>(windowWidth, windowHeight, windowTitle);
-        m_Renderer = std::make_unique<Renderer>(backend, m_Window.get());
+        m_Input = std::make_unique<Input>(*m_EventBus);
 
         m_Scene = std::make_unique<Scene>();
 
-        ENGINE_INFO("Engine Initialized");
+        ENGINE_TRACE("Engine Initialized");
     }
 
     Engine::~Engine()
@@ -57,6 +58,12 @@ NAMESPACE {
 
         while (!m_Window->ShouldClose()) {
             ZoneScopedN("Main Loop");
+
+            {
+                ZoneScopedN("Flush event queue");
+
+                m_EventBus->flush();
+            }
 
             time_point currentTime = clock::now();
             std::chrono::duration<double> elapsed = currentTime - previousTime;
@@ -90,7 +97,7 @@ NAMESPACE {
 
             m_Renderer->EndScene();
 
-            m_Window->SwapBuffers();
+            m_Input->EndFrame();
 
             FrameMark;
         }

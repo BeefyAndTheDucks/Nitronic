@@ -4,12 +4,19 @@
 
 #include "renderer/ImGuiRenderer.h"
 #include "imgui_impl_glfw.h"
+#include "engine/Event.h"
 
-NAMESPACE {
+NAMESPACE
+{
 
-    ImGuiRenderer::ImGuiRenderer(const RenderingBackend backend, Window* window, RendererData* rendererData, DeviceData* deviceData)
-        : m_ImGuiRendererData(nullptr), m_RendererData(rendererData), m_DeviceData(deviceData), m_Window(window), m_Backend(backend)
+    ImGuiRenderer* ImGuiRenderer::s_Instance = nullptr;
+
+    ImGuiRenderer::ImGuiRenderer(const RenderingBackend backend, Window* window, RendererData* rendererData, DeviceData* deviceData, EventBus& eventBus)
+        : m_ImGuiRendererData(nullptr), m_RendererData(rendererData), m_DeviceData(deviceData), m_Window(window),
+          m_Backend(backend), m_EventBus(eventBus)
     {
+        s_Instance = this;
+
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
         ImGuiIO& io = ImGui::GetIO();
@@ -25,18 +32,52 @@ NAMESPACE {
         static auto original = platformIO.Platform_CreateWindow;
         static auto windowIcons = window->GetIcons();
 
-        platformIO.Platform_CreateWindow = [](ImGuiViewport* vp) {
+        platformIO.Platform_CreateWindow = [](ImGuiViewport* vp)
+        {
             if (!original)
                 return;
 
             original(vp);
 
+            const auto platformWindow = static_cast<GLFWwindow*>(vp->PlatformHandle);
+
             std::vector<GLFWimage> icons;
-            for (const auto &[pixels, width, height] : windowIcons) {
-                icons.push_back({ width, height, pixels });
+            for (const auto& [pixels, width, height] : windowIcons)
+            {
+                icons.push_back({width, height, pixels});
             }
 
-            glfwSetWindowIcon(static_cast<GLFWwindow*>(vp->PlatformHandle), static_cast<int>(icons.size()), icons.data());
+            s_Instance->m_OriginalKeyCallback = glfwSetKeyCallback(platformWindow, [](GLFWwindow* eventWindow, const int key, const int scancode, const int action, const int mods)
+            {
+                s_Instance->m_OriginalKeyCallback(eventWindow, key, scancode, action, mods);
+                s_Instance->m_EventBus.dispatch(KeyEvent{key, scancode, action, mods});
+            });
+
+            s_Instance->m_OriginalMouseButtonCallback = glfwSetMouseButtonCallback(platformWindow, [](GLFWwindow* eventWindow, const int button, const int action, const int mods)
+            {
+                s_Instance->m_OriginalMouseButtonCallback(eventWindow, button, action, mods);
+                s_Instance->m_EventBus.dispatch(MouseButtonEvent{button, action, mods});
+            });
+
+            s_Instance->m_OriginalCursorPosCallback = glfwSetCursorPosCallback(platformWindow, [](GLFWwindow* eventWindow, const double xPos, const double yPos)
+            {
+                s_Instance->m_OriginalCursorPosCallback(eventWindow, xPos, yPos);
+                s_Instance->m_EventBus.dispatch(MouseMoveEvent{xPos, yPos});
+            });
+
+            s_Instance->m_OriginalScrollCallback = glfwSetScrollCallback(platformWindow, [](GLFWwindow* eventWindow, const double xOffset, const double yOffset)
+            {
+                s_Instance->m_OriginalScrollCallback(eventWindow, xOffset, yOffset);
+                s_Instance->m_EventBus.dispatch(MouseScrollEvent{xOffset, yOffset});
+            });
+
+            s_Instance->m_OriginalCharCallback = glfwSetCharCallback(platformWindow, [](GLFWwindow* eventWindow, const unsigned int codepoint)
+            {
+                s_Instance->m_OriginalCharCallback(eventWindow, codepoint);
+                s_Instance->m_EventBus.dispatch(CharInputEvent{codepoint});
+            });
+
+            glfwSetWindowIcon(platformWindow, static_cast<int>(icons.size()), icons.data());
         };
     }
 

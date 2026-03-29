@@ -4,6 +4,7 @@
 
 #include "engine/AssetImporter.h"
 #include "engine/Engine.h"
+#include "engine/Event.h"
 #include "renderer/Shaders.h"
 
 class EditorLayer : public Nitronic::Layer {
@@ -47,16 +48,72 @@ public:
         m_LastDeltaTime = deltaTimeSeconds;
         m_TotalTimePassed += deltaTimeSeconds;
 
-        scene.camera.transform.position.x = glm::cos(static_cast<float>(m_TotalTimePassed) * 1) * 15.0f;
-        scene.camera.transform.position.y = glm::sin(static_cast<float>(m_TotalTimePassed) * 3) * 5.0f;
-        scene.camera.transform.position.z = glm::sin(static_cast<float>(m_TotalTimePassed) * 1) * 15.0f;
-        scene.camera.transform.rotation = glm::quatLookAt(glm::normalize(-scene.camera.transform.position), glm::vec3(0.f,1.f,0.f));
+        if (!m_ViewportFocused) return;
+
+        const auto dt = static_cast<float>(deltaTimeSeconds);
+        auto& cam = scene.camera.transform;
+
+        if (Nitronic::Input::MouseButtonDown(Nitronic::MouseButton::Right))
+        {
+            double dx, dy;
+            Nitronic::Input::MouseDelta(dx, dy);
+
+            if (dx != 0 || dy != 0)
+            {
+                m_Yaw += static_cast<float>(dx) * m_MouseSensitivity;
+                m_Pitch -= static_cast<float>(dy) * m_MouseSensitivity;
+
+                cam.rotation = glm::quatLookAt(m_CameraForward, m_CameraUp);
+
+                m_CameraForward = glm::normalize(glm::vec3(
+                    glm::cos(glm::radians(m_Yaw)) * glm::cos(glm::radians(m_Pitch)),
+                    glm::sin(glm::radians(m_Pitch)),
+                    glm::sin(glm::radians(m_Yaw)) * glm::cos(glm::radians(m_Pitch))
+                ));
+                m_CameraRight = glm::normalize(glm::cross(m_CameraForward, glm::vec3(0.0f, 1.0f, 0.0f)));
+                m_CameraUp    = glm::normalize(glm::cross(m_CameraRight, m_CameraForward));
+            }
+
+            glm::vec3 moveDir(0.0f);
+
+            if (Nitronic::Input::MouseButtonDown(Nitronic::MouseButton::Right)) {
+                if (Nitronic::Input::KeyDown(Nitronic::Key::W)) moveDir += m_CameraForward;
+                if (Nitronic::Input::KeyDown(Nitronic::Key::S)) moveDir -= m_CameraForward;
+                if (Nitronic::Input::KeyDown(Nitronic::Key::D)) moveDir += m_CameraRight;
+                if (Nitronic::Input::KeyDown(Nitronic::Key::A)) moveDir -= m_CameraRight;
+                if (Nitronic::Input::KeyDown(Nitronic::Key::E)) moveDir += m_CameraUp;
+                if (Nitronic::Input::KeyDown(Nitronic::Key::Q)) moveDir -= m_CameraUp;
+            }
+
+            float moveMultiplier = 1.0f;
+            if (Nitronic::Input::KeyDown(Nitronic::Key::LeftShift)) moveMultiplier = 2.0f;
+
+            double scrollX, scrollY;
+            Nitronic::Input::MouseScrollDelta(scrollX, scrollY);
+            m_MoveSpeedMultiplier += static_cast<float>(scrollY) * m_MoveSpeedMultiplier * 0.01f;
+            if (scrollY != 0.0f)
+                APP_TRACE("Move speed: {}", m_MoveSpeedMultiplier);
+
+            if (glm::length(moveDir) > 0.0f)
+                cam.position += glm::normalize(moveDir) * m_MoveSpeed * moveMultiplier * m_MoveSpeedMultiplier * dt;
+        } else
+        {
+            double scrollX, scrollY;
+            Nitronic::Input::MouseScrollDelta(scrollX, scrollY);
+            cam.position += cam.rotation * glm::vec3(0.0f, 0.0f, -scrollY);
+        }
     }
 
     void OnImGuiRender() override
     {
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
         ImGui::Begin("Game");
+
+        if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+            ImGui::SetWindowFocus();
+
+        m_ViewportFocused = ImGui::IsWindowFocused();
+
         const ImVec2 windowSize = ImGui::GetContentRegionAvail();
         if (windowSize.x > 0 && windowSize.y > 0) {
             const auto w = static_cast<uint32_t>(windowSize.x);
@@ -81,6 +138,18 @@ private:
 
     double m_LastDeltaTime = 0.0001;
     std::unique_ptr<Nitronic::OffscreenFramebuffer> m_GameFramebuffer;
+
+    bool m_ViewportFocused = false;
+
+    float m_Yaw                 = -90.0f;
+    float m_Pitch               =   0.0f;
+    float m_MouseSensitivity    =   0.1f;
+    float m_MoveSpeed           =   5.0f;
+    float m_MoveSpeedMultiplier =   1.0f;
+
+    glm::vec3 m_CameraForward = {0.0f, 0.0f, -1.0f};
+    glm::vec3 m_CameraRight   = {1.0f, 0.0f,  0.0f};
+    glm::vec3 m_CameraUp      = {0.0f, 1.0f,  0.0f};
 };
 
 int main(const int argc, char* argv[]) {

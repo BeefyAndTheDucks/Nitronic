@@ -39,6 +39,8 @@ float4 fragmentMain(FragmentInput input) : SV_Target
     float diffuse = max(dot(N, L), 0.0);
     float ambient = 0.2;
 
-    float3 color = (ambient + diffuse) * float3(1.0, 1.0, 1.0);
+    float3 baseColor = float3(0.404, 0.306, 0.22);
+
+    float3 color = (ambient + diffuse) * baseColor;
     return float4(color, 1.0);
 }

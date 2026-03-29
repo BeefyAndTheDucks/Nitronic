@@ -11,6 +11,10 @@
 #include <stb_image.h>
 #include <tracy/Tracy.hpp>
 
+#include "core/Constants.h"
+#include "engine/Event.h"
+#include "engine/Log.h"
+
 NAMESPACE
 {
 
@@ -18,8 +22,10 @@ NAMESPACE
         16, 24, 32, 48, 64, 128, 256, 512
     };
 
-    Window::Window(const int width, const int height, const char* title)
-        : m_Width(width), m_Height(height) {
+    Window::Window(const int width, const int height, const char* title, EventBus& eventBus)
+        : m_Width(width), m_Height(height), m_EventBus(eventBus) {
+        glfwSetErrorCallback(OnGLFWError);
+
         if (!glfwInit())
             throw std::runtime_error("Failed to initialize GLFW");
 
@@ -30,11 +36,23 @@ NAMESPACE
             glfwTerminate();
             throw std::runtime_error("Failed to create GLFW window");
         }
+        glfwSetWindowUserPointer(m_Window, this);
+
+
+        glfwSetWindowSizeCallback(m_Window,      OnWindowResized);
+        glfwSetWindowCloseCallback(m_Window,     OnWindowClose);
+        glfwSetWindowFocusCallback(m_Window,     OnWindowFocus);
+        glfwSetKeyCallback(m_Window,             OnKey);
+        glfwSetMouseButtonCallback(m_Window,     OnMouseButton);
+        glfwSetCursorPosCallback(m_Window,       OnCursorPos);
+        glfwSetScrollCallback(m_Window,          OnScroll);
+        glfwSetCharCallback(m_Window,            OnChar);
+        glfwSetFramebufferSizeCallback(m_Window, OnFramebufferResize);
 
         GLFWimage icons[std::size(resolutions)];
         for (int i = 0; i < std::size(resolutions); i++) {
             WindowIcon icon{};
-            icon.pixels = stbi_load(std::format("../assets/logo_{}.png", resolutions[i]).c_str(), &icon.width, &icon.height, nullptr, 4);
+            icon.pixels = stbi_load(std::format("{}logo_{}.png", g_AssetsDirectory, resolutions[i]).c_str(), &icon.width, &icon.height, nullptr, 4);
             m_Icons.push_back(icon);
 
             icons[i].width = icon.width;
@@ -53,14 +71,69 @@ NAMESPACE
         glfwTerminate();
     }
 
+    void Window::OnGLFWError(int errorCode, const char* description)
+    {
+        ENGINE_ERROR("GLFW Error: {} (Code {})", description, errorCode);
+    }
+
     void Window::PollEvents() {
         ZoneScoped;
 
         glfwPollEvents();
     }
 
-    void Window::SwapBuffers() const {
-        glfwSwapBuffers(m_Window);
+    void Window::OnWindowResized(GLFWwindow* w, const int width, const int height)
+    {
+        const auto* self = static_cast<Window*>(glfwGetWindowUserPointer(w));
+        self->m_EventBus.dispatch(WindowResizeEvent{width, height});
+    }
+
+    void Window::OnWindowClose(GLFWwindow* w)
+    {
+        const auto* self = static_cast<Window*>(glfwGetWindowUserPointer(w));
+        self->m_EventBus.dispatch(WindowCloseEvent{});
+    }
+
+    void Window::OnWindowFocus(GLFWwindow* w, const int focused)
+    {
+        const auto* self = static_cast<Window*>(glfwGetWindowUserPointer(w));
+        self->m_EventBus.dispatch(WindowFocusEvent{ focused == GLFW_TRUE });
+    }
+
+    void Window::OnKey(GLFWwindow* w, const int key, const int scancode, const int action, const int mods)
+    {
+        const auto* self = static_cast<Window*>(glfwGetWindowUserPointer(w));
+        self->m_EventBus.dispatch(KeyEvent{ key, scancode, action, mods });
+    }
+
+    void Window::OnMouseButton(GLFWwindow* w, const int button, const int action, const int mods)
+    {
+        const auto* self = static_cast<Window*>(glfwGetWindowUserPointer(w));
+        self->m_EventBus.dispatch(MouseButtonEvent{ button, action, mods });
+    }
+
+    void Window::OnCursorPos(GLFWwindow* w, const double x, const double y)
+    {
+        const auto* self = static_cast<Window*>(glfwGetWindowUserPointer(w));
+        self->m_EventBus.dispatch(MouseMoveEvent{ x, y });
+    }
+
+    void Window::OnScroll(GLFWwindow* w, const double xOffset, const double yOffset)
+    {
+        const auto* self = static_cast<Window*>(glfwGetWindowUserPointer(w));
+        self->m_EventBus.dispatch(MouseScrollEvent{ xOffset, yOffset });
+    }
+
+    void Window::OnChar(GLFWwindow* w, const uint32_t codepoint)
+    {
+        const auto* self = static_cast<Window*>(glfwGetWindowUserPointer(w));
+        self->m_EventBus.dispatch(CharInputEvent{ codepoint });
+    }
+
+    void Window::OnFramebufferResize(GLFWwindow* w, const int width, const int height)
+    {
+        const auto* self = static_cast<Window*>(glfwGetWindowUserPointer(w));
+        self->m_EventBus.dispatch(FramebufferResizeEvent{ width, height });
     }
 
     bool Window::ShouldClose() const {

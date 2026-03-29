@@ -56,7 +56,7 @@ NAMESPACE
 
     class Renderer {
     public:
-        Renderer(RenderingBackend backend, Window* window);
+        Renderer(RenderingBackend backend, Window* window, EventBus& eventBus);
         ~Renderer();
 
         void BeginScene(const Camera& camera);

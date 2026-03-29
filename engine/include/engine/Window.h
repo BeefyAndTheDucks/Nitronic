@@ -6,6 +6,7 @@
 #define NITRONIC_WINDOW_H
 #include <vector>
 
+#include "EventBus.h"
 #include "GlfwInclude.h"
 
 #include "core/Macros.h"
@@ -20,12 +21,22 @@ NAMESPACE {
 
     class Window {
     public:
-        Window(int width, int height, const char* title);
+        Window(int width, int height, const char* title, EventBus& eventBus);
         ~Window();
+
+        static void OnGLFWError(int errorCode, const char* description);
 
         static void PollEvents();
 
-        void SwapBuffers() const;
+        static void OnWindowResized(GLFWwindow* w, int width, int height);
+        static void OnWindowClose(GLFWwindow* w);
+        static void OnWindowFocus(GLFWwindow* w, int focused);
+        static void OnKey(GLFWwindow* w, int key, int scancode, int action, int mods);
+        static void OnMouseButton(GLFWwindow* w, int button, int action, int mods);
+        static void OnCursorPos(GLFWwindow* w, double x, double y);
+        static void OnScroll(GLFWwindow* w, double xOffset, double yOffset);
+        static void OnChar(GLFWwindow* w, unsigned int codepoint);
+        static void OnFramebufferResize(GLFWwindow* w, int width, int height);
 
         [[nodiscard]] bool ShouldClose() const;
 
@@ -50,6 +61,8 @@ NAMESPACE {
         GLFWwindow* m_Window;
 
         std::vector<WindowIcon> m_Icons;
+
+        EventBus& m_EventBus;
     };
 
 }

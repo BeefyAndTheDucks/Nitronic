@@ -25,7 +25,7 @@ NAMESPACE {
 
     class ImGuiRenderer {
     public:
-        ImGuiRenderer(RenderingBackend backend, Window* window, RendererData* rendererData, DeviceData* deviceData);
+        ImGuiRenderer(RenderingBackend backend, Window* window, RendererData* rendererData, DeviceData* deviceData, EventBus& eventBus);
         ~ImGuiRenderer();
 
         void BeginFrame() const;
@@ -50,6 +50,16 @@ NAMESPACE {
 
         Window* m_Window; // Borrowed from Engine
         RenderingBackend m_Backend;
+
+        EventBus& m_EventBus;
+
+        GLFWkeyfun m_OriginalKeyCallback;
+        GLFWmousebuttonfun m_OriginalMouseButtonCallback;
+        GLFWcursorposfun m_OriginalCursorPosCallback;
+        GLFWscrollfun m_OriginalScrollCallback;
+        GLFWcharfun m_OriginalCharCallback;
+
+        static ImGuiRenderer* s_Instance;
     };
 
 }
