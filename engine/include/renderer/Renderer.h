@@ -19,9 +19,9 @@
 #include "Model.h"
 #include "OffscreenFramebuffer.h"
 #include "PSOCache.h"
+#include "engine/Event.h"
 
-NAMESPACE
-{
+NAMESPACE {
 
     struct SwapChainImage {
         nvrhi::TextureHandle nvrhiHandle;
@@ -97,9 +97,12 @@ NAMESPACE
         void BuildOffscreenFramebufferImages(OffscreenFramebuffer& fb, uint32_t width, uint32_t height) const;
         void FlushPendingResizes();
 
+        void OnFramebufferResized(FramebufferResizeEvent e);
+
     private:
         RenderingBackend m_Backend;
         Window* m_Window; // Borrowed from Engine
+        EventBus& m_EventBus;
 
         // Data
         std::unique_ptr<RendererData> m_RendererData;
@@ -112,6 +115,7 @@ NAMESPACE
         // Framebuffers
         std::vector<nvrhi::FramebufferHandle> m_Backbuffers;
         std::vector<nvrhi::TextureHandle> m_BackbufferDepthStencilTextures;
+        bool m_ForceResizeSwapchain = false;
 
         // 3D render target, nullptr = swapchain
         OffscreenFramebuffer* m_3DRenderTarget = nullptr;

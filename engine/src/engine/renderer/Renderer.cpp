@@ -15,13 +15,14 @@
 
 #include "core/Macros.h"
 #include "core/Constants.h"
+#include "engine/Event.h"
 #include "renderer/RendererConstants.h"
 
 NAMESPACE
 {
 
     Renderer::Renderer(const RenderingBackend backend, Window* window, EventBus& eventBus)
-        : m_Backend(backend), m_Window(window), m_RendererData(nullptr), m_ViewProjectionMatrix(glm::identity<glm::mat4>())
+        : m_Backend(backend), m_Window(window), m_RendererData(nullptr), m_ViewProjectionMatrix(glm::identity<glm::mat4>()), m_EventBus(eventBus)
     {
         ZoneScoped
 
@@ -45,17 +46,21 @@ NAMESPACE
 
         GenerateBackbuffers();
 
-        m_ImGuiRenderer = std::make_unique<ImGuiRenderer>(backend, window, m_RendererData.get(), m_Device->GetDeviceData(), eventBus);
+        m_ImGuiRenderer = std::make_unique<ImGuiRenderer>(backend, window, m_RendererData.get(), m_Device->GetDeviceData(), m_EventBus);
 
         const nvrhi::SamplerDesc samplerDesc = nvrhi::SamplerDesc()
             .setAllAddressModes(nvrhi::SamplerAddressMode::Repeat)
             .setMaxAnisotropy(1.0f);
         m_Sampler = m_Device->GetDevice()->createSampler(samplerDesc);
+
+        m_EventBus.subscribe<FramebufferResizeEvent, &Renderer::OnFramebufferResized>(*this);
     }
 
     Renderer::~Renderer() {
         m_Device->GetDevice()->runGarbageCollection();
         m_Device->GetDevice()->waitForIdle();
+
+        m_EventBus.unsubscribe<FramebufferResizeEvent, &Renderer::OnFramebufferResized>(*this);
 
         m_3DRenderTarget = nullptr;
 
@@ -218,6 +223,10 @@ NAMESPACE
         m_PendingResizes.clear();
     }
 
+    void Renderer::OnFramebufferResized(FramebufferResizeEvent) {
+        m_ForceResizeSwapchain = true;
+    }
+
     void Renderer::BeginScene(const Camera& camera) {
         ZoneScoped;
 
@@ -286,6 +295,7 @@ NAMESPACE
         if (m_3DRenderTarget && m_3DRenderTarget->IsValid()) {
             const auto& tex = m_3DRenderTarget->GetImGuiTexture(m_SwapChainIndex);
             m_RenderingCommandList->setTextureState(tex.texture, nvrhi::AllSubresources, nvrhi::ResourceStates::ShaderResource);
+            m_RenderingCommandList->commitBarriers();
         }
 
         int framebufferWidth, framebufferHeight;

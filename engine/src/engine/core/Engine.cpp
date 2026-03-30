@@ -70,7 +70,7 @@ NAMESPACE {
             const double deltaTime = elapsed.count(); // seconds
             previousTime = currentTime;
 
-            Window::PollEvents();
+            m_Window->PollEvents();
 
             {
                 ZoneScopedN("Update Layers");

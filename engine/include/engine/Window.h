@@ -26,7 +26,7 @@ NAMESPACE {
 
         static void OnGLFWError(int errorCode, const char* description);
 
-        static void PollEvents();
+        void PollEvents() const;
 
         static void OnWindowResized(GLFWwindow* w, int width, int height);
         static void OnWindowClose(GLFWwindow* w);

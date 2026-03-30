@@ -6,7 +6,7 @@
 #define NITRONIC_INPUT_H
 
 #include "core/Macros.h"
-#include <GLFW/glfw3.h>
+#include "GlfwInclude.h"
 
 #include "Event.h"
 #include "EventBus.h"

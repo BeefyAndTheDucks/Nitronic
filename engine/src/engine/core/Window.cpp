@@ -18,7 +18,7 @@
 NAMESPACE
 {
 
-    constexpr int resolutions[8] = {
+    constexpr int g_IconResolutions[8] = {
         16, 24, 32, 48, 64, 128, 256, 512
     };
 
@@ -26,18 +26,18 @@ NAMESPACE
         : m_Width(width), m_Height(height), m_EventBus(eventBus) {
         glfwSetErrorCallback(OnGLFWError);
 
-        if (!glfwInit())
-            throw std::runtime_error("Failed to initialize GLFW");
+        ENGINE_ASSERT(glfwInit(), "Failed to initialize GLFW");
+
+        ENGINE_ASSERT(glfwVulkanSupported(), "GLFW doesn't support Vulkan in this environment.");
 
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
         m_Window = glfwCreateWindow(width, height, title, nullptr, nullptr);
         if (!m_Window) {
             glfwTerminate();
-            throw std::runtime_error("Failed to create GLFW window");
+            ENGINE_ABORT("Failed to create GLFW window");
         }
         glfwSetWindowUserPointer(m_Window, this);
-
 
         glfwSetWindowSizeCallback(m_Window,      OnWindowResized);
         glfwSetWindowCloseCallback(m_Window,     OnWindowClose);
@@ -49,17 +49,19 @@ NAMESPACE
         glfwSetCharCallback(m_Window,            OnChar);
         glfwSetFramebufferSizeCallback(m_Window, OnFramebufferResize);
 
-        GLFWimage icons[std::size(resolutions)];
-        for (int i = 0; i < std::size(resolutions); i++) {
-            WindowIcon icon{};
-            icon.pixels = stbi_load(std::format("{}logo_{}.png", g_AssetsDirectory, resolutions[i]).c_str(), &icon.width, &icon.height, nullptr, 4);
-            m_Icons.push_back(icon);
+        if (glfwGetPlatform() != GLFW_PLATFORM_WAYLAND && glfwGetPlatform() != GLFW_PLATFORM_COCOA) { // Wayland/MacOS don't support setting window icons
+            GLFWimage icons[std::size(g_IconResolutions)];
+            for (int i = 0; i < std::size(g_IconResolutions); i++) {
+                WindowIcon icon{};
+                icon.pixels = stbi_load(std::format("{}logo_{}.png", g_AssetsDirectory, g_IconResolutions[i]).c_str(), &icon.width, &icon.height, nullptr, 4);
+                m_Icons.push_back(icon);
 
-            icons[i].width = icon.width;
-            icons[i].height = icon.height;
-            icons[i].pixels = icon.pixels;
+                icons[i].width = icon.width;
+                icons[i].height = icon.height;
+                icons[i].pixels = icon.pixels;
+            }
+            glfwSetWindowIcon(m_Window, std::size(g_IconResolutions), icons);
         }
-        glfwSetWindowIcon(m_Window, std::size(resolutions), icons);
     }
 
     Window::~Window() {
@@ -76,10 +78,13 @@ NAMESPACE
         ENGINE_ERROR("GLFW Error: {} (Code {})", description, errorCode);
     }
 
-    void Window::PollEvents() {
+    void Window::PollEvents() const {
         ZoneScoped;
 
-        glfwPollEvents();
+        if (IsMinimized())
+            glfwWaitEvents();
+        else
+            glfwPollEvents();
     }
 
     void Window::OnWindowResized(GLFWwindow* w, const int width, const int height)

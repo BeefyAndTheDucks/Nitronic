@@ -174,7 +174,7 @@ NAMESPACE {
     }
 
     void Renderer::InitVk() {
-        ENGINE_INFO("Init Vulkan");
+        ENGINE_TRACE("Init Vulkan");
 
         m_RendererData = std::make_unique<RendererDataVk>();
 
@@ -298,7 +298,7 @@ NAMESPACE {
             ));
             RENDERER_DATA_OWNED->surface = rawSurface;
 
-            ENGINE_INFO("Vulkan initialized.");
+            ENGINE_TRACE("Vulkan initialized.");
         }
         catch (const vk::SystemError& e) {
             ENGINE_CRITICAL("Vulkan error during instance creation: {}", e.what());
@@ -323,7 +323,7 @@ NAMESPACE {
             const auto& semaphore = RENDERER_DATA_OWNED->acquireSemaphores[RENDERER_DATA_OWNED->acquireSemaphoreIndex];
             res = DEVICE_DATA_FROM_BASE(m_Device->GetDeviceData())->logicalDevice.acquireNextImageKHR(
                 RENDERER_DATA_OWNED->nativeSwapChain,
-                10, // timeout
+                UINT64_MAX-1, // timeout
                 semaphore,
                 vk::Fence(),
                 &m_SwapChainIndex);
@@ -373,7 +373,8 @@ NAMESPACE {
             try {
                 const vk::Result res = DEVICE_DATA_FROM_BASE(m_Device->GetDeviceData())->presentQueue.presentKHR(&presentInfo);
 
-                if (res == vk::Result::eErrorOutOfDateKHR) {
+                if (res == vk::Result::eErrorOutOfDateKHR || m_ForceResizeSwapchain) {
+                    m_ForceResizeSwapchain = false;
                     m_SwapChainImages = CreateSwapChain(m_Device.get(), m_Window, RENDERER_DATA_OWNED->surface, RENDERER_DATA_OWNED);
                     m_SwapChainIndex = 0;
                     GenerateBackbuffers();
