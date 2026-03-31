@@ -123,6 +123,25 @@ public:
 
     void OnImGuiRender() override
     {
+        if (ImGui::BeginMainMenuBar()) {
+            if (ImGui::BeginMenu("File")) {
+                if (ImGui::MenuItem("Quit", "Alt+F4")) {
+                    GetEngine()->GetWindow()->Close();
+                }
+                ImGui::EndMenu();
+            }
+            if (ImGui::BeginMenu("Help")) {
+                if (ImGui::MenuItem("Show/Hide Demo Window")) {
+                    m_ShowDemoWindow = !m_ShowDemoWindow;
+                }
+                ImGui::EndMenu();
+            }
+            ImGui::EndMainMenuBar();
+        }
+
+        if (m_ShowDemoWindow)
+            ImGui::ShowDemoWindow(&m_ShowDemoWindow);
+
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
         ImGui::Begin("Game");
 
@@ -149,6 +168,17 @@ public:
         ImGui::Text("FPS (60 frames): %.2f", ImGui::GetIO().Framerate);
         ImGui::Text("Delta Time (60 frames): %.2fms", ImGui::GetIO().DeltaTime * 1000);
         ImGui::End();
+
+        ImGui::Begin("Entities");
+
+        const auto view = GetEngine()->GetScene().view<Nitronic::GameObject>();
+        for (auto entity : view) {
+            auto gameObject = view.get(entity);
+
+            //ImGui::
+        }
+
+        ImGui::End();
     }
 private:
     double m_TotalTimePassed = 0.0;
@@ -169,6 +199,10 @@ private:
     glm::vec3 m_CameraUp      = {0.0f, 1.0f,  0.0f};
 
     bool m_IsUsingCursorForControls = false;
+
+    bool m_ShowDemoWindow = false;
+
+    entt::entity m_SelectedEntity;
 };
 
 int main(const int argc, char* argv[]) {
