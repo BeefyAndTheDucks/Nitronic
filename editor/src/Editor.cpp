@@ -3,6 +3,7 @@
 //
 
 #include "engine/AssetImporter.h"
+#include "engine/BasicComponents.h"
 #include "engine/Engine.h"
 #include "engine/Event.h"
 #include "renderer/Shaders.h"
@@ -11,22 +12,29 @@ class EditorLayer : public Nitronic::Layer {
 public:
     EditorLayer() : Layer("EditorLayer") {}
 
-    void OnAttach(Nitronic::RendererScene& scene) override
+    void OnAttach() override
     {
         auto assetImporter = Nitronic::AssetImporter();
 
-        const auto monkeyMesh = assetImporter.ImportMesh("Monkey.obj");
+        const std::shared_ptr<Nitronic::Mesh> monkeyMesh = assetImporter.ImportMesh("Monkey.obj");
 
-        auto monkeyMaterial = Nitronic::Material{};
-        monkeyMaterial.fragmentShader = Nitronic::g_ShaderBasicFragment;
-        monkeyMaterial.vertexShader = Nitronic::g_ShaderBasicVertex;
-        monkeyMaterial.vertexAttributes = Nitronic::g_ShaderBasicAttributes;
+        const auto monkeyMaterial = std::make_shared<Nitronic::Material>(Nitronic::g_ShaderBasicFragment, Nitronic::g_ShaderBasicVertex, Nitronic::g_ShaderBasicAttributes);
 
         auto monkeyTransform = Nitronic::Transform{};
 
-        auto monkeyModel = std::make_unique<Nitronic::Model>(*monkeyMesh, monkeyMaterial, monkeyTransform, false);
+        const entt::entity monkeyEntity = GetEngine()->GetScene().create();
 
-        scene.AddModel(std::move(monkeyModel));
+        auto &rendered = GetEngine()->GetScene().emplace<Nitronic::Rendered>(monkeyEntity);
+        rendered.mesh = monkeyMesh;
+        rendered.material = monkeyMaterial;
+        rendered.cullBackfaces = false;
+
+        auto &[monkeyEntityName, monkeyEntityTransform] = GetEngine()->GetScene().get<Nitronic::GameObject>(monkeyEntity);
+        monkeyEntityName = "Monkey";
+
+        //auto monkeyModel = std::make_unique<Nitronic::Model>(*monkeyMesh, monkeyMaterial, monkeyTransform, false);
+
+        //scene.AddModel(std::move(monkeyModel));
 
         Nitronic::OffscreenFramebufferDesc desc;
         desc.width = 1;
@@ -36,14 +44,14 @@ public:
         GetEngine()->GetRenderer()->Set3DRenderTarget(m_GameFramebuffer.get());
     }
 
-    void OnDetach(Nitronic::RendererScene& scene) override
+    void OnDetach() override
     {
         GetEngine()->GetRenderer()->Set3DRenderTarget(nullptr);
         GetEngine()->GetRenderer()->DestroyOffscreenFramebuffer(*m_GameFramebuffer);
         m_GameFramebuffer.reset();
     }
 
-    void OnUpdate(Nitronic::RendererScene& scene, const double deltaTimeSeconds) override
+    void OnUpdate(const double deltaTimeSeconds) override
     {
         m_IsUsingCursorForControls = false;
 
@@ -56,7 +64,7 @@ public:
         }
 
         const auto dt = static_cast<float>(deltaTimeSeconds);
-        auto& cam = scene.camera.transform;
+        auto& cam = GetEngine()->GetCamera().transform;
 
         if (Nitronic::Input::MouseButtonDown(Nitronic::MouseButton::Right))
         {

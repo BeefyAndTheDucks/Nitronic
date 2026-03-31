@@ -12,7 +12,6 @@
 #include "renderer/Renderer.h"
 
 #include "Window.h"
-#include "../renderer/RendererScene.h"
 
 NAMESPACE {
 
@@ -29,6 +28,7 @@ NAMESPACE {
         [[nodiscard]] EventBus* GetEventBus() const { return m_EventBus.get(); }
         [[nodiscard]] Renderer* GetRenderer() const { return m_Renderer.get(); }
         [[nodiscard]] Window* GetWindow() const { return m_Window.get(); }
+        [[nodiscard]] Camera& GetCamera() { return m_CurrentCamera; }
 
         [[nodiscard]] entt::registry& GetScene() { return m_Scene; }
     private:
@@ -38,10 +38,9 @@ NAMESPACE {
 
         std::unique_ptr<Input> m_Input;
 
-        std::unique_ptr<RendererScene> m_RenderingScene;
-
         std::vector<Layer*> m_Layers;
 
+        Camera m_CurrentCamera;
         entt::registry m_Scene;
     };
 

@@ -16,15 +16,21 @@
 #include "Camera.h"
 #include "Device.h"
 #include "ImGuiRenderer.h"
-#include "Model.h"
 #include "OffscreenFramebuffer.h"
 #include "PSOCache.h"
+#include "RendererComponents.h"
 #include "engine/Event.h"
 
 NAMESPACE {
 
     struct SwapChainImage {
         nvrhi::TextureHandle nvrhiHandle;
+    };
+
+    struct alignas(16) ModelConstants {
+        glm::mat4 viewProj;
+        glm::mat4 model;
+        glm::mat4 normalMatrix;
     };
 
     struct NvrhiMessageCallback : nvrhi::IMessageCallback
@@ -61,7 +67,7 @@ NAMESPACE {
 
         void BeginScene(const Camera& camera);
 
-        void RenderModel(Model& model) const;
+        void RenderRenderables(entt::registry &scene) const;
 
         void EndScene();
 
@@ -96,6 +102,8 @@ NAMESPACE {
         void GenerateBackbuffers();
         void BuildOffscreenFramebufferImages(OffscreenFramebuffer& fb, uint32_t width, uint32_t height) const;
         void FlushPendingResizes();
+
+        void CheckInitializeRendered(Rendered &rendered, const nvrhi::FramebufferHandle &targetFB) const;
 
         void OnFramebufferResized(FramebufferResizeEvent e);
 

@@ -18,7 +18,7 @@ NAMESPACE {
         AssetImporter() = default;
         ~AssetImporter() = default;
 
-        Mesh* ImportMesh(const std::filesystem::path& file);
+        std::shared_ptr<Mesh> ImportMesh(const std::filesystem::path &file);
     private:
         Assimp::Importer m_Importer;
     };

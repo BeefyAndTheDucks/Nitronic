@@ -11,8 +11,7 @@
 
 NAMESPACE
 {
-    
-    Mesh* AssetImporter::ImportMesh(const std::filesystem::path& file) {
+    std::shared_ptr<Mesh> AssetImporter::ImportMesh(const std::filesystem::path &file) {
         const aiScene* scene = m_Importer.ReadFile(g_AssetsDirectory + file.string(),
             aiProcess_Triangulate |
             aiProcess_GenNormals |
@@ -44,9 +43,7 @@ NAMESPACE
             indices.push_back(face.mIndices[2]);
         }
 
-        const auto mesh = new Mesh(vertices, indices);
-
-        return mesh;
+        return std::make_shared<Mesh>(vertices, indices);
     }
     
 }

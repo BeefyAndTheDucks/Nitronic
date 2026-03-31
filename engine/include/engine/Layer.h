@@ -4,8 +4,9 @@
 
 #ifndef NITRONIC_LAYER_H
 #define NITRONIC_LAYER_H
+#include <string>
+
 #include "core/Macros.h"
-#include "../renderer/RendererScene.h"
 
 NAMESPACE {
 
@@ -20,9 +21,9 @@ NAMESPACE {
         explicit Layer(const std::string& debugName = "Unnamed Layer");
         virtual ~Layer() = default;
 
-        virtual void OnAttach(RendererScene& scene) = 0;
-        virtual void OnDetach(RendererScene& scene) = 0;
-        virtual void OnUpdate(RendererScene& scene, double deltaTimeSeconds) = 0;
+        virtual void OnAttach() = 0;
+        virtual void OnDetach() = 0;
+        virtual void OnUpdate(double deltaTimeSeconds) = 0;
         virtual void OnImGuiRender() = 0;
 
         [[nodiscard]] const std::string& GetDebugName() const { return m_DebugName; }

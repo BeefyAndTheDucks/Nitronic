@@ -14,6 +14,7 @@
 #include <tracy/Tracy.hpp>
 
 #include "engine/AssetImporter.h"
+#include "engine/BasicComponents.h"
 #include "engine/Log.h"
 
 #include "renderer/Shaders.h"
@@ -36,7 +37,7 @@ NAMESPACE {
 
         m_Input = std::make_unique<Input>(*m_EventBus);
 
-        m_RenderingScene = std::make_unique<RendererScene>();
+        m_Scene.on_construct<entt::entity>().connect<&entt::registry::emplace_or_replace<GameObject>>();
 
         ENGINE_TRACE("Engine Initialized");
     }
@@ -45,7 +46,7 @@ NAMESPACE {
     {
         for (Layer* layer : m_Layers)
         {
-            layer->OnDetach(*m_RenderingScene);
+            layer->OnDetach();
             delete layer;
         }
     }
@@ -76,16 +77,17 @@ NAMESPACE {
                 ZoneScopedN("Update Layers");
 
                 for (Layer* layer : m_Layers)
-                    layer->OnUpdate(*m_RenderingScene, deltaTime);
+                    layer->OnUpdate(deltaTime);
             }
 
-            m_Renderer->BeginScene(m_RenderingScene->camera);
+            m_Renderer->BeginScene(m_CurrentCamera);
 
             {
                 ZoneScopedN("Render Models");
 
-                for (auto& model : m_RenderingScene->models)
-                    m_Renderer->RenderModel(*model);
+                /*for (auto& model : m_RenderingScene->models)
+                    m_Renderer->RenderModel(*model);*/
+                m_Renderer->RenderRenderables(m_Scene);
             }
 
             {
@@ -108,7 +110,7 @@ NAMESPACE {
         ENGINE_TRACE("Adding layer {} to engine", layer->GetDebugName());
         m_Layers.push_back(layer);
         layer->m_Engine = this;
-        layer->OnAttach(*m_RenderingScene);
+        layer->OnAttach();
     }
 
     void Engine::RemoveLayer(Layer* layer)
@@ -118,7 +120,7 @@ NAMESPACE {
         auto it = std::ranges::find(m_Layers, layer);
         if (it != m_Layers.end()) {
             m_Layers.erase(it);
-            layer->OnDetach(*m_RenderingScene);
+            layer->OnDetach();
         } else
             ENGINE_WARN("Cannot remove layer {}. (Not found)", layer->GetDebugName());
     }

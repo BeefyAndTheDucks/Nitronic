@@ -6,13 +6,16 @@
 
 #include "renderer/Mesh.h"
 
-NAMESPACE
-{
+#include "tracy/Tracy.hpp"
+
+NAMESPACE {
 
     Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices)
         : m_Vertices(vertices), m_Indices(indices) {}
 
     void Mesh::Initialize(nvrhi::IDevice* device, nvrhi::ICommandList* commandList) {
+        ZoneScoped;
+
         if (m_Initialized) {
             ENGINE_WARN("Mesh already initialized.");
             return;

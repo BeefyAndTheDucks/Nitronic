@@ -15,14 +15,16 @@
 
 #include "core/Macros.h"
 #include "core/Constants.h"
+#include "engine/BasicComponents.h"
 #include "engine/Event.h"
+#include "renderer/RendererComponents.h"
 #include "renderer/RendererConstants.h"
+#include "renderer/RendererUtils.h"
 
-NAMESPACE
-{
+NAMESPACE {
 
     Renderer::Renderer(const RenderingBackend backend, Window* window, EventBus& eventBus)
-        : m_Backend(backend), m_Window(window), m_RendererData(nullptr), m_ViewProjectionMatrix(glm::identity<glm::mat4>()), m_EventBus(eventBus)
+        : m_Backend(backend), m_Window(window), m_EventBus(eventBus), m_RendererData(nullptr), m_ViewProjectionMatrix(glm::identity<glm::mat4>())
     {
         ZoneScoped
 
@@ -266,8 +268,57 @@ NAMESPACE
         }
     }
 
-    void Renderer::RenderModel(Model& model) const
-    {
+    void Renderer::CheckInitializeRendered(Rendered& rendered, const nvrhi::FramebufferHandle& targetFB) const {
+        if (!rendered.mesh->IsInitialized())
+            rendered.mesh->Initialize(m_Device->GetDevice(), m_RenderingCommandList);
+
+        if (!rendered.initialized) {
+            ZoneScopedN("Initialize Rendered Buffers");
+
+            const auto modelConstantsBufferDesc = nvrhi::utils::CreateVolatileConstantBufferDesc(sizeof(ModelConstants), "ModelConstants Buffer", g_MaxFramesInFlight * 2)
+                .setInitialState(nvrhi::ResourceStates::ConstantBuffer)
+                .setKeepInitialState(true);
+            rendered.modelConstantsBuffer = m_Device->GetDevice()->createBuffer(modelConstantsBufferDesc);
+
+            const auto bindingSetDesc = nvrhi::BindingSetDesc()
+                .addItem(nvrhi::BindingSetItem::ConstantBuffer(0, rendered.modelConstantsBuffer));
+
+            ENGINE_ASSERT(nvrhi::utils::CreateBindingSetAndLayout(m_Device->GetDevice(), nvrhi::ShaderType::All, 0, bindingSetDesc, rendered.bindingLayout, rendered.bindingSet), "Failed to create Binding Set/Layout");
+        }
+
+        if (!rendered.initialized || rendered.material != rendered.lastUsedMaterial ||
+                    !AreFramebuffersCompatible(targetFB->getFramebufferInfo(), rendered.lastUsedFramebuffer) ||
+                    rendered.lastUsedCullBackfaces != rendered.cullBackfaces) {
+            ZoneScopedN("Regenerate Graphics Pipeline");
+
+            const nvrhi::RenderState renderState = nvrhi::RenderState()
+                .setDepthStencilState(nvrhi::DepthStencilState()
+                    .setDepthTestEnable(true)
+                    .setDepthWriteEnable(true)
+                    .setDepthFunc(nvrhi::ComparisonFunc::Less))
+                .setRasterState(nvrhi::RasterState()
+                    .setFrontCounterClockwise(true)
+                    .setCullMode(rendered.cullBackfaces ? nvrhi::RasterCullMode::Back : nvrhi::RasterCullMode::None));
+
+            PSOKey key{};
+            key.vertexShader = rendered.material->vertexShader;
+            key.fragmentShader = rendered.material->fragmentShader;
+            key.renderState = renderState;
+            key.primType = nvrhi::PrimitiveType::TriangleList;
+            key.vertexAttributes = rendered.material->vertexAttributes;
+            key.bindingLayout = rendered.bindingLayout;
+            key.framebufferInfo = targetFB->getFramebufferInfo();
+
+            rendered.graphicsPipeline = m_PSOCache->getPipeline(key);
+
+            rendered.initialized = true;
+            rendered.lastUsedCullBackfaces = rendered.cullBackfaces;
+            rendered.lastUsedMaterial = rendered.material;
+            rendered.lastUsedFramebuffer = targetFB->getFramebufferInfo();
+        }
+    }
+
+    void Renderer::RenderRenderables(entt::registry& scene) const {
         ZoneScoped;
 
         nvrhi::FramebufferHandle targetFB;
@@ -280,12 +331,41 @@ NAMESPACE
         } else
             targetFB = m_Backbuffers[m_SwapChainIndex];
 
-        if (!model.IsInitialized())
-            model.Initialize(m_Device->GetDevice(), m_RenderingCommandList, *m_PSOCache, targetFB);
-        else if (!model.IsCompatibleWith(targetFB))
-            model.RebuildPipeline(*m_PSOCache, targetFB);
+        const auto view = scene.view<GameObject, Rendered>();
 
-        model.Render(m_RenderingCommandList, targetFB, m_ViewProjectionMatrix);
+        for (const auto entity : view) {
+            auto [gameObj, rendered] = view.get(entity);
+
+            if (rendered.mesh == nullptr || rendered.material == nullptr)
+                continue;
+
+            CheckInitializeRendered(rendered, targetFB);
+
+            ModelConstants modelConstants{};
+            modelConstants.viewProj = m_ViewProjectionMatrix;
+            modelConstants.model = gameObj.transform.GetMatrix();
+
+            // if this is a performance hit, cache the result and only update if transform updates.
+            modelConstants.normalMatrix = glm::transpose(glm::inverse(glm::mat3(modelConstants.model)));
+
+            m_RenderingCommandList->writeBuffer(rendered.modelConstantsBuffer, &modelConstants, sizeof(modelConstants));
+
+            const auto graphicsState = nvrhi::GraphicsState()
+                .setPipeline(rendered.graphicsPipeline)
+                .setFramebuffer(targetFB)
+                .addVertexBuffer(nvrhi::VertexBufferBinding(rendered.mesh->GetVertexBuffer()))
+                .setIndexBuffer(nvrhi::IndexBufferBinding(rendered.mesh->GetIndexBuffer()))
+                .addBindingSet(rendered.bindingSet)
+                .setViewport(nvrhi::ViewportState().addViewportAndScissorRect(nvrhi::Viewport(
+                    static_cast<float>(targetFB->getFramebufferInfo().width),
+                    static_cast<float>(targetFB->getFramebufferInfo().height))));
+
+            m_RenderingCommandList->setGraphicsState(graphicsState);
+
+            nvrhi::DrawArguments drawArgs{};
+            drawArgs.vertexCount = rendered.mesh->GetNumVertices();
+            m_RenderingCommandList->drawIndexed(drawArgs);
+        }
     }
 
     void Renderer::EndScene() {
@@ -365,7 +445,7 @@ NAMESPACE
             key.vertexAttributes   = g_ShaderEmptyAttributes;
             key.primType           = nvrhi::PrimitiveType::TriangleList;
 
-            m_ImGuiGraphicsPipeline = m_PSOCache->get(key);
+            m_ImGuiGraphicsPipeline = m_PSOCache->getPipeline(key);
             m_HasImGuiGraphicsPipeline = true;
         }
     }

@@ -6,12 +6,16 @@
 #define NITRONIC_BASICCOMPONENTS_H
 #include <string>
 
-#include "renderer/Transform.h"
+#include "Transform.h"
 
-struct GameObject
-{
-    std::string& name;
-    Nitronic::Transform transform;
-};
+NAMESPACE {
+
+    struct GameObject
+    {
+        std::string name;
+        Transform transform = {};
+    };
+
+}
 
 #endif //NITRONIC_BASICCOMPONENTS_H

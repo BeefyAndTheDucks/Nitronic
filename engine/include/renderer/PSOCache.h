@@ -78,7 +78,7 @@ NAMESPACE {
         PSOCache(PSOCache&&)                 = delete;
         PSOCache& operator=(PSOCache&&)      = delete;
 
-        nvrhi::GraphicsPipelineHandle get(const PSOKey& key)
+        nvrhi::GraphicsPipelineHandle getPipeline(const PSOKey& key)
         {
             {
                 std::shared_lock lock(m_Mutex);

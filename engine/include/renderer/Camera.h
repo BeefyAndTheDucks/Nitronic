@@ -4,7 +4,7 @@
 
 #ifndef NITRONIC_CAMERA_H
 #define NITRONIC_CAMERA_H
-#include "Transform.h"
+#include "engine/Transform.h"
 #include "core/Macros.h"
 
 NAMESPACE {
