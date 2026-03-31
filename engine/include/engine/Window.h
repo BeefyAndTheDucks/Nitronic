@@ -13,6 +13,20 @@
 
 NAMESPACE {
 
+    enum class CursorMode {
+        /// Normal cursor
+        Normal,
+
+        /// Hides the cursor, but doesn't confine the cursor to the window
+        Hidden,
+
+        /// Hides the cursor and keeps it centered.
+        Disabled,
+
+        /// Cursor is visible, but it cannot leave the window.
+        Captured
+    };
+
     struct WindowIcon {
         unsigned char* pixels;
         int width;
@@ -28,15 +42,15 @@ NAMESPACE {
 
         void PollEvents() const;
 
-        static void OnWindowResized(GLFWwindow* w, int width, int height);
-        static void OnWindowClose(GLFWwindow* w);
-        static void OnWindowFocus(GLFWwindow* w, int focused);
-        static void OnKey(GLFWwindow* w, int key, int scancode, int action, int mods);
-        static void OnMouseButton(GLFWwindow* w, int button, int action, int mods);
-        static void OnCursorPos(GLFWwindow* w, double x, double y);
-        static void OnScroll(GLFWwindow* w, double xOffset, double yOffset);
-        static void OnChar(GLFWwindow* w, unsigned int codepoint);
-        static void OnFramebufferResize(GLFWwindow* w, int width, int height);
+        static void OnWindowResized    (GLFWwindow* w, int width, int height                      );
+        static void OnWindowClose      (GLFWwindow* w                                             );
+        static void OnWindowFocus      (GLFWwindow* w, int focused                                );
+        static void OnKey              (GLFWwindow* w, int key, int scancode, int action, int mods);
+        static void OnMouseButton      (GLFWwindow* w, int button, int action, int mods           );
+        static void OnCursorPos        (GLFWwindow* w, double x, double y                         );
+        static void OnScroll           (GLFWwindow* w, double xOffset, double yOffset             );
+        static void OnChar             (GLFWwindow* w, unsigned int codepoint                     );
+        static void OnFramebufferResize(GLFWwindow* w, int width, int height                      );
 
         [[nodiscard]] bool ShouldClose() const;
 
@@ -51,6 +65,10 @@ NAMESPACE {
         [[nodiscard]] bool IsMinimized() const;
 
         void SetTitle(const char* title) const;
+
+        void SetCursorPosition(double xPos, double yPos) const;
+
+        void SetCursorMode(const CursorMode &cursorMode) const;
 
         void Close() const { glfwSetWindowShouldClose(m_Window, true); }
         void CancelClose() const { glfwSetWindowShouldClose(m_Window, false); }

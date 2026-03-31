@@ -169,4 +169,30 @@ NAMESPACE
     void Window::SetTitle(const char *title) const {
         glfwSetWindowTitle(m_Window, title);
     }
+
+    void Window::SetCursorPosition(const double xPos, const double yPos) const {
+        if (glfwGetPlatform() == GLFW_PLATFORM_WAYLAND) {
+            ENGINE_WARN("GLFW doesn't support setting the cursors position on Wayland.");
+            return;
+        }
+
+        glfwSetCursorPos(m_Window, xPos, yPos);
+    }
+
+    void Window::SetCursorMode(const CursorMode& cursorMode) const {
+        switch (cursorMode) {
+            case CursorMode::Normal:
+                glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                break;
+            case CursorMode::Hidden:
+                glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+                break;
+            case CursorMode::Disabled:
+                glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+                break;
+            case CursorMode::Captured:
+                glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_CAPTURED);
+                break;
+        }
+    }
 }

@@ -45,16 +45,23 @@ public:
 
     void OnUpdate(Nitronic::RendererScene& scene, const double deltaTimeSeconds) override
     {
+        m_IsUsingCursorForControls = false;
+
         m_LastDeltaTime = deltaTimeSeconds;
         m_TotalTimePassed += deltaTimeSeconds;
 
-        if (!m_ViewportFocused) return;
+        if (!m_ViewportFocused) {
+            GetEngine()->GetWindow()->SetCursorMode(Nitronic::CursorMode::Normal);
+            return;
+        }
 
         const auto dt = static_cast<float>(deltaTimeSeconds);
         auto& cam = scene.camera.transform;
 
         if (Nitronic::Input::MouseButtonDown(Nitronic::MouseButton::Right))
         {
+            m_IsUsingCursorForControls = true;
+
             double dx, dy;
             Nitronic::Input::MouseDelta(dx, dy);
 
@@ -102,6 +109,8 @@ public:
             Nitronic::Input::MouseScrollDelta(scrollX, scrollY);
             cam.position += cam.rotation * glm::vec3(0.0f, 0.0f, -scrollY);
         }
+
+        GetEngine()->GetWindow()->SetCursorMode(m_IsUsingCursorForControls ? Nitronic::CursorMode::Disabled : Nitronic::CursorMode::Normal);
     }
 
     void OnImGuiRender() override
@@ -150,6 +159,8 @@ private:
     glm::vec3 m_CameraForward = {0.0f, 0.0f, -1.0f};
     glm::vec3 m_CameraRight   = {1.0f, 0.0f,  0.0f};
     glm::vec3 m_CameraUp      = {0.0f, 1.0f,  0.0f};
+
+    bool m_IsUsingCursorForControls = false;
 };
 
 int main(const int argc, char* argv[]) {
