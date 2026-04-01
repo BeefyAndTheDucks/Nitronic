@@ -7,6 +7,9 @@ if(WIN32)
     target_compile_definitions(engine PUBLIC NOMINMAX _CRT_SECURE_NO_WARNINGS)
 endif()
 
+target_compile_definitions(engine PUBLIC $<$<CONFIG:Debug>:CONFIG_DEBUG>)
+target_compile_definitions(engine PUBLIC $<$<CONFIG:Release>:CONFIG_RELEASE>)
+
 target_link_libraries(engine
         PUBLIC glfw
         PUBLIC glm

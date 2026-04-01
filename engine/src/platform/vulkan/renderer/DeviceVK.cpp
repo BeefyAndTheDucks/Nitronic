@@ -81,8 +81,21 @@ NAMESPACE {
 
         int score = 0;
 
-        if (deviceProperties.deviceType == vk::PhysicalDeviceType::eDiscreteGpu) {
-            score += 1000;
+        switch (deviceProperties.deviceType) {
+            case vk::PhysicalDeviceType::eOther:
+                break;
+            case vk::PhysicalDeviceType::eIntegratedGpu:
+                score += 128;
+                break;
+            case vk::PhysicalDeviceType::eDiscreteGpu:
+                score += 1024;
+                break;
+            case vk::PhysicalDeviceType::eVirtualGpu:
+                score += 64;
+                break;
+            case vk::PhysicalDeviceType::eCpu:
+                score -= 1024;
+                break;
         }
 
         score += static_cast<int>(deviceProperties.limits.maxImageDimension2D);
@@ -118,7 +131,13 @@ NAMESPACE {
             throw std::runtime_error("No suitable Vulkan-compatible GPU found.");
         }
 
-        ENGINE_INFO("Using device {}", devices[0].getProperties().deviceName.data());
+#ifdef CONFIG_DEBUG
+        for (const auto& [key, value] : candidates | std::views::reverse) {
+            ENGINE_TRACE("Device: {}, Score: {}", value.getProperties().deviceName.data(), key);
+        }
+#endif
+
+        ENGINE_INFO("Using device {}", candidates.rbegin()->second.getProperties().deviceName.data());
 
         DEVICE_DATA_OWNED->queueFamilyIndices = FindQueueFamilies(DEVICE_DATA_OWNED->physicalDevice, RENDERER_DATA->surface);
 
@@ -174,7 +193,7 @@ NAMESPACE {
 
         nvrhi::DeviceHandle nvrhiDevice = nvrhi::vulkan::createDevice(deviceDesc);
 
-#if _DEBUG
+#ifdef CONFIG_DEBUG
         m_Device = nvrhi::validation::createValidationLayer(nvrhiDevice);
 #else
         m_Device = nvrhiDevice;

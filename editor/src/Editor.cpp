@@ -27,14 +27,10 @@ public:
         auto &rendered = GetEngine()->GetScene().emplace<Nitronic::Rendered>(monkeyEntity);
         rendered.mesh = monkeyMesh;
         rendered.material = monkeyMaterial;
-        rendered.cullBackfaces = false;
+        rendered.cullBackfaces = true;
 
         auto &[monkeyEntityName, monkeyEntityTransform] = GetEngine()->GetScene().get<Nitronic::GameObject>(monkeyEntity);
         monkeyEntityName = "Monkey";
-
-        //auto monkeyModel = std::make_unique<Nitronic::Model>(*monkeyMesh, monkeyMaterial, monkeyTransform, false);
-
-        //scene.AddModel(std::move(monkeyModel));
 
         Nitronic::OffscreenFramebufferDesc desc;
         desc.width = 1;
@@ -202,7 +198,7 @@ private:
 
     bool m_ShowDemoWindow = false;
 
-    entt::entity m_SelectedEntity;
+    std::vector<entt::entity> m_SelectedEntities;
 };
 
 int main(const int argc, char* argv[]) {

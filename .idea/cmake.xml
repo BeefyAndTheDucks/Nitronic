@@ -8,8 +8,6 @@
       <configuration PROFILE_NAME="Release-MSVC" ENABLED="false" CONFIG_NAME="Release" GENERATION_OPTIONS="-G Ninja -DFETCHCONTENT_QUIET=OFF" />
       <configuration PROFILE_NAME="Release-LLVM" ENABLED="false" CONFIG_NAME="Release" TOOLCHAIN_NAME="LLVM (Clang)" GENERATION_OPTIONS="-G Ninja -DFETCHCONTENT_QUIET=OFF" />
       <configuration PROFILE_NAME="Release-WSL" ENABLED="false" CONFIG_NAME="Release" TOOLCHAIN_NAME="WSL" GENERATION_OPTIONS="-G Ninja -DFETCHCONTENT_QUIET=OFF" />
-      <configuration PROFILE_NAME="Release-GCC" ENABLED="true" CONFIG_NAME="Release" />
-      <configuration PROFILE_NAME="Debug-GCC" ENABLED="true" CONFIG_NAME="Debug" />
     </configurations>
   </component>
 </project>

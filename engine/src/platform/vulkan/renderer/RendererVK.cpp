@@ -207,7 +207,7 @@ NAMESPACE {
             }
 
             std::vector<const char*> layers;
-#ifdef _DEBUG
+#ifdef CONFIG_DEBUG
             layers.emplace_back("VK_LAYER_KHRONOS_validation");
 #endif
 
@@ -242,7 +242,7 @@ NAMESPACE {
             };
 
             bool enableDebugUtils = false;
-#ifdef _DEBUG
+#ifdef CONFIG_DEBUG
             if (isExtAvailable(vk::EXTDebugUtilsExtensionName)) {
                 instanceExtensions.emplace_back(vk::EXTDebugUtilsExtensionName);
                 enableDebugUtils = true;
