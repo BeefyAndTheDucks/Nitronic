@@ -169,9 +169,10 @@ public:
 
         const auto view = GetEngine()->GetScene().view<Nitronic::GameObject>();
         for (auto entity : view) {
-            auto gameObject = view.get(entity);
+            auto [gameObject] = view.get(entity);
 
-            //ImGui::
+            // Temporary
+            ImGui::TextUnformatted(gameObject.name.c_str());
         }
 
         ImGui::End();
