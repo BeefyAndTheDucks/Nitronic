@@ -51,7 +51,7 @@ NAMESPACE
 
         if (glfwGetPlatform() != GLFW_PLATFORM_WAYLAND && glfwGetPlatform() != GLFW_PLATFORM_COCOA) { // Wayland/MacOS don't support setting window icons
             GLFWimage icons[std::size(g_IconResolutions)];
-            for (int i = 0; i < std::size(g_IconResolutions); i++) {
+            for (size_t i = 0; i < std::size(g_IconResolutions); i++) {
                 WindowIcon icon{};
                 icon.pixels = stbi_load(std::format("{}logo_{}.png", g_AssetsDirectory, g_IconResolutions[i]).c_str(), &icon.width, &icon.height, nullptr, 4);
                 m_Icons.push_back(icon);

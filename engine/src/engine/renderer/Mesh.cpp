@@ -34,7 +34,8 @@ NAMESPACE {
             .setIsIndexBuffer(true)
             .setInitialState(nvrhi::ResourceStates::IndexBuffer)
             .setKeepInitialState(true) // enable fully automatic state tracking
-            .setDebugName("Index Buffer");
+            .setDebugName("Index Buffer")
+            .setFormat(k_IndexBufferFormat);
         m_IndexBuffer = device->createBuffer(indexBufferDesc);
 
         commandList->writeBuffer(m_VertexBuffer, m_Vertices.data(), m_Vertices.size() * sizeof(Vertex));

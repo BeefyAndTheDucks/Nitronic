@@ -5,34 +5,67 @@
 #include "engine/AssetImporter.h"
 #include "engine/BasicComponents.h"
 #include "engine/Engine.h"
-#include "engine/Event.h"
 #include "renderer/Shaders.h"
 
-class EditorLayer : public Nitronic::Layer {
+using namespace Nitronic;
+
+class EditorLayer : public Layer {
 public:
     EditorLayer() : Layer("EditorLayer") {}
 
     void OnAttach() override
     {
-        auto assetImporter = Nitronic::AssetImporter();
+        auto assetImporter = AssetImporter();
 
-        const std::shared_ptr<Nitronic::Mesh> monkeyMesh = assetImporter.ImportMesh("Monkey.obj");
+        const std::shared_ptr<Mesh> monkeyMesh = assetImporter.ImportMesh("Monkey.obj");
 
-        const auto monkeyMaterial = std::make_shared<Nitronic::Material>(Nitronic::g_ShaderBasicFragment, Nitronic::g_ShaderBasicVertex, Nitronic::g_ShaderBasicAttributes);
+        const auto monkeyMaterial = std::make_shared<Material>(g_ShaderBasicFragment, g_ShaderBasicVertex, g_ShaderBasicAttributes);
 
-        auto monkeyTransform = Nitronic::Transform{};
+        auto monkeyTransform = Transform{};
 
-        const entt::entity monkeyEntity = GetEngine()->GetScene().create();
+        const entt::entity monkey1 = GetEngine()->GetScene().create();
+        const entt::entity monkey2 = GetEngine()->GetScene().create();
+        const entt::entity monkey3 = GetEngine()->GetScene().create();
+        const entt::entity monkey4 = GetEngine()->GetScene().create();
 
-        auto &rendered = GetEngine()->GetScene().emplace<Nitronic::Rendered>(monkeyEntity);
-        rendered.mesh = monkeyMesh;
-        rendered.material = monkeyMaterial;
-        rendered.cullBackfaces = true;
+        GetEngine()->GetScene().emplace<Rendered>(monkey1);
+        GetEngine()->GetScene().emplace<Rendered>(monkey2);
+        GetEngine()->GetScene().emplace<Rendered>(monkey3);
+        GetEngine()->GetScene().emplace<Rendered>(monkey4);
 
-        auto &[monkeyEntityName, monkeyEntityTransform] = GetEngine()->GetScene().get<Nitronic::GameObject>(monkeyEntity);
-        monkeyEntityName = "Monkey";
+        auto monkeyView = GetEngine()->GetScene().view<Rendered>();
+        for (const auto monkey : monkeyView) {
+            auto [rendered] = monkeyView.get(monkey);
+            rendered.mesh = monkeyMesh;
+            rendered.material = monkeyMaterial;
+            rendered.cullBackfaces = true;
+        }
 
-        Nitronic::OffscreenFramebufferDesc desc;
+        auto &[monkey1EntityName, monkeyEntity1Transform] = GetEngine()->GetScene().get<GameObject>(monkey1);
+        monkey1EntityName = "Monkey 1";
+        monkeyEntity1Transform.position.x = -2;
+        monkeyEntity1Transform.position.y = 2;
+        monkeyEntity1Transform.position.z = -10;
+
+        auto &[monkey2EntityName, monkeyEntity2Transform] = GetEngine()->GetScene().get<GameObject>(monkey2);
+        monkey2EntityName = "Monkey 2";
+        monkeyEntity2Transform.position.x = 2;
+        monkeyEntity2Transform.position.y = 2;
+        monkeyEntity2Transform.position.z = -10;
+
+        auto &[monkey3EntityName, monkeyEntity3Transform] = GetEngine()->GetScene().get<GameObject>(monkey3);
+        monkey3EntityName = "Monkey 3";
+        monkeyEntity3Transform.position.x = 2;
+        monkeyEntity3Transform.position.y = -2;
+        monkeyEntity3Transform.position.z = -10;
+
+        auto &[monkey4EntityName, monkeyEntity4Transform] = GetEngine()->GetScene().get<GameObject>(monkey4);
+        monkey4EntityName = "Monkey 4";
+        monkeyEntity4Transform.position.x = -2;
+        monkeyEntity4Transform.position.y = -2;
+        monkeyEntity4Transform.position.z = -10;
+
+        OffscreenFramebufferDesc desc;
         desc.width = 1;
         desc.height = 1;
         desc.debugName = "Game Viewport";
@@ -55,24 +88,25 @@ public:
         m_TotalTimePassed += deltaTimeSeconds;
 
         if (!m_ViewportFocused) {
-            GetEngine()->GetWindow()->SetCursorMode(Nitronic::CursorMode::Normal);
+            GetEngine()->GetWindow()->SetCursorMode(CursorMode::Normal);
             return;
         }
 
         const auto dt = static_cast<float>(deltaTimeSeconds);
         auto& cam = GetEngine()->GetCamera().transform;
 
-        if (Nitronic::Input::MouseButtonDown(Nitronic::MouseButton::Right))
+        if (Input::MouseButtonDown(MouseButton::Right))
         {
             m_IsUsingCursorForControls = true;
 
             double dx, dy;
-            Nitronic::Input::MouseDelta(dx, dy);
+            Input::MouseDelta(dx, dy);
 
             if (dx != 0 || dy != 0)
             {
                 m_Yaw += static_cast<float>(dx) * m_MouseSensitivity;
                 m_Pitch -= static_cast<float>(dy) * m_MouseSensitivity;
+                m_Pitch = glm::clamp(m_Pitch, -89.9f, 89.9f);
 
                 cam.rotation = glm::quatLookAt(m_CameraForward, m_CameraUp);
 
@@ -87,20 +121,20 @@ public:
 
             glm::vec3 moveDir(0.0f);
 
-            if (Nitronic::Input::MouseButtonDown(Nitronic::MouseButton::Right)) {
-                if (Nitronic::Input::KeyDown(Nitronic::Key::W)) moveDir += m_CameraForward;
-                if (Nitronic::Input::KeyDown(Nitronic::Key::S)) moveDir -= m_CameraForward;
-                if (Nitronic::Input::KeyDown(Nitronic::Key::D)) moveDir += m_CameraRight;
-                if (Nitronic::Input::KeyDown(Nitronic::Key::A)) moveDir -= m_CameraRight;
-                if (Nitronic::Input::KeyDown(Nitronic::Key::E)) moveDir += m_CameraUp;
-                if (Nitronic::Input::KeyDown(Nitronic::Key::Q)) moveDir -= m_CameraUp;
+            if (Input::MouseButtonDown(MouseButton::Right)) {
+                if (Input::KeyDown(Key::W)) moveDir += m_CameraForward;
+                if (Input::KeyDown(Key::S)) moveDir -= m_CameraForward;
+                if (Input::KeyDown(Key::D)) moveDir += m_CameraRight;
+                if (Input::KeyDown(Key::A)) moveDir -= m_CameraRight;
+                if (Input::KeyDown(Key::E)) moveDir += m_CameraUp;
+                if (Input::KeyDown(Key::Q)) moveDir -= m_CameraUp;
             }
 
             float moveMultiplier = 1.0f;
-            if (Nitronic::Input::KeyDown(Nitronic::Key::LeftShift)) moveMultiplier = 2.0f;
+            if (Input::KeyDown(Key::LeftShift)) moveMultiplier = 2.0f;
 
             double scrollX, scrollY;
-            Nitronic::Input::MouseScrollDelta(scrollX, scrollY);
+            Input::MouseScrollDelta(scrollX, scrollY);
             m_MoveSpeedMultiplier += static_cast<float>(scrollY) * m_MoveSpeedMultiplier * 0.1f;
             if (scrollY != 0.0f)
                 APP_TRACE("Move speed: {}", m_MoveSpeedMultiplier);
@@ -110,11 +144,11 @@ public:
         } else
         {
             double scrollX, scrollY;
-            Nitronic::Input::MouseScrollDelta(scrollX, scrollY);
+            Input::MouseScrollDelta(scrollX, scrollY);
             cam.position += cam.rotation * glm::vec3(0.0f, 0.0f, -scrollY);
         }
 
-        GetEngine()->GetWindow()->SetCursorMode(m_IsUsingCursorForControls ? Nitronic::CursorMode::Disabled : Nitronic::CursorMode::Normal);
+        GetEngine()->GetWindow()->SetCursorMode(m_IsUsingCursorForControls ? CursorMode::Disabled : CursorMode::Normal);
     }
 
     void OnImGuiRender() override
@@ -167,7 +201,7 @@ public:
 
         ImGui::Begin("Entities");
 
-        const auto view = GetEngine()->GetScene().view<Nitronic::GameObject>();
+        const auto view = GetEngine()->GetScene().view<GameObject>();
         for (auto entity : view) {
             auto [gameObject] = view.get(entity);
 
@@ -181,7 +215,7 @@ private:
     double m_TotalTimePassed = 0.0;
 
     double m_LastDeltaTime = 0.0001;
-    std::unique_ptr<Nitronic::OffscreenFramebuffer> m_GameFramebuffer;
+    std::unique_ptr<OffscreenFramebuffer> m_GameFramebuffer;
 
     bool m_ViewportFocused = false;
 
@@ -203,7 +237,7 @@ private:
 };
 
 int main(const int argc, char* argv[]) {
-    auto* engine = new Nitronic::Engine(1280, 720, "Nitronic Editor", argc, argv);
+    auto* engine = new Engine(1280, 720, "Nitronic Editor", argc, argv);
 
     engine->AddLayer(new EditorLayer());
 

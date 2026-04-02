@@ -21,7 +21,7 @@
 
 NAMESPACE {
 
-    Engine::Engine(int windowWidth, int windowHeight, const char* windowTitle, int argc, char* argv[], RenderingBackend backend)
+    Engine::Engine(int windowWidth, int windowHeight, const char* windowTitle, int /* argc */, char* argv[], RenderingBackend backend)
     {
         std::filesystem::current_path(
             std::filesystem::path(argv[0]).parent_path()
@@ -83,10 +83,6 @@ NAMESPACE {
             m_Renderer->BeginScene(m_CurrentCamera);
 
             {
-                ZoneScopedN("Render Models");
-
-                /*for (auto& model : m_RenderingScene->models)
-                    m_Renderer->RenderModel(*model);*/
                 m_Renderer->RenderRenderables(m_Scene);
             }
 

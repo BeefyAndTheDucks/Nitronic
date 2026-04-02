@@ -122,5 +122,7 @@ add_dependencies(engine copy_assets)
 install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${ASSETS_DIR}/" DESTINATION "${ASSETS_DIR}")
 install(DIRECTORY "${CMAKE_BINARY_DIR}/${SHADERS_DIR}/" DESTINATION "${SHADERS_DIR}")
 
+target_compile_options(engine PUBLIC -Wall -Wextra -Werror=all)
+
 #file(COPY assets DESTINATION ${CMAKE_BINARY_DIR})
 

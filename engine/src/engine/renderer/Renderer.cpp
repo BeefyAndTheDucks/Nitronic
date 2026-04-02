@@ -353,8 +353,8 @@ NAMESPACE {
             const auto graphicsState = nvrhi::GraphicsState()
                 .setPipeline(rendered.graphicsPipeline)
                 .setFramebuffer(targetFB)
-                .addVertexBuffer(nvrhi::VertexBufferBinding(rendered.mesh->GetVertexBuffer()))
-                .setIndexBuffer(nvrhi::IndexBufferBinding(rendered.mesh->GetIndexBuffer()))
+                .addVertexBuffer(rendered.mesh->GetVertexBufferBinding())
+                .setIndexBuffer(rendered.mesh->GetIndexBufferBinding())
                 .addBindingSet(rendered.bindingSet)
                 .setViewport(nvrhi::ViewportState().addViewportAndScissorRect(nvrhi::Viewport(
                     static_cast<float>(targetFB->getFramebufferInfo().width),
@@ -362,8 +362,8 @@ NAMESPACE {
 
             m_RenderingCommandList->setGraphicsState(graphicsState);
 
-            nvrhi::DrawArguments drawArgs{};
-            drawArgs.vertexCount = rendered.mesh->GetNumVertices();
+            nvrhi::DrawArguments drawArgs = nvrhi::DrawArguments()
+                .setVertexCount(rendered.mesh->GetNumVertices());
             m_RenderingCommandList->drawIndexed(drawArgs);
         }
     }
