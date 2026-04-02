@@ -2,24 +2,24 @@
 // Created by simon on 02/09/2025.
 //
 
-#ifndef NITRONIC_RENDERER_H
-#define NITRONIC_RENDERER_H
+#ifndef NITRONIC_RENDERER_HPP
+#define NITRONIC_RENDERER_HPP
 #include <filesystem>
 #include <queue>
 
-#include "core/Enums.h"
-#include "core/Macros.h"
+#include "core/Enums.hpp"
+#include "core/Macros.hpp"
 
-#include "engine/Window.h"
-#include "engine/Log.h"
+#include "engine/Window.hpp"
+#include "engine/Log.hpp"
 
-#include "Camera.h"
-#include "Device.h"
-#include "ImGuiRenderer.h"
-#include "OffscreenFramebuffer.h"
-#include "PSOCache.h"
-#include "RendererComponents.h"
-#include "engine/Event.h"
+#include "Camera.hpp"
+#include "Device.hpp"
+#include "ImGuiRenderer.hpp"
+#include "OffscreenFramebuffer.hpp"
+#include "PSOCache.hpp"
+#include "RendererComponents.hpp"
+#include "engine/Event.hpp"
 
 NAMESPACE {
 
@@ -167,4 +167,4 @@ NAMESPACE {
 
 }
 
-#endif //NITRONIC_RENDERER_H
+#endif //NITRONIC_RENDERER_HPP

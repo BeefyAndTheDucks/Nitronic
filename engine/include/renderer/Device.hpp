@@ -2,14 +2,14 @@
 // Created by simon on 02/09/2025.
 //
 
-#ifndef NITRONIC_DEVICE_H
-#define NITRONIC_DEVICE_H
+#ifndef NITRONIC_DEVICE_HPP
+#define NITRONIC_DEVICE_HPP
 
 #include <memory>
 
-#include "RendererTypes.h"
-#include "core/Macros.h"
-#include "core/Enums.h"
+#include "RendererTypes.hpp"
+#include "core/Macros.hpp"
+#include "core/Enums.hpp"
 #include "nvrhi/nvrhi.h"
 
 NAMESPACE {
@@ -33,4 +33,4 @@ NAMESPACE {
 
 }
 
-#endif //NITRONIC_DEVICE_H
+#endif //NITRONIC_DEVICE_HPP

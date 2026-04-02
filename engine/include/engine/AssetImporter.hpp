@@ -2,14 +2,14 @@
 // Created by simon on 22/03/2026.
 //
 
-#ifndef NITRONIC_ASSETIMPORTER_H
-#define NITRONIC_ASSETIMPORTER_H
+#ifndef NITRONIC_ASSETIMPORTER_HPP
+#define NITRONIC_ASSETIMPORTER_HPP
 
 #include <filesystem>
 
 #include <assimp/Importer.hpp>
 
-#include "renderer/Mesh.h"
+#include "renderer/Mesh.hpp"
 
 NAMESPACE {
 
@@ -25,4 +25,4 @@ NAMESPACE {
 
 }
 
-#endif //NITRONIC_ASSETIMPORTER_H
+#endif //NITRONIC_ASSETIMPORTER_HPP

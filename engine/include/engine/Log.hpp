@@ -2,14 +2,14 @@
 // Created by simon on 23/03/2026.
 //
 
-#ifndef NITRONIC_LOG_H
-#define NITRONIC_LOG_H
+#ifndef NITRONIC_LOG_HPP
+#define NITRONIC_LOG_HPP
 
 #include <filesystem>
 #include <platform_folders.h>
 #include <spdlog/spdlog.h>
 
-#include "core/Macros.h"
+#include "core/Macros.hpp"
 
 NAMESPACE {
 
@@ -81,4 +81,4 @@ NAMESPACE {
         }                                                     \
     } while(0)
 
-#endif //NITRONIC_LOG_H
+#endif //NITRONIC_LOG_HPP

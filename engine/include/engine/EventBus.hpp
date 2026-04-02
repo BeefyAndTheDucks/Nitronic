@@ -2,12 +2,12 @@
 // Created by simon on 28/03/2026.
 //
 
-#ifndef NITRONIC_EVENTBUS_H
-#define NITRONIC_EVENTBUS_H
+#ifndef NITRONIC_EVENTBUS_HPP
+#define NITRONIC_EVENTBUS_HPP
 
 #include <entt/entt.hpp>
 
-#include "core/Macros.h"
+#include "core/Macros.hpp"
 
 NAMESPACE {
 
@@ -68,4 +68,4 @@ NAMESPACE {
 
 }
 
-#endif //NITRONIC_EVENTBUS_H
+#endif //NITRONIC_EVENTBUS_HPP

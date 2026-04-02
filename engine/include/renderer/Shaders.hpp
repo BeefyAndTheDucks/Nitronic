@@ -2,11 +2,11 @@
 // Created by simon on 21/03/2026.
 //
 
-#ifndef NITRONIC_SHADERS_H
-#define NITRONIC_SHADERS_H
+#ifndef NITRONIC_SHADERS_HPP
+#define NITRONIC_SHADERS_HPP
 #include <nvrhi/nvrhi.h>
 
-#include "Renderer.h"
+#include "Renderer.hpp"
 
 NAMESPACE {
 
@@ -54,4 +54,4 @@ NAMESPACE {
 
 }
 
-#endif //NITRONIC_SHADERS_H
+#endif //NITRONIC_SHADERS_HPP

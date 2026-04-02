@@ -4,7 +4,7 @@
 
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #define GLM_FORCE_RADIANS
-#include "renderer/Camera.h"
+#include "renderer/Camera.hpp"
 
 #include "glm/gtc/quaternion.hpp"
 

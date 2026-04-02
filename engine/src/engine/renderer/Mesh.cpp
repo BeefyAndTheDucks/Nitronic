@@ -2,9 +2,9 @@
 // Created by simon on 21/03/2026.
 //
 
-#include "engine/Log.h"
+#include "engine/Log.hpp"
 
-#include "renderer/Mesh.h"
+#include "renderer/Mesh.hpp"
 
 #include "tracy/Tracy.hpp"
 

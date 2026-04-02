@@ -2,10 +2,10 @@
 // Created by simon on 21/03/2026.
 //
 
-#ifndef NITRONIC_PSOCACHE_H
-#define NITRONIC_PSOCACHE_H
+#ifndef NITRONIC_PSOCACHE_HPP
+#define NITRONIC_PSOCACHE_HPP
 
-#include "ShaderCache.h"
+#include "ShaderCache.hpp"
 
 NAMESPACE {
 
@@ -152,4 +152,4 @@ NAMESPACE {
 
 }
 
-#endif //NITRONIC_PSOCACHE_H
+#endif //NITRONIC_PSOCACHE_HPP

@@ -2,7 +2,7 @@
 // Created by simon on 23/03/2026.
 //
 
-#include "engine/Log.h"
+#include "engine/Log.hpp"
 
 #include "spdlog/sinks/basic_file_sink.h"
 #include "spdlog/sinks/stdout_color_sinks.h"

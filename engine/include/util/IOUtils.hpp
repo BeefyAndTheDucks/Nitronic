@@ -2,13 +2,13 @@
 // Created by simon on 11/01/2026.
 //
 
-#ifndef NITRONIC_IOUTILS_H
-#define NITRONIC_IOUTILS_H
+#ifndef NITRONIC_IOUTILS_HPP
+#define NITRONIC_IOUTILS_HPP
 #include <filesystem>
 #include <fstream>
 #include <vector>
 
-#include "engine/Log.h"
+#include "engine/Log.hpp"
 
 static std::vector<char> readFile(const std::filesystem::path& filePath) {
     std::ifstream file(filePath, std::ios::ate | std::ios::binary);
@@ -29,4 +29,4 @@ static std::vector<char> readFile(const std::filesystem::path& filePath) {
     return buffer;
 }
 
-#endif //NITRONIC_IOUTILS_H
+#endif //NITRONIC_IOUTILS_HPP

@@ -2,9 +2,9 @@
 // Created by simon on 03/09/2025.
 //
 
-#ifndef NITRONIC_RENDERERTYPES_H
-#define NITRONIC_RENDERERTYPES_H
-#include "core/Macros.h"
+#ifndef NITRONIC_RENDERERTYPES_HPP
+#define NITRONIC_RENDERERTYPES_HPP
+#include "core/Macros.hpp"
 #include <glm/glm.hpp>
 
 NAMESPACE {
@@ -29,4 +29,4 @@ NAMESPACE {
 
 }
 
-#endif //NITRONIC_RENDERERTYPES_H
+#endif //NITRONIC_RENDERERTYPES_HPP

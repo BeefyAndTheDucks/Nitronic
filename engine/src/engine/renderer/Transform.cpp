@@ -2,9 +2,9 @@
 // Created by simon on 21/03/2026.
 //
 
-#include "engine/Transform.h"
+#include "engine/Transform.hpp"
 
-#include "engine/Log.h"
+#include "engine/Log.hpp"
 #include "glm/gtc/quaternion.hpp"
 
 NAMESPACE {

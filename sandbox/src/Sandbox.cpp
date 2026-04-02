@@ -2,9 +2,9 @@
 // Created by simon on 28/08/2025.
 //
 
-#include "engine/AssetImporter.h"
-#include "engine/Engine.h"
-#include "renderer/Shaders.h"
+#include "engine/AssetImporter.hpp"
+#include "engine/Engine.hpp"
+#include "renderer/Shaders.hpp"
 
 class SandboxLayer : public Nitronic::Layer
 {

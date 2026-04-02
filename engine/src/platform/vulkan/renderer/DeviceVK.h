@@ -9,7 +9,7 @@
 
 #include <optional>
 
-#include "renderer/Device.h"
+#include "renderer/Device.hpp"
 
 NAMESPACE {
 

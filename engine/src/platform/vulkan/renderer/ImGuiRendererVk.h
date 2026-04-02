@@ -5,7 +5,7 @@
 #ifndef NITRONIC_IMGUIRENDERERVK_H
 #define NITRONIC_IMGUIRENDERERVK_H
 
-#include "renderer/ImGuiRenderer.h"
+#include "renderer/ImGuiRenderer.hpp"
 #include "VulkanInclude.h"
 
 NAMESPACE {

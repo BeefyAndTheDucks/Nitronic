@@ -2,14 +2,14 @@
 // Created by simon on 21/03/2026.
 //
 
-#ifndef NITRONIC_TRANSFORM_H
-#define NITRONIC_TRANSFORM_H
+#ifndef NITRONIC_TRANSFORM_HPP
+#define NITRONIC_TRANSFORM_HPP
 #include <set>
 
 #include <glm/vec3.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-#include "core/Macros.h"
+#include "core/Macros.hpp"
 
 NAMESPACE {
 
@@ -40,4 +40,4 @@ NAMESPACE {
 
 }
 
-#endif //NITRONIC_TRANSFORM_H
+#endif //NITRONIC_TRANSFORM_HPP

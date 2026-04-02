@@ -2,16 +2,16 @@
 // Created by simon on 28/08/2025.
 //
 
-#ifndef NITRONIC_ENGINE_H
-#define NITRONIC_ENGINE_H
-#include "EventBus.h"
-#include "Input.h"
-#include "Layer.h"
-#include "core/Macros.h"
-#include "core/Enums.h"
-#include "renderer/Renderer.h"
+#ifndef NITRONIC_ENGINE_HPP
+#define NITRONIC_ENGINE_HPP
+#include "EventBus.hpp"
+#include "Input.hpp"
+#include "Layer.hpp"
+#include "core/Macros.hpp"
+#include "core/Enums.hpp"
+#include "renderer/Renderer.hpp"
 
-#include "Window.h"
+#include "Window.hpp"
 
 NAMESPACE {
 
@@ -46,4 +46,4 @@ NAMESPACE {
 
 }
 
-#endif //NITRONIC_ENGINE_H
+#endif //NITRONIC_ENGINE_HPP

@@ -2,15 +2,15 @@
 // Created by simon on 28/03/2026.
 //
 
-#ifndef NITRONIC_OFFSCREENFRAMEBUFFER_H
-#define NITRONIC_OFFSCREENFRAMEBUFFER_H
+#ifndef NITRONIC_OFFSCREENFRAMEBUFFER_HPP
+#define NITRONIC_OFFSCREENFRAMEBUFFER_HPP
 
 #include <vector>
 #include <string>
 #include <nvrhi/nvrhi.h>
 
-#include "core/Macros.h"
-#include "renderer/ImGuiRenderer.h"
+#include "core/Macros.hpp"
+#include "renderer/ImGuiRenderer.hpp"
 
 NAMESPACE {
 
@@ -70,4 +70,4 @@ NAMESPACE {
 
 }
 
-#endif //NITRONIC_OFFSCREENFRAMEBUFFER_H
+#endif //NITRONIC_OFFSCREENFRAMEBUFFER_HPP

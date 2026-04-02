@@ -2,10 +2,10 @@
 // Created by simon on 25/03/2026.
 //
 
-#ifndef NITRONIC_CONSTANTS_H
-#define NITRONIC_CONSTANTS_H
+#ifndef NITRONIC_CONSTANTS_HPP
+#define NITRONIC_CONSTANTS_HPP
 
-#include "Macros.h"
+#include "Macros.hpp"
 
 NAMESPACE {
 
@@ -14,4 +14,4 @@ NAMESPACE {
 
 }
 
-#endif //NITRONIC_CONSTANTS_H
+#endif //NITRONIC_CONSTANTS_HPP

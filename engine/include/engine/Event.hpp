@@ -2,8 +2,10 @@
 // Created by simon on 28/03/2026.
 //
 
-#ifndef NITRONIC_EVENT_H
-#define NITRONIC_EVENT_H
+#ifndef NITRONIC_EVENT_HPP
+#define NITRONIC_EVENT_HPP
+
+#include "core/Macros.hpp"
 
 NAMESPACE {
 
@@ -19,4 +21,4 @@ NAMESPACE {
 
 }
 
-#endif //NITRONIC_EVENT_H
+#endif //NITRONIC_EVENT_HPP

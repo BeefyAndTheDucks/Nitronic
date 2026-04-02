@@ -2,13 +2,13 @@
 // Created by simon on 02/09/2025.
 //
 
-#include "engine/GlfwInclude.h"
+#include "engine/GlfwInclude.hpp"
 
 #include "RendererVK.h"
 
 #include "VkMacros.h"
-#include "core/Macros.h"
-#include "renderer/RendererConstants.h"
+#include "core/Macros.hpp"
+#include "renderer/RendererConstants.hpp"
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 

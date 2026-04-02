@@ -2,24 +2,24 @@
 // Created by simon on 02/09/2025.
 //
 
-#include "renderer/Renderer.h"
+#include "renderer/Renderer.hpp"
 
 #include <filesystem>
 #include <tracy/Tracy.hpp>
 #include <imgui.h>
 #include <nvrhi/utils.h>
 
-#include "renderer/Camera.h"
-#include "renderer/ImGuiRenderer.h"
-#include "renderer/Shaders.h"
+#include "renderer/Camera.hpp"
+#include "renderer/ImGuiRenderer.hpp"
+#include "renderer/Shaders.hpp"
 
-#include "core/Macros.h"
-#include "core/Constants.h"
-#include "engine/BasicComponents.h"
-#include "engine/Event.h"
-#include "renderer/RendererComponents.h"
-#include "renderer/RendererConstants.h"
-#include "renderer/RendererUtils.h"
+#include "core/Macros.hpp"
+#include "core/Constants.hpp"
+#include "engine/BasicComponents.hpp"
+#include "engine/Event.hpp"
+#include "renderer/RendererComponents.hpp"
+#include "renderer/RendererConstants.hpp"
+#include "renderer/RendererUtils.hpp"
 
 NAMESPACE {
 

@@ -2,14 +2,14 @@
 // Created by simon on 28/08/2025.
 //
 
-#ifndef NITRONIC_WINDOW_H
-#define NITRONIC_WINDOW_H
+#ifndef NITRONIC_WINDOW_HPP
+#define NITRONIC_WINDOW_HPP
 #include <vector>
 
-#include "EventBus.h"
-#include "GlfwInclude.h"
+#include "EventBus.hpp"
+#include "GlfwInclude.hpp"
 
-#include "core/Macros.h"
+#include "core/Macros.hpp"
 
 NAMESPACE {
 
@@ -85,4 +85,4 @@ NAMESPACE {
 
 }
 
-#endif //NITRONIC_WINDOW_H
+#endif //NITRONIC_WINDOW_HPP

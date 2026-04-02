@@ -2,10 +2,10 @@
 // Created by simon on 21/03/2026.
 //
 
-#ifndef NITRONIC_CAMERA_H
-#define NITRONIC_CAMERA_H
-#include "engine/Transform.h"
-#include "core/Macros.h"
+#ifndef NITRONIC_CAMERA_HPP
+#define NITRONIC_CAMERA_HPP
+#include "engine/Transform.hpp"
+#include "core/Macros.hpp"
 
 NAMESPACE {
 
@@ -24,4 +24,4 @@ NAMESPACE {
 
 }
 
-#endif //NITRONIC_CAMERA_H
+#endif //NITRONIC_CAMERA_HPP

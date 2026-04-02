@@ -2,11 +2,11 @@
 // Created by simon on 29/03/2026.
 //
 
-#ifndef NITRONIC_BASICCOMPONENTS_H
-#define NITRONIC_BASICCOMPONENTS_H
+#ifndef NITRONIC_BASICCOMPONENTS_HPP
+#define NITRONIC_BASICCOMPONENTS_HPP
 #include <string>
 
-#include "Transform.h"
+#include "Transform.hpp"
 
 NAMESPACE {
 
@@ -18,4 +18,4 @@ NAMESPACE {
 
 }
 
-#endif //NITRONIC_BASICCOMPONENTS_H
+#endif //NITRONIC_BASICCOMPONENTS_HPP

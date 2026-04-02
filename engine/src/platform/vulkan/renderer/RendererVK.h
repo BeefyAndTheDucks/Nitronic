@@ -5,7 +5,7 @@
 #ifndef NITRONIC_RENDERERVK_H
 #define NITRONIC_RENDERERVK_H
 
-#include "renderer/Renderer.h"
+#include "renderer/Renderer.hpp"
 
 #include "VulkanInclude.h"
 #include "VkHelpers.h"

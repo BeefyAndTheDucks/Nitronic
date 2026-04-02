@@ -4,16 +4,16 @@
 
 #include <stdexcept>
 
-#include "core/Macros.h"
-#include "engine/Window.h"
+#include "core/Macros.hpp"
+#include "engine/Window.hpp"
 
 #include <format>
 #include <stb_image.h>
 #include <tracy/Tracy.hpp>
 
-#include "core/Constants.h"
-#include "engine/Event.h"
-#include "engine/Log.h"
+#include "core/Constants.hpp"
+#include "engine/Event.hpp"
+#include "engine/Log.hpp"
 
 NAMESPACE
 {

@@ -2,11 +2,11 @@
 // Created by simon on 28/03/2026.
 //
 
-#ifndef NITRONIC_LAYER_H
-#define NITRONIC_LAYER_H
+#ifndef NITRONIC_LAYER_HPP
+#define NITRONIC_LAYER_HPP
 #include <string>
 
-#include "core/Macros.h"
+#include "core/Macros.hpp"
 
 NAMESPACE {
 
@@ -40,4 +40,4 @@ NAMESPACE {
 }
 
 
-#endif //NITRONIC_LAYER_H
+#endif //NITRONIC_LAYER_HPP

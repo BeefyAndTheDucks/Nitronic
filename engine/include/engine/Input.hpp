@@ -2,14 +2,14 @@
 // Created by simon on 28/03/2026.
 //
 
-#ifndef NITRONIC_INPUT_H
-#define NITRONIC_INPUT_H
+#ifndef NITRONIC_INPUT_HPP
+#define NITRONIC_INPUT_HPP
 
-#include "core/Macros.h"
-#include "GlfwInclude.h"
+#include "core/Macros.hpp"
+#include "GlfwInclude.hpp"
 
-#include "Event.h"
-#include "EventBus.h"
+#include "Event.hpp"
+#include "EventBus.hpp"
 
 NAMESPACE
 {
@@ -218,4 +218,4 @@ NAMESPACE
 
 }
 
-#endif //NITRONIC_INPUT_H
+#endif //NITRONIC_INPUT_HPP

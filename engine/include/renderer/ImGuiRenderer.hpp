@@ -2,18 +2,19 @@
 // Created by simon on 18/01/2026.
 //
 
-#ifndef NITRONIC_IMGUIRENDERER_H
-#define NITRONIC_IMGUIRENDERER_H
+#ifndef NITRONIC_IMGUIRENDERER_HPP
+#define NITRONIC_IMGUIRENDERER_HPP
 #include <memory>
 
+#include <nvrhi/nvrhi.h>
 #include <imgui.h>
 
-#include "core/Enums.h"
-#include "core/Macros.h"
+#include "core/Enums.hpp"
+#include "core/Macros.hpp"
 
-#include "engine/Window.h"
+#include "engine/Window.hpp"
 
-#include "renderer/RendererTypes.h"
+#include "renderer/RendererTypes.hpp"
 
 NAMESPACE {
 
@@ -64,4 +65,4 @@ NAMESPACE {
 
 }
 
-#endif //NITRONIC_IMGUIRENDERER_H
+#endif //NITRONIC_IMGUIRENDERER_HPP

@@ -2,11 +2,11 @@
 // Created by simon on 29/03/2026.
 //
 
-#ifndef NITRONIC_RENDERERCOMPONENTS_H
-#define NITRONIC_RENDERERCOMPONENTS_H
-#include "Material.h"
-#include "Mesh.h"
-#include "core/Macros.h"
+#ifndef NITRONIC_RENDERERCOMPONENTS_HPP
+#define NITRONIC_RENDERERCOMPONENTS_HPP
+#include "Material.hpp"
+#include "Mesh.hpp"
+#include "core/Macros.hpp"
 
 NAMESPACE {
 
@@ -37,4 +37,4 @@ NAMESPACE {
 
 }
 
-#endif //NITRONIC_RENDERERCOMPONENTS_H
+#endif //NITRONIC_RENDERERCOMPONENTS_HPP

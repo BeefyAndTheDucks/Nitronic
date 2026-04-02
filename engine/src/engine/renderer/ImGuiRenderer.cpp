@@ -2,9 +2,9 @@
 // Created by simon on 18/01/2026.
 //
 
-#include "renderer/ImGuiRenderer.h"
+#include "renderer/ImGuiRenderer.hpp"
 #include "imgui_impl_glfw.h"
-#include "engine/Event.h"
+#include "engine/Event.hpp"
 
 NAMESPACE
 {

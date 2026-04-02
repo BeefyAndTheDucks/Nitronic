@@ -2,9 +2,9 @@
 // Created by simon on 28/03/2026.
 //
 
-#include "engine/Input.h"
+#include "engine/Input.hpp"
 
-#include "engine/Log.h"
+#include "engine/Log.hpp"
 
 NAMESPACE
 {

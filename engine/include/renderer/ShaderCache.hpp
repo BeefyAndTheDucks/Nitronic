@@ -2,18 +2,18 @@
 // Created by simon on 21/03/2026.
 //
 
-#ifndef NITRONIC_SHADERCACHE_H
-#define NITRONIC_SHADERCACHE_H
+#ifndef NITRONIC_SHADERCACHE_HPP
+#define NITRONIC_SHADERCACHE_HPP
 #include <filesystem>
 #include <shared_mutex>
 #include <mutex>
 #include <string>
 #include <unordered_map>
 
-#include "core/Enums.h"
-#include "core/Macros.h"
+#include "core/Enums.hpp"
+#include "core/Macros.hpp"
 #include "nvrhi/nvrhi.h"
-#include "util/IOUtils.h"
+#include "util/IOUtils.hpp"
 
 NAMESPACE {
 
@@ -46,7 +46,6 @@ NAMESPACE {
             assert(m_Device && "ShaderCache requires a valid device");
         }
 
-        // Disallow copy, allow move.
         ShaderCache(const ShaderCache&)            = delete;
         ShaderCache& operator=(const ShaderCache&) = delete;
         ShaderCache(ShaderCache&&)                 = delete;
@@ -134,4 +133,4 @@ NAMESPACE {
 
 }
 
-#endif //NITRONIC_SHADERCACHE_H
+#endif //NITRONIC_SHADERCACHE_HPP

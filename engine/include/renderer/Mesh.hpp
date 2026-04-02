@@ -2,14 +2,14 @@
 // Created by simon on 21/03/2026.
 //
 
-#ifndef NITRONIC_MESH_H
-#define NITRONIC_MESH_H
+#ifndef NITRONIC_MESH_HPP
+#define NITRONIC_MESH_HPP
 #include <vector>
 
 #include <nvrhi/nvrhi.h>
 
-#include "RendererTypes.h"
-#include "core/Macros.h"
+#include "RendererTypes.hpp"
+#include "core/Macros.hpp"
 
 NAMESPACE {
 
@@ -44,4 +44,4 @@ NAMESPACE {
 }
 
 
-#endif //NITRONIC_MESH_H
+#endif //NITRONIC_MESH_HPP

@@ -7,7 +7,7 @@
 #include "RendererVK.h"
 #include "DeviceVK.h"
 #include "ImGuiRendererVk.h"
-#include "core/Macros.h"
+#include "core/Macros.hpp"
 
 NAMESPACE {
 

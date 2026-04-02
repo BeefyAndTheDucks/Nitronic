@@ -2,9 +2,9 @@
 // Created by beefy on 3/31/26.
 //
 
-#ifndef NITRONIC_RENDERERUTILS_H
-#define NITRONIC_RENDERERUTILS_H
-#include "core/Macros.h"
+#ifndef NITRONIC_RENDERERUTILS_HPP
+#define NITRONIC_RENDERERUTILS_HPP
+#include "core/Macros.hpp"
 #include "nvrhi/nvrhi.h"
 
 NAMESPACE {
@@ -20,4 +20,4 @@ NAMESPACE {
     }
 }
 
-#endif //NITRONIC_RENDERERUTILS_H
+#endif //NITRONIC_RENDERERUTILS_HPP

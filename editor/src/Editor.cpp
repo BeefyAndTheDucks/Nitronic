@@ -2,10 +2,7 @@
 // Created by simon on 28/08/2025.
 //
 
-#include "engine/AssetImporter.h"
-#include "engine/BasicComponents.h"
-#include "engine/Engine.h"
-#include "renderer/Shaders.h"
+#include <Nitronic.hpp>
 
 using namespace Nitronic;
 

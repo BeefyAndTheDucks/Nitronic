@@ -2,9 +2,9 @@
 // Created by simon on 21/03/2026.
 //
 
-#ifndef NITRONIC_RENDERERCONSTANTS_H
-#define NITRONIC_RENDERERCONSTANTS_H
-#include "core/Macros.h"
+#ifndef NITRONIC_RENDERERCONSTANTS_HPP
+#define NITRONIC_RENDERERCONSTANTS_HPP
+#include "core/Macros.hpp"
 
 #include <nvrhi/nvrhi.h>
 

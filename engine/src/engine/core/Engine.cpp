@@ -2,7 +2,7 @@
 // Created by simon on 28/08/2025.
 //
 
-#include "engine/Engine.h"
+#include "engine/Engine.hpp"
 
 #include <chrono>
 #include <numeric>
@@ -13,11 +13,11 @@
 
 #include <tracy/Tracy.hpp>
 
-#include "engine/AssetImporter.h"
-#include "engine/BasicComponents.h"
-#include "engine/Log.h"
+#include "engine/AssetImporter.hpp"
+#include "engine/BasicComponents.hpp"
+#include "engine/Log.hpp"
 
-#include "renderer/Shaders.h"
+#include "renderer/Shaders.hpp"
 
 NAMESPACE {
 
